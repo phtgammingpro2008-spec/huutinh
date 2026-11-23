@@ -32,4 +32,9 @@ export type Env = {
   APP_URL?: string;
   /** Test hook: fixed clock. */
   NOW?: () => Date;
+  /** Resend API key and sender ("HLUXURY <no-reply@domain>"); email is off until both are set. */
+  RESEND_API_KEY?: string;
+  MAIL_FROM?: string;
+  /** Test/dev hook: emails are collected here instead of being sent. */
+  EMAIL_OUTBOX?: { to: string; subject: string; html: string }[];
 };

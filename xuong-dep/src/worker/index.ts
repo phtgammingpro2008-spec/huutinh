@@ -9,6 +9,7 @@ import { imageRoutes } from './routes/images';
 import { mediaRoutes } from './media';
 import { customerRoutes } from './routes/customer';
 import { contentRoutes } from './routes/content';
+import { userRoutes } from './routes/users';
 import { orderRoutes } from './routes/orders';
 import { paymentRoutes } from './routes/payments';
 import { publicRoutes } from './routes/public';
@@ -24,6 +25,7 @@ imageRoutes(router);
 mediaRoutes(router);
 customerRoutes(router);
 contentRoutes(router);
+userRoutes(router);
 orderRoutes(router);
 designRoutes(router);
 

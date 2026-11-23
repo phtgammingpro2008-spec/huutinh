@@ -9,6 +9,7 @@ import { bump, clientIp, isLimited } from '../ratelimit';
 import { findByIdentifier } from '../repo/users';
 import { currentUser } from '../roles';
 import type { Router } from '../router';
+import { sendVerifyEmail } from './users';
 
 const langOf = (v: unknown): Lang => (LANGS.includes(v as Lang) ? (v as Lang) : 'vi');
 
@@ -86,6 +87,7 @@ export function authRoutes(r: Router) {
       throw e;
     }
     await bump(env, ipKey, REGISTER_WINDOW);
+    await sendVerifyEmail(env, req, userId, email, lang);
     const token = await createSession(env, userId);
     return json({ id: userId, name, role: 'customer' }, 200, { 'set-cookie': sessionCookie(req, token) });
   });

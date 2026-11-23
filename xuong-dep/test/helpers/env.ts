@@ -10,5 +10,5 @@ export async function createTestEnv(opts: { now?: () => Date } = {}): Promise<En
   const db = sqliteDb(':memory:');
   migrate(db);
   const dir = await mkdtemp(join(tmpdir(), 'xuong-dep-r2-'));
-  return { DB: db, IMAGES: fsBucket(dir), APP_URL: 'https://xuong.test', NOW: opts.now };
+  return { DB: db, IMAGES: fsBucket(dir), APP_URL: 'https://xuong.test', NOW: opts.now, EMAIL_OUTBOX: [] };
 }
