@@ -1,7 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { api, AUTH_LOST } from './api';
 import { Login, type Me } from './pages/Login';
+import { CustomerDetail, Customers } from './pages/Customers';
+import { Home } from './pages/Home';
+import { OrderDetail } from './pages/OrderDetail';
 import { OrderEditor } from './pages/OrderEditor';
+import { Orders } from './pages/Orders';
+import { Settings } from './pages/Settings';
 import { useRoute, type Route } from './router';
 
 type Auth = { state: 'loading' } | { state: 'out'; needsSetup: boolean } | { state: 'in'; me: Me };
@@ -34,13 +39,15 @@ function Placeholder({ title }: { title: string }) {
 
 function Screen({ route }: { route: Route }): ReactNode {
   const [a, b] = route.parts;
-  if (!a) return <Placeholder title="Trang chủ" />;
+  if (!a) return <Home />;
   if (a === 'orders' && b === 'new') return <OrderEditor key={route.path + route.query} designId={route.query.get('design')} />;
   if (a === 'orders' && b && route.parts[2] === 'edit') return <OrderEditor key={route.path} orderId={b} />;
-  if (a === 'orders') return <Placeholder title="Đơn hàng" />;
+  if (a === 'orders' && b) return <OrderDetail key={b} id={b} />;
+  if (a === 'orders') return <Orders />;
   if (a === 'library') return <Placeholder title="Thư viện mẫu" />;
-  if (a === 'customers') return <Placeholder title="Khách hàng" />;
-  if (a === 'settings') return <Placeholder title="Cài đặt" />;
+  if (a === 'customers' && b) return <CustomerDetail key={b} id={b} />;
+  if (a === 'customers') return <Customers />;
+  if (a === 'settings') return <Settings />;
   return <Placeholder title="Không tìm thấy trang" />;
 }
 
