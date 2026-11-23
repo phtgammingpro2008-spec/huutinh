@@ -6,6 +6,7 @@ import type { Env, Stmt } from '../env';
 import { now } from '../http';
 import { getCustomer, type Customer } from './customers';
 import { insertDesignsStmt, insertImagesStmt } from './designs';
+import { listPayments, type Payment } from './payments';
 import { groupBy, mapImage, mapItem, mapLine, type ImageRow, type ItemRow, type LineRow } from './rows';
 
 export type OrderRow = {
@@ -18,7 +19,7 @@ export type Totals = { qty: number; amount: number; missingPrice: boolean };
 
 export type OrderView = OrderInput & {
   code: string; status: OrderStatus; quoteVersion: number; quoteToken: string | null; customer: Customer;
-  totals: Totals; paid: number; due: number; createdAt: string; quotedAt: string | null; acceptedAt: string | null;
+  totals: Totals; paid: number; due: number; payments: Payment[]; createdAt: string; quotedAt: string | null; acceptedAt: string | null;
 };
 
 export type OrderSummary = {
@@ -64,12 +65,13 @@ export async function loadOrder(env: Env, id: string): Promise<OrderView | null>
   const customer = (await getCustomer(env, o.customer_id))!;
   const images = (await env.DB.prepare('SELECT * FROM order_images WHERE order_id = ? ORDER BY position').bind(id).all<ImageRow>()).results.map(mapImage);
   const items = (await itemsByOrder(env, [id])).get(id) ?? [];
-  const paid = (await paidByOrder(env, [id])).get(id) ?? 0;
+  const payments = await listPayments(env, id);
+  const paid = payments.reduce((s, p) => s + p.amount, 0);
   const totals = totalsOf(items);
   return {
     id: o.id, customerId: o.customer_id, currency: o.currency, neededBy: o.needed_by, note: o.note,
     allowPublic: !!o.allow_public, images, items, code: o.code, status: o.status, quoteVersion: o.quote_version,
-    quoteToken: o.quote_token, customer, totals, paid, due: Math.max(0, totals.amount - paid),
+    quoteToken: o.quote_token, customer, totals, paid, due: Math.max(0, totals.amount - paid), payments,
     createdAt: o.created_at, quotedAt: o.quoted_at, acceptedAt: o.accepted_at,
   };
 }

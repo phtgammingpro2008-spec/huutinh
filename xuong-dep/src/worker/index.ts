@@ -6,11 +6,13 @@ import { catalogRoutes } from './routes/catalog';
 import { designRoutes } from './routes/designs';
 import { imageRoutes } from './routes/images';
 import { orderRoutes } from './routes/orders';
+import { paymentRoutes } from './routes/payments';
 import { publicRoutes } from './routes/public';
 import { quoteRoutes } from './routes/quotes';
 
 const router = new Router();
 quoteRoutes(router);
+paymentRoutes(router);
 publicRoutes(router);
 authRoutes(router);
 catalogRoutes(router);
