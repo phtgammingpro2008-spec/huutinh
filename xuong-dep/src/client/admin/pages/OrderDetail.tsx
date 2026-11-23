@@ -16,6 +16,7 @@ export type OrderView = OrderInput & {
   totals: { qty: number; amount: number; missingPrice: boolean }; paid: number; due: number; payments: Payment[];
   createdAt: string; quotedAt: string | null; acceptedAt: string | null;
   source?: 'admin' | 'customer'; cancelReason?: string; cancelledBy?: string | null;
+  productTitles?: Record<string, { product: { vi: string }; color: { vi: string } }>;
 };
 type SendResult = { url: string; message: string; zaloUrl: string | null; messengerUrl: string | null; version: number };
 
@@ -114,7 +115,7 @@ export function OrderDetail({ id }: { id: string }) {
   return (
     <main className="page order-detail">
       <div className="topbar">
-        <h1>{o.code}</h1>
+        <h1 className="code-title">{o.code}</h1>
         {o.source === 'customer' && <span className="badge src-customer">Khách tự đặt</span>}
         <StatusBadge s={o.status} />
       </div>
@@ -141,7 +142,8 @@ export function OrderDetail({ id }: { id: string }) {
             <CropThumb image={imageOf(it.imageId)} crop={it.crop} cropKey={it.cropKey} size={72} />
             <div className="grow">
               <h3 style={{ margin: 0 }}>Mẫu {it.tagNo}</h3>
-              <div className="small">{materialsText(it) || <span className="muted">Chưa chọn vật liệu</span>}</div>
+              {o.productTitles?.[it.id] && <div className="small"><strong>{o.productTitles[it.id].product.vi} · {o.productTitles[it.id].color.vi}</strong></div>}
+              <div className="small">{materialsText(it) || (!o.productTitles?.[it.id] && <span className="muted">Chưa chọn vật liệu</span>)}</div>
               {it.colorNote && <div className="small muted">{it.colorNote}</div>}
             </div>
             <strong className="num small">{formatQty(itemQty(it))} đôi</strong>
@@ -172,7 +174,7 @@ export function OrderDetail({ id }: { id: string }) {
       <section className="card stack" style={{ marginTop: 16 }} aria-label="Báo giá">
         {!locked && (
           <div className="row">
-            <input aria-label="Giá cho mọi dòng" className="grow" inputMode="decimal" placeholder="Giá cho mọi dòng" value={allPrice} onChange={(e) => setAllPrice(e.target.value)} />
+            <input aria-label="Giá cho mọi dòng" className="grow" inputMode="decimal" placeholder="Giá chung" value={allPrice} onChange={(e) => setAllPrice(e.target.value)} />
             <button type="button" className="btn-sm" onClick={() => {
               const v = parseMoney(allPrice, o.currency);
               if (v == null) return setError('Giá không đọc được');

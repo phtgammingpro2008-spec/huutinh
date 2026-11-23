@@ -189,3 +189,15 @@ test("an admin edit that doesn't send deliverNote keeps the customer's delivery 
   expect(r.status).toBe(200);
   expect(r.body).toMatchObject({ note: 'anh sửa', deliverNote: 'Bến xe Phnom Penh', source: 'customer' });
 });
+
+test('orders show which product and colour each design came from', async () => {
+  const pub = (await call(env, 'POST', '/api/content/images?w=1&h=1', jpeg, admin, { 'content-type': 'image/jpeg' })).body.key as string;
+  const p = (await call(env, 'POST', '/api/products', { name: { vi: 'Kẹp đế êm', en: 'Soft flip-flop' }, published: true, colors: [{ name: { vi: 'Đen', en: 'Black' }, imageKey: pub }] }, admin)).body;
+  const a = await customer(1);
+  const it = item(1, { designId: uid('d'), imageId: null, crop: null, cropKey: '', productId: p.id, colorId: p.colors[0].id, lines: [line({ qtyEach: 2 })] });
+  const o = { id: uid('order'), neededBy: null, note: '', deliverNote: '', images: [], items: [it] };
+  expect((await call(env, 'PUT', `/api/c/orders/${o.id}`, o, a.c)).status).toBe(200);
+  const want = { product: { vi: 'Kẹp đế êm', en: 'Soft flip-flop', km: '' }, color: { vi: 'Đen', en: 'Black', km: '' } };
+  expect((await call(env, 'GET', `/api/c/orders/${o.id}`, undefined, a.c)).body.productTitles).toEqual({ [it.id]: want });
+  expect((await call(env, 'GET', `/api/orders/${o.id}`, undefined, admin)).body.productTitles).toEqual({ [it.id]: want });
+});

@@ -561,3 +561,12 @@ fieldset.card legend { font-weight: 700; padding: 0 4px; }
 .token-help span { background: var(--surface-2); border-radius: 8px; padding: 4px 8px; }
 .token-help code { font-weight: 700; color: var(--ink); }
 .lang-tag-sm { width: 28px; min-height: 22px; font-size: .65rem; }
+
+/* ---- audit fixes ---- */
+.badge { font-family: var(--font); letter-spacing: 0; vertical-align: middle; }
+h1.code-title { font-size: 1.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.topbar { flex-wrap: wrap; }
+.order-row-head { row-gap: 4px; }
+.order-row-head .code { white-space: nowrap; }
+.col-hero:not(:has(img)) .col-hero-copy { background: none; }
+@media (max-width: 400px) { .hide-xs { display: none; } .head-account { padding: 0 10px; } }

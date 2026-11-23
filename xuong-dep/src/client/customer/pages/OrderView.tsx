@@ -15,6 +15,7 @@ type COrder = {
   id: string; code: string; status: OrderStatus; createdAt: string; neededBy: string | null; note: string; deliverNote: string;
   currency: Currency; cancelReason: string | null; items: Item[]; totals: { qty: number }; quote: QuoteSnapshot | null;
   acceptedVersion: number | null; paid: number; due: number; canEdit: boolean; canCancel: boolean; cancelledBy?: string | null;
+  productTitles?: Record<string, { product: Record<Lang, string>; color: Record<Lang, string> }>;
 };
 
 const FLOW: OrderStatus[] = ['cho_bao_gia', 'da_bao_gia', 'khach_dong_y', 'dang_san_xuat', 'da_giao', 'hoan_tat'];
@@ -57,8 +58,8 @@ function CancelDialog({ t, onConfirm, onClose, busy }: { t: T; onConfirm: (reaso
 }
 
 /** One design: picture, size lines with counts; with a quote, the price lines from the quote the workshop sent. */
-function Design({ item, quoted, currency, lang, t, labelOf }: {
-  item: Item; quoted: QuoteSnapshot['items'][number] | null; currency: Currency; lang: Lang; t: T; labelOf: (k: string) => string;
+function Design({ item, quoted, currency, lang, t, labelOf, title }: {
+  item: Item; quoted: QuoteSnapshot['items'][number] | null; currency: Currency; lang: Lang; t: T; labelOf: (k: string) => string; title?: string;
 }) {
   return (
     <article className="card citem-view">
@@ -66,6 +67,7 @@ function Design({ item, quoted, currency, lang, t, labelOf }: {
         {item.cropKey ? <img className="thumb" src={media(item.cropKey)} alt="" loading="lazy" style={{ width: 84, height: 84 }} /> : <div className="thumb" style={{ width: 84, height: 84 }} />}
         <div className="grow">
           <h3 style={{ margin: 0 }}>{t('c.design_n', { n: item.tagNo })}</h3>
+          {title && <p className="small" style={{ margin: 0 }}><strong>{title}</strong></p>}
           {item.colorNote && <p className="small" style={{ margin: 0 }}>{item.colorNote}</p>}
           {item.isPrivate && <span className="badge">{t('c.private')}</span>}
         </div>
@@ -151,7 +153,7 @@ export function OrderView({ id, t, lang }: { id: string; t: T; lang: Lang }) {
     <main className="page">
       <a className="back" href="#/"><ArrowLeft size={18} aria-hidden="true" /> {t('c.nav_orders')}</a>
       <div className="topbar">
-        <h1>{t('c.order_code', { code: o.code })}</h1>
+        <h1 className="code-title">{t('c.order_code', { code: o.code })}</h1>
         <span className={`badge s-${o.status}`}>{statusText(t, o.status)}</span>
       </div>
       <p className="small muted" style={{ marginTop: -6 }}>{t('c.created', { date: dmy(o.createdAt) })}</p>
@@ -171,7 +173,8 @@ export function OrderView({ id, t, lang }: { id: string; t: T; lang: Lang }) {
       </section>
 
       <h2>{t('c.designs')}</h2>
-      {o.items.map((it) => <Design key={it.id} item={it} quoted={quotedItem(it)} currency={o.currency} lang={lang} t={t} labelOf={labelOf} />)}
+      {o.items.map((it) => <Design key={it.id} item={it} quoted={quotedItem(it)} currency={o.currency} lang={lang} t={t} labelOf={labelOf}
+        title={o.productTitles?.[it.id] ? `${nameIn(o.productTitles[it.id].product, lang)} · ${nameIn(o.productTitles[it.id].color, lang)}` : undefined} />)}
 
       <section className="card stack" style={{ marginTop: 16 }} aria-label={t('c.quote')}>
         <div className="row"><span className="grow">{qt(lang, 'total.pairs')}</span><strong className="num">{formatQty(q ? q.totalQty : o.totals.qty)}</strong></div>

@@ -77,8 +77,9 @@ function Num({ label, value, onChange, width = 90 }: { label: string; value: num
 }
 
 /** List + editor for one kind of site content. */
-function Crud<T extends { id?: string; published: boolean }>({ path, noun, blank, title, form, after }: {
+function Crud<T extends { id?: string; published: boolean }>({ path, noun, blank, title, form, after, thumb }: {
   path: string; noun: string; blank: () => T; title: (x: T) => string; form: (x: T, set: (p: Partial<T>) => void) => ReactNode; after?: (x: T) => ReactNode;
+  thumb?: (x: T) => string | null | undefined;
 }) {
   const [list, setList] = useState<T[] | null>(null);
   const [edit, setEdit] = useState<T | null>(null);
@@ -129,6 +130,7 @@ function Crud<T extends { id?: string; published: boolean }>({ path, noun, blank
         {list?.map((x) => (
           <li key={x.id}>
             <button type="button" className="list-item btn-block" style={{ justifyContent: 'flex-start' }} onClick={() => setEdit(x)}>
+              {thumb && (thumb(x) ? <img className="thumb" src={imgUrl(thumb(x)!)} alt="" loading="lazy" /> : <span className="thumb" />)}
               <span className="grow" style={{ textAlign: 'left' }}>{title(x) || '(chưa đặt tên)'}</span>
               <span className={`badge ${x.published ? 's-khach_dong_y' : ''}`}>{x.published ? 'Đang hiện' : 'Đang ẩn'}</span>
             </button>
@@ -296,18 +298,18 @@ export function Content() {
         ))}
       </div>
       {tab === 'products' && (
-        <Crud<Product> key="p" path="/api/products" noun="sản phẩm" title={(x) => x.name.vi}
+        <Crud<Product> key="p" path="/api/products" noun="sản phẩm" title={(x) => x.name.vi} thumb={(x) => x.colors[0]?.imageKey}
           blank={() => ({ name: N0(), desc: N0(), styleId: null, soleId: null, strapId: null, lines: [], isNew: true, published: false, hasBrandLogo: false, position: 0, colors: [] })}
           form={(x, set) => <ProductForm p={x} set={set} />}
           after={(x) => x.published && x.slug ? <a className="btn btn-block" href={`/san-pham/${x.slug}`} target="_blank" rel="noreferrer">Xem trên trang web</a> : null} />
       )}
       {tab === 'collections' && (
-        <Crud<Collection> key="c" path="/api/collections" noun="bộ sưu tập" title={(x) => x.title.vi}
+        <Crud<Collection> key="c" path="/api/collections" noun="bộ sưu tập" title={(x) => x.title.vi} thumb={(x) => x.coverKey}
           blank={() => ({ title: N0(), subtitle: N0(), coverKey: null, color: '#1b3b2c', published: false, position: 0, productIds: [] })}
           form={(x, set) => <CollectionForm c={x} set={set} products={products} />} />
       )}
       {tab === 'posters' && (
-        <Crud<Poster> key="o" path="/api/posters" noun="poster" title={(x) => x.title.vi}
+        <Crud<Poster> key="o" path="/api/posters" noun="poster" title={(x) => x.title.vi} thumb={(x) => x.imageKey}
           blank={() => ({ tag: N0(), title: N0(), body: N0(), imageKey: null, ctaLabel: N0(), ctaHref: '/san-pham', published: false, position: 0 })}
           form={(x, set) => <PosterForm p={x} set={set} />} />
       )}

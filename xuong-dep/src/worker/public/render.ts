@@ -72,7 +72,7 @@ const messengerHref = (m: string) => {
 function header(c: PageCtx): Html {
   const next = encodeURIComponent(c.path);
   const account = c.user
-    ? html`<a class="btn btn-sm head-account" href="${c.user.role === 'admin' ? '/quan-ly' : '/tai-khoan'}">${icon('user', 18)}<span>${tr(c, 'pub.account')}</span></a>`
+    ? html`<a class="btn btn-sm head-account" href="${c.user.role === 'admin' ? '/quan-ly' : '/tai-khoan'}" aria-label="${tr(c, 'pub.account')}">${icon('user', 18)}<span class="hide-xs">${tr(c, 'pub.account')}</span></a>`
     : html`<a class="btn btn-sm btn-primary head-account" href="${'/dang-nhap?next=' + next}">${tr(c, 'pub.login')}</a>`;
   return html`<header class="site-header"><div class="site-header-in">
 <a class="brand" href="/" aria-label="HLUXURY – ${tr(c, 'pub.home')}"><span class="brand-mark" aria-hidden="true">H</span><span class="brand-name">HLUXURY</span></a>
@@ -97,10 +97,15 @@ ${m ? html`<li>${icon('chat', 16)}<a href="${m}" rel="noopener" target="_blank">
 </div></footer>`;
 }
 
-function stickyCta(c: PageCtx): Html {
+/** The bar at the bottom of the screen: "send a photo" by default, the page's own main action when it has one. */
+export type StickyAction = { label: string; next: string; kind: string };
+function stickyCta(c: PageCtx, action?: StickyAction): Html {
   const z = zaloHref(c.shop.zalo);
-  return html`<div class="sticky-cta" role="region" aria-label="${tr(c, 'pub.cta')}">
-${orderLink(c, html`${icon('camera', 18)}<span>${tr(c, 'pub.cta')}</span>`, 'cta-main')}
+  const main = action
+    ? orderLink(c, html`<span>${action.label}</span>`, 'cta-main', action.next, action.kind)
+    : orderLink(c, html`${icon('camera', 18)}<span>${tr(c, 'pub.cta')}</span>`, 'cta-main');
+  return html`<div class="sticky-cta" role="region" aria-label="${action?.label ?? tr(c, 'pub.cta')}">
+${main}
 ${z ? html`<a class="cta-zalo" href="${z}" rel="noopener" target="_blank" aria-label="${tr(c, 'pub.zalo')}">${icon('chat', 22)}</a>` : ''}
 </div>`;
 }
@@ -109,7 +114,7 @@ const LANG_TAGS: Record<Lang, string> = { vi: 'vi', en: 'en', km: 'km' };
 
 /** Full HTML document for a public page. `indexable` pages get index,follow; the rest stay noindex. */
 export function renderPage(c: PageCtx, o: {
-  title: string; description: string; ogImage?: string | null; body: Html; indexable?: boolean; headExtra?: Html; cta?: boolean;
+  title: string; description: string; ogImage?: string | null; body: Html; indexable?: boolean; headExtra?: Html; cta?: boolean; action?: StickyAction;
 }): string {
   const url = c.origin + c.path;
   const canonical = c.origin + c.path.split('?')[0];
@@ -144,7 +149,7 @@ ${o.headExtra ?? ''}
 ${header(c)}
 <main id="main">${o.body}</main>
 ${footer(c)}
-${o.cta === false ? '' : stickyCta(c)}
+${o.cta === false ? '' : stickyCta(c, o.action)}
 <script type="module" src="${PATHS.island}"></script>
 </body>
 </html>`.s;

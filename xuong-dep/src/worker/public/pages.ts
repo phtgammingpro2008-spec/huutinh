@@ -166,12 +166,12 @@ ${spec.length ? html`<dl class="spec">${spec}</dl>` : ''}
 ${colors}
 ${lines}
 ${c.user ? '' : html`<p class="locked">${icon('lock', 16)} ${tr(c, 'pub.login_to_see')}</p>`}
-${orderLink(c, tr(c, 'pub.order_this'), 'btn-cta btn-block', orderUrl, 'order')}
 </div></article>`;
   const product = { '@context': 'https://schema.org', '@type': 'Product', name, description: desc || undefined, brand: { '@type': 'Brand', name: 'HLUXURY' },
     image: first ? c.origin + mediaUrl(first.imageKey) : undefined };
   const ld = raw(`<script type="application/ld+json">${JSON.stringify(product).replace(/</g, '\\u003c')}</script>`);
-  return send(renderPage(c, { title: `${name} · HLUXURY`, description: desc || tr(c, 'pub.meta_desc'), ogImage: first?.imageKey, body, headExtra: ld }));
+  return send(renderPage(c, { title: `${name} · HLUXURY`, description: desc || tr(c, 'pub.meta_desc'), ogImage: first?.imageKey, body, headExtra: ld,
+    action: { label: tr(c, 'pub.order_this'), next: orderUrl, kind: 'order' } }));
 }
 
 async function collectionPage(req: Request, env: Env, p: Record<string, string>): Promise<Response> {

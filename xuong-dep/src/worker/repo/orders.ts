@@ -23,6 +23,7 @@ export type OrderView = OrderInput & {
   code: string; status: OrderStatus; quoteVersion: number; quoteToken: string | null; customer: Customer;
   totals: Totals; paid: number; due: number; payments: Payment[]; createdAt: string; quotedAt: string | null; acceptedAt: string | null;
   source: 'admin' | 'customer'; seenByAdmin: boolean; cancelReason: string; cancelledBy: string | null;
+  productTitles: Record<string, { product: { vi: string; en: string; km: string }; color: { vi: string; en: string; km: string } }>;
 };
 
 export type OrderSummary = {
@@ -72,12 +73,28 @@ export async function loadOrder(env: Env, id: string): Promise<OrderView | null>
   const paid = payments.reduce((s, p) => s + p.amount, 0);
   const totals = totalsOf(items);
   return {
+    productTitles: await productTitlesOf(env, items),
     id: o.id, customerId: o.customer_id, currency: o.currency, neededBy: o.needed_by, note: o.note,
     allowPublic: !!o.allow_public, images, items, code: o.code, status: o.status, quoteVersion: o.quote_version,
     quoteToken: o.quote_token, customer, totals, paid, due: Math.max(0, totals.amount - paid), payments,
     createdAt: o.created_at, quotedAt: o.quoted_at, acceptedAt: o.accepted_at,
     deliverNote: o.deliver_note, source: o.source, seenByAdmin: !!o.seen_by_admin, cancelReason: o.cancel_reason, cancelledBy: o.cancelled_by,
   };
+}
+
+type Names3 = { vi: string; en: string; km: string };
+/** item id → product and colour names, for designs ordered from a product colour. */
+async function productTitlesOf(env: Env, items: Item[]): Promise<Record<string, { product: Names3; color: Names3 }>> {
+  const ids = [...new Set(items.map((i) => i.colorId).filter((x): x is string => !!x))];
+  if (!ids.length) return {};
+  const rows = (await env.DB.prepare(
+    `SELECT pc.id, pc.name_vi AS cv, pc.name_en AS ce, pc.name_km AS ck, p.name_vi AS pv, p.name_en AS pe, p.name_km AS pk
+     FROM product_colors pc JOIN products p ON p.id = pc.product_id WHERE pc.id IN (SELECT value FROM json_each(?))`,
+  ).bind(JSON.stringify(ids)).all<Record<string, string>>()).results;
+  const byColor = new Map(rows.map((r) => [r.id, {
+    product: { vi: r.pv ?? '', en: r.pe ?? '', km: r.pk ?? '' }, color: { vi: r.cv ?? '', en: r.ce ?? '', km: r.ck ?? '' },
+  }]));
+  return Object.fromEntries(items.filter((i) => i.colorId && byColor.has(i.colorId)).map((i) => [i.id, byColor.get(i.colorId!)!]));
 }
 
 /** Canonical form of everything that affects quantities or money; used to detect qty/price edits. */
