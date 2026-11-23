@@ -83,7 +83,7 @@ export async function pageApi<T = any>(page: Page, method: string, path: string,
 export const SAMPLE_COUNTS = [85, 25, 18, 20, 17, 13, 25, 14, 18];
 
 /** Seeds a customer + the 9-design sample order through the API (one real uploaded crop image). */
-export async function seedSampleOrder(page: Page, opts: { customer?: string; lang?: string; currency?: string; zalo?: string; soleId?: string | null; price?: number | null; counts?: number[] } = {}) {
+export async function seedSampleOrder(page: Page, opts: { customer?: string; lang?: string; currency?: string; zalo?: string; soleId?: string | null; strapId?: string | null; styleId?: string | null; price?: number | null; counts?: number[]; twoLines?: boolean; note?: string } = {}) {
   return page.evaluate(async (o) => {
     const j = async (method: string, path: string, body?: unknown) => {
       const r = await fetch(path, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
@@ -104,8 +104,11 @@ export async function seedSampleOrder(page: Page, opts: { customer?: string; lan
       images: [{ id: up.id, key: up.key, width: 60, height: 60 }],
       items: counts.map((n, i) => ({
         id: crypto.randomUUID(), designId: crypto.randomUUID(), imageId: up.id, tagNo: i + 1, tapX: 0.5, tapY: 0.5,
-        crop: { x: 0, y: 0, w: 1, h: 1 }, cropKey: up.key, soleId: o.soleId ?? null, strapId: null, styleId: null, colorNote: '',
-        lines: [{ id: crypto.randomUUID(), lineKey: 'nam', sizeFrom: 39, sizeTo: 44, mode: 'even', qtyEach: n, perSize: {}, unitPrice: o.price ?? null }],
+        crop: { x: 0, y: 0, w: 1, h: 1 }, cropKey: up.key, soleId: o.soleId ?? null, strapId: o.strapId ?? null, styleId: o.styleId ?? null, colorNote: o.note ?? '',
+        lines: [{ id: crypto.randomUUID(), lineKey: 'nam', sizeFrom: 39, sizeTo: 44, mode: o.twoLines ? 'per_size' : 'even', qtyEach: n,
+          perSize: o.twoLines ? { '39': n, '40': n, '41': n, '42': n, '43': n, '44': n } : {}, unitPrice: o.price ?? null },
+          ...(o.twoLines ? [{ id: crypto.randomUUID(), lineKey: 'nu', sizeFrom: 35, sizeTo: 40, mode: 'per_size', qtyEach: 0,
+            perSize: { '35': 5, '36': 6, '37': 7, '38': 8, '39': 9, '40': 10 }, unitPrice: o.price ?? null }] : [])],
       })),
     };
     return j('PUT', `/api/orders/${id}`, order);

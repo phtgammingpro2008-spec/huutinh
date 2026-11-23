@@ -70,7 +70,7 @@ Android (Chrome): menu ⋮ → **Thêm vào màn hình chính**.
 ## Sao lưu dữ liệu
 
 - **Trong web:** Cài đặt → **Tải bản sao lưu**. File JSON chứa toàn bộ khách, đơn, báo giá, tiền nhận, thư viện mẫu (không chứa mật khẩu). Nên tải mỗi tuần và cất vào Google Drive.
-- **D1 tự khôi phục được 30 ngày** (Time Travel, có sẵn). Khi lỡ xóa nhầm: `npx wrangler d1 time-travel restore xuong-dep --timestamp=<thời điểm>`.
+- **D1 tự khôi phục được** về một thời điểm trước đó (Time Travel, có sẵn): gói miễn phí giữ 7 ngày, gói trả phí giữ 30 ngày. Vì vậy vẫn nên tải bản sao lưu hằng tuần. Khi lỡ xóa nhầm: `npx wrangler d1 time-travel restore xuong-dep --timestamp=<thời điểm>`.
 - **Ảnh** nằm trong R2 `xuong-dep-anh`. Muốn tải hết ảnh về máy có thể dùng `rclone` hoặc trang quản trị R2.
 
 ## Chạy thử trên máy (cho người code)

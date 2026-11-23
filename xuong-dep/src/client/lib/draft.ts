@@ -32,11 +32,13 @@ export function clearDraft(orderId: string): void {
   } catch { /* ignore */ }
 }
 
-/** Calls `fn` once `ms` have passed without another call. */
+/** Calls `fn` once `ms` have passed without another call. `cancel()` drops a pending call. */
 export function debounce<A extends unknown[]>(fn: (...a: A) => void, ms: number) {
   let t: ReturnType<typeof setTimeout> | undefined;
-  return (...a: A) => {
+  const run = (...a: A) => {
     clearTimeout(t);
     t = setTimeout(() => fn(...a), ms);
   };
+  run.cancel = () => clearTimeout(t);
+  return run;
 }

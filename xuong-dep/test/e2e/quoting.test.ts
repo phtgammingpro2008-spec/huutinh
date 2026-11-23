@@ -99,3 +99,17 @@ test('status buttons move the order forward and cancel asks first', async () => 
   await page.getByRole('button', { name: 'Hủy đơn' }).click();
   await page.locator('.order-detail .badge', { hasText: 'Đã hủy' }).waitFor();
 });
+
+test('changing currency on a priced order asks first and clears the old prices', async () => {
+  const o = await seedSampleOrder(page, { customer: 'Mr Chan', price: 47000, counts: [10] });
+  await page.goto(app.url + `/#/orders/${o.id}/edit`);
+  await page.reload();
+  await page.getByLabel('Loại tiền').waitFor();
+  page.once('dialog', (d) => d.accept());
+  await page.getByLabel('Loại tiền').selectOption('USD');
+  await page.getByRole('button', { name: 'Lưu', exact: true }).click();
+  await page.waitForURL(new RegExp(`#/orders/${o.id}$`));
+  const v = await pageApi(page, 'GET', `/api/orders/${o.id}`);
+  expect(v.currency).toBe('USD');
+  expect(v.items[0].lines[0].unitPrice).toBeNull();
+});

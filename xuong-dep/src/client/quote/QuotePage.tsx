@@ -30,7 +30,7 @@ function Item({ item, index, token, lang, q }: { item: SnapshotItem; index: numb
   return (
     <article className="card" style={{ marginTop: 12 }}>
       <div className="item">
-        <img src={`/q/${token}/img/${index}`} alt={`${t(lang, 'design')} ${item.tagNo}`} loading="lazy" />
+        <img src={`/q/${token}/img/${q.snapshot.version}/${index}`} alt={`${t(lang, 'design')} ${item.tagNo}`} loading="lazy" />
         <div>
           <h3 style={{ marginTop: 0 }}>{t(lang, 'design')} {item.tagNo}</h3>
           {mats.map(([k, v]) => <div key={k} className="small">{t(lang, k)}: <strong>{nameIn(v, lang)}</strong></div>)}

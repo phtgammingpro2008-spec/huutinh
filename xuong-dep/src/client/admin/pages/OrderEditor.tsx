@@ -66,6 +66,7 @@ export function OrderEditor({ orderId, designId, libraryOnly }: { orderId?: stri
   const [error, setError] = useState('');
   const uploads = useRef(new Map<string, Promise<string>>());
   const touched = useRef(false);
+  const saved = useRef(false); // once saved, nothing may write the draft again
 
   // Load the order (edit) or look for an unfinished new order (draft).
   useEffect(() => {
@@ -95,8 +96,17 @@ export function OrderEditor({ orderId, designId, libraryOnly }: { orderId?: stri
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [designId, settings]);
 
-  const persist = useMemo(() => debounce((st: State) => saveDraft(st.id, toDraft(st), st.isNew), 500), []);
-  useEffect(() => { if (s && touched.current) persist(s); }, [s, persist]);
+  const persist = useMemo(() => debounce((st: State) => { if (!saved.current) saveDraft(st.id, toDraft(st), st.isNew); }, 500), []);
+  useEffect(() => { if (s && touched.current && !saved.current) persist(s); }, [s, persist]);
+  const latest = useRef<State | null>(null);
+  latest.current = s;
+  // Leaving the editor: drop the pending autosave; an unsaved order is written right away instead.
+  useEffect(() => () => {
+    persist.cancel();
+    const st = latest.current;
+    if (st && touched.current && !saved.current) saveDraft(st.id, toDraft(st), st.isNew);
+  }, [persist]);
+  const finishSaved = (id: string) => { saved.current = true; persist.cancel(); clearDraft(id); };
 
   const update = (fn: (st: State) => State) => { touched.current = true; setS((st) => (st ? fn(st) : st)); };
 
@@ -178,14 +188,14 @@ export function OrderEditor({ orderId, designId, libraryOnly }: { orderId?: stri
       update((st) => ({ ...st, items, cropSigs })); // keep uploaded crops if the order save fails
       if (s.libraryOnly) {
         await api('POST', '/api/library', { images, items });
-        clearDraft(s.id);
+        finishSaved(s.id);
         go('/library');
       } else {
         await api('PUT', `/api/orders/${s.id}`, {
           customerId: s.customer!.id, currency: s.currency, neededBy: s.neededBy || null, note: s.note,
           allowPublic: s.allowPublic, images, items,
         });
-        clearDraft(s.id);
+        finishSaved(s.id);
         go(`/orders/${s.id}`);
       }
     } catch (e) {
@@ -260,7 +270,13 @@ export function OrderEditor({ orderId, designId, libraryOnly }: { orderId?: stri
           <div className="row">
             <div className="grow">
               <label htmlFor="ord-cur">Loại tiền</label>
-              <select id="ord-cur" value={s.currency} disabled={locked} onChange={(e) => update((st) => ({ ...st, currency: e.target.value as Currency }))}>
+              <select id="ord-cur" value={s.currency} disabled={locked} onChange={(e) => {
+                const currency = e.target.value as Currency;
+                const priced = s.items.some((i) => i.lines.some((l) => l.unitPrice != null));
+                // a price typed in đồng means nothing in cents: changing currency clears the old prices
+                if (priced && !window.confirm('Đổi loại tiền sẽ xóa các đơn giá đã nhập để báo giá lại. Tiếp tục?')) return;
+                update((st) => ({ ...st, currency, items: st.items.map((i) => ({ ...i, lines: i.lines.map((l) => ({ ...l, unitPrice: null })) })) }));
+              }}>
                 <option value="VND">VND (₫)</option>
                 <option value="USD">USD ($)</option>
               </select>

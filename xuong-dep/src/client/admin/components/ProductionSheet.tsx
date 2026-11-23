@@ -3,7 +3,7 @@ import { formatQty } from '../../../shared/money';
 import { printable } from '../../../shared/status';
 import { itemQty, lineQty, lineSizes } from '../../../shared/totals';
 import type { Item } from '../../../shared/types';
-import { paginateItems, renderSheetPngs, type SheetData, type SheetItem } from '../../lib/sheet-png';
+import { paginateByHeight, renderSheetPngs, type SheetData, type SheetItem } from '../../lib/sheet-png';
 import { api, imgUrl } from '../api';
 import { lineLabel, useSettings, type Material, type Settings } from '../catalog';
 import type { OrderView } from '../pages/OrderDetail';
@@ -52,7 +52,7 @@ export function ProductionSheet({ id }: { id: string }) {
   }
 
   const data = toSheet(o, mats, settings);
-  const pages = paginateItems(data.items);
+  const pages = paginateByHeight(data.items);
   const files = () => pngs.map((p, i) => new File([p.blob], `${o.code}-trang-${i + 1}.png`, { type: 'image/png' }));
 
   async function makePngs() {

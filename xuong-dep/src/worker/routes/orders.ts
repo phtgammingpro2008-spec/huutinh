@@ -10,7 +10,7 @@ import {
   dashboard, getOrderRow, itemsByOrder, listOrders, loadOrder, nextOrderCode, qtyPriceSignature,
   replaceContentStmts, totalsOf,
 } from '../repo/orders';
-import { createQuoteVersion } from '../repo/quotes';
+import { buildSnapshot, quoteVersionStmts } from '../repo/quotes';
 import type { Router } from '../router';
 
 export const LOCKED_MSG = 'Đơn đang sản xuất, không sửa số lượng/giá được';
@@ -59,6 +59,9 @@ export async function saveOrder(env: Env, o: OrderInput): Promise<Response> {
   const oldItems = (await itemsByOrder(env, [o.id])).get(o.id) ?? [];
   const changed = qtyPriceSignature(old.currency, oldItems) !== qtyPriceSignature(o.currency, o.items);
   if (changed && qtyPriceLocked(old.status)) return err(409, lockedMessage(old.status));
+  if (o.currency !== old.currency && o.items.some((i) => i.lines.some((l) => l.unitPrice != null))) {
+    return err(400, 'Đổi loại tiền thì phải xóa các đơn giá cũ trước');
+  }
 
   let status = old.status;
   let requote = false;
@@ -67,14 +70,18 @@ export async function saveOrder(env: Env, o: OrderInput): Promise<Response> {
     if (totalsOf(o.items).missingPrice) status = 'cho_bao_gia';
     else { status = 'da_bao_gia'; requote = true; }
   }
+  // The new quote version is written in the same transaction as the new numbers: never one without the other.
+  const requoteStmts = requote
+    ? quoteVersionStmts(env, o.id, await buildSnapshot(env, { ...o, totals: totalsOf(o.items) }, old.quote_version + 1), at)
+    : [];
   await env.DB.batch([
     env.DB.prepare(
       `UPDATE orders SET customer_id = ?, currency = ?, needed_by = ?, note = ?, allow_public = ?, updated_at = ?,
          status = ?, accepted_at = CASE WHEN ? THEN NULL ELSE accepted_at END WHERE id = ?`,
     ).bind(o.customerId, o.currency, o.neededBy, o.note, o.allowPublic ? 1 : 0, at, status, status !== old.status ? 1 : 0, o.id),
     ...replaceContentStmts(env, o, at),
+    ...requoteStmts,
   ]);
-  if (requote) await createQuoteVersion(env, o.id);
   return json(await loadOrder(env, o.id));
 }
 

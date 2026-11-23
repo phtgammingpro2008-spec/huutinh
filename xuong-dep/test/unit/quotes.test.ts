@@ -179,10 +179,10 @@ test('public crop image served without auth for valid token, 404 for wrong token
   const o = sampleOrder(cust.id, { items: [item(1, { cropKey: up.key, lines: [line({ qtyEach: 1, unitPrice: 1 })] })] });
   await saveOrder(env, c, o);
   const token = (await send(o)).body.url.split('/q/')[1];
-  const img = await call(env, 'GET', `/q/${token}/img/0`);
+  const img = await call(env, 'GET', `/q/${token}/img/1/0`);
   expect(img.status).toBe(200);
   expect(new Uint8Array(await img.raw.arrayBuffer())).toEqual(bytes);
   expect(img.headers.get('x-robots-tag')).toBe('noindex');
-  expect((await call(env, 'GET', `/q/sai-token-123456789012345678901234567890/img/0`)).status).toBe(404);
-  expect((await call(env, 'GET', `/q/${token}/img/5`)).status).toBe(404);
+  expect((await call(env, 'GET', `/q/sai-token-123456789012345678901234567890/img/1/0`)).status).toBe(404);
+  expect((await call(env, 'GET', `/q/${token}/img/1/5`)).status).toBe(404);
 });

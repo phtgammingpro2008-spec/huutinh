@@ -185,3 +185,19 @@ test('save without a customer shows a clear message', async () => {
   await page.getByRole('button', { name: 'Lưu', exact: true }).click();
   await page.getByText('Chọn khách trước khi lưu').waitFor();
 });
+
+test('a saved order leaves no draft behind, even after the autosave delay', async () => {
+  await openNew();
+  await newCustomer('chị Đào');
+  await addPhoto();
+  await page.getByRole('button', { name: 'Cả ảnh là 1 mẫu' }).click();
+  await item(1).getByLabel('Số đôi mỗi size – Nam').fill('3');
+  await page.getByRole('button', { name: 'Lưu', exact: true }).click();
+  await page.waitForURL(/#\/orders\/[0-9a-f-]{36}$/);
+  await page.waitForTimeout(1300);
+  expect(await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('draft:')))).toEqual([]);
+  await page.goto(app.url + '/#/orders/new');
+  await page.getByRole('heading', { name: 'Đơn mới' }).waitFor();
+  await page.waitForTimeout(300);
+  expect(await page.getByText('Tiếp tục đơn đang nhập dở?').count()).toBe(0);
+});

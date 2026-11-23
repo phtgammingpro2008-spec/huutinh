@@ -1,7 +1,8 @@
 import { addDays, localDate, localDayStartIso } from '../../shared/dates';
-import { rank } from '../../shared/status';
+import { STATUSES, rank } from '../../shared/status';
 import { lineQty, orderAmount, orderQty } from '../../shared/totals';
 import type { Currency, Item, OrderInput, OrderStatus } from '../../shared/types';
+import { foldSearch } from '../../shared/search';
 import type { Env, Stmt } from '../env';
 import { now } from '../http';
 import { getCustomer, type Customer } from './customers';
@@ -130,13 +131,13 @@ export function replaceContentStmts(env: Env, o: OrderInput, at: string): Stmt[]
 export type OrderFilter = { status?: string; customerId?: string; q?: string; from?: string; to?: string };
 
 export async function listOrders(env: Env, f: OrderFilter = {}): Promise<OrderSummary[]> {
-  const q = f.q?.trim().toLowerCase() ?? '';
+  const q = foldSearch(f.q ?? '');
   const fromIso = f.from ? localDayStartIso(f.from) : null;
   const toIso = f.to ? localDayStartIso(addDays(f.to, 1)) : null;
   const rows = (await env.DB.prepare(
     `SELECT o.*, c.name AS customer_name FROM orders o JOIN customers c ON c.id = o.customer_id
      WHERE (?1 IS NULL OR o.status = ?1) AND (?2 IS NULL OR o.customer_id = ?2)
-       AND (?3 = '' OR lower(o.code) LIKE '%' || ?3 || '%' OR lower(c.name) LIKE '%' || ?3 || '%')
+       AND (?3 = '' OR lower(o.code) LIKE '%' || ?3 || '%' OR c.name_search LIKE '%' || ?3 || '%')
        AND (?4 IS NULL OR o.created_at >= ?4) AND (?5 IS NULL OR o.created_at < ?5)
      ORDER BY o.created_at DESC, o.code DESC LIMIT 500`,
   ).bind(f.status || null, f.customerId || null, q, fromIso, toIso).all<OrderRow & { customer_name: string }>()).results;
@@ -165,18 +166,32 @@ export async function customerOrders(env: Env, customerId: string): Promise<Orde
   return listOrders(env, { customerId });
 }
 
+/** Pair count of one item_lines row `l`, in SQL (same rules as shared/totals lineQty). */
+const LINE_QTY_SQL = `CASE l.mode WHEN 'total' THEN l.qty_each WHEN 'even' THEN l.qty_each * (l.size_to - l.size_from + 1)
+  ELSE (SELECT COALESCE(SUM(j.value), 0) FROM json_each(l.per_size) j WHERE CAST(j.key AS INTEGER) BETWEEN l.size_from AND l.size_to) END`;
+
+async function summariesWhere(env: Env, where: string, binds: unknown[]): Promise<OrderSummary[]> {
+  const rows = (await env.DB.prepare(
+    `SELECT o.*, c.name AS customer_name FROM orders o JOIN customers c ON c.id = o.customer_id WHERE ${where} ORDER BY o.created_at DESC`,
+  ).bind(...binds).all<OrderRow & { customer_name: string }>()).results;
+  return summarize(env, rows);
+}
+
+/** Each bucket is its own query, so old orders never fall out of view however many orders exist. */
 export async function dashboard(env: Env) {
-  const all = await listOrders(env);
   const t = now(env);
   const today = localDate(t);
   const weekAgo = new Date(t.getTime() - 7 * 86400_000).toISOString();
-  const soon = addDays(today, 7);
-  const open = (s: OrderStatus) => !['da_giao', 'hoan_tat', 'da_huy'].includes(s);
+  const accepted = STATUSES.filter((s) => s !== 'da_huy' && rank(s) >= rank('khach_dong_y'));
+  const inList = (xs: string[]) => xs.map((s) => `'${s}'`).join(', '); // fixed status names, not user input
   return {
-    waitingQuote: all.filter((o) => o.status === 'cho_bao_gia'),
-    justAccepted: all.filter((o) => o.status === 'khach_dong_y' && (o.acceptedAt ?? '') >= weekAgo),
-    dueSoon: all.filter((o) => o.neededBy && o.neededBy <= soon && open(o.status))
+    waitingQuote: await summariesWhere(env, "o.status = 'cho_bao_gia'", []),
+    justAccepted: await summariesWhere(env, "o.status = 'khach_dong_y' AND o.accepted_at >= ?", [weekAgo]),
+    dueSoon: (await summariesWhere(env, "o.needed_by IS NOT NULL AND o.needed_by <= ? AND o.status NOT IN ('da_giao', 'hoan_tat', 'da_huy')", [addDays(today, 7)]))
       .sort((a, b) => (a.neededBy! < b.neededBy! ? -1 : 1)),
-    unpaid: all.filter((o) => o.status !== 'da_huy' && rank(o.status) >= rank('khach_dong_y') && o.due > 0),
+    unpaid: (await summariesWhere(env, `o.status IN (${inList(accepted)})
+      AND (SELECT COALESCE(SUM(l.unit_price * ${LINE_QTY_SQL}), 0) FROM item_lines l JOIN order_items i ON i.id = l.item_id
+           WHERE i.order_id = o.id AND l.unit_price IS NOT NULL)
+        > (SELECT COALESCE(SUM(p.amount), 0) FROM payments p WHERE p.order_id = o.id)`, [])).filter((o) => o.due > 0),
   };
 }

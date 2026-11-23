@@ -1,4 +1,5 @@
 import type { Box, Item, OrderImage } from '../../shared/types';
+import { foldSearch } from '../../shared/search';
 import type { Env, Stmt } from '../env';
 import { parseJson } from './rows';
 
@@ -34,10 +35,10 @@ export async function getDesignsByIds(env: Env, ids: string[]): Promise<Map<stri
 export type DesignFilter = { label?: string; soleId?: string; strapId?: string; styleId?: string; q?: string };
 
 export async function listDesigns(env: Env, f: DesignFilter): Promise<Design[]> {
-  const q = f.q?.trim().toLowerCase() ?? '';
+  const q = foldSearch(f.q ?? '');
   const r = await env.DB.prepare(
     `${SELECT} WHERE (?1 IS NULL OR d.label = ?1) AND (?2 IS NULL OR d.sole_id = ?2) AND (?3 IS NULL OR d.strap_id = ?3)
-       AND (?4 IS NULL OR d.style_id = ?4) AND (?5 = '' OR lower(d.note) LIKE '%' || ?5 || '%')
+       AND (?4 IS NULL OR d.style_id = ?4) AND (?5 = '' OR d.note_search LIKE '%' || ?5 || '%')
      ORDER BY d.created_at DESC, d.id LIMIT 1000`,
   ).bind(f.label || null, f.soleId || null, f.strapId || null, f.styleId || null, q).all<Row>();
   return r.results.map(map);
@@ -45,21 +46,21 @@ export async function listDesigns(env: Env, f: DesignFilter): Promise<Design[]> 
 
 export function updateDesignStmt(env: Env, d: Design): Stmt {
   return env.DB.prepare(
-    'UPDATE designs SET label = ?, note = ?, allow_public = ?, sole_id = ?, strap_id = ?, style_id = ? WHERE id = ?',
-  ).bind(d.label, d.note, d.allowPublic ? 1 : 0, d.soleId, d.strapId, d.styleId, d.id);
+    'UPDATE designs SET label = ?, note = ?, note_search = ?, allow_public = ?, sole_id = ?, strap_id = ?, style_id = ? WHERE id = ?',
+  ).bind(d.label, d.note, foldSearch(d.note), d.allowPublic ? 1 : 0, d.soleId, d.strapId, d.styleId, d.id);
 }
 
 /** One statement for any number of designs (D1 caps bound parameters at 100). Existing ids are left as they are. */
 export function insertDesignsStmt(env: Env, items: Item[], allowPublic: boolean, createdAt: string): Stmt {
   const rows = items.map((i) => ({
     id: i.designId, cropKey: i.cropKey, imageId: i.imageId, crop: i.crop, soleId: i.soleId, strapId: i.strapId,
-    styleId: i.styleId, note: i.colorNote,
+    styleId: i.styleId, note: i.colorNote, noteSearch: foldSearch(i.colorNote),
   }));
   return env.DB.prepare(
-    `INSERT OR IGNORE INTO designs (id, crop_key, image_id, crop, label, sole_id, strap_id, style_id, note, allow_public, created_at)
+    `INSERT OR IGNORE INTO designs (id, crop_key, image_id, crop, label, sole_id, strap_id, style_id, note, note_search, allow_public, created_at)
      SELECT json_extract(value, '$.id'), json_extract(value, '$.cropKey'), json_extract(value, '$.imageId'),
             json_extract(value, '$.crop'), 'dat_rieng', json_extract(value, '$.soleId'), json_extract(value, '$.strapId'),
-            json_extract(value, '$.styleId'), json_extract(value, '$.note'), ?, ?
+            json_extract(value, '$.styleId'), json_extract(value, '$.note'), json_extract(value, '$.noteSearch'), ?, ?
      FROM json_each(?)`,
   ).bind(allowPublic ? 1 : 0, createdAt, JSON.stringify(rows));
 }

@@ -8,6 +8,34 @@ export function paginateItems<T>(items: T[], perPage = PER_PAGE): T[][] {
   return pages;
 }
 
+// Print layout (A4, 12 mm margins → 273 mm usable). Heights in mm at 16 pt body text.
+const ROW = 6.8;           // one 16 pt text line
+const ITEM_MIN = 76;       // photo box 72 mm + padding
+const PAGE_BODY = 236;     // 273 − page header (≈ 27) − room for the order total footer (≈ 10)
+
+/** Conservative height estimate of one design on the printed sheet. */
+export function estimateItemMm(it: SheetItem): number {
+  const noteRows = it.note ? Math.ceil(it.note.length / 26) : 0;
+  const lines = it.lines.reduce((s, l) => s + ROW + (l.total ? ROW : 2 * 8 * Math.ceil(l.sizes.length / 8) + 2), 0);
+  const text = 8 + ROW * it.materials.length + ROW * noteRows + lines + ROW + 6;
+  return Math.max(ITEM_MIN, text + 4);
+}
+
+/** Fills each printed page with as many designs as fit; a design taller than a page gets a page of its own. */
+export function paginateByHeight(items: SheetItem[], body = PAGE_BODY): SheetItem[][] {
+  const pages: SheetItem[][] = [];
+  let cur: SheetItem[] = [];
+  let used = 0;
+  for (const it of items) {
+    const h = estimateItemMm(it);
+    if (cur.length && used + h > body) { pages.push(cur); cur = []; used = 0; }
+    cur.push(it);
+    used += h;
+  }
+  if (cur.length) pages.push(cur);
+  return pages;
+}
+
 export type SheetLine = { label: string; range: string; total: boolean; sizes: [string, number][]; qty: number };
 export type SheetItem = { tagNo: number; cropUrl: string; materials: string[]; note: string; lines: SheetLine[]; qty: number };
 export type SheetData = { code: string; customer: string; neededBy: string; totalQty: number; items: SheetItem[] };

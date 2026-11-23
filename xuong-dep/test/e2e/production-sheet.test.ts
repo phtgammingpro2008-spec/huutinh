@@ -69,3 +69,25 @@ test('print media emulation fits each page within A4', async () => {
   expect(Math.max(...counts)).toBe(3);
   await page.emulateMedia({ media: 'screen' });
 });
+
+test('Nam+Nữ per-size items with materials and notes are never clipped in print', async () => {
+  const mk = async (kind: string, nameVi: string) => (await pageApi(page, 'POST', '/api/materials', { kind, nameVi })).id;
+  const o = await seedSampleOrder(page, {
+    customer: 'chị Lan', price: 47000, twoLines: true, counts: [30, 20, 10, 12, 14],
+    soleId: await mk('sole', 'VIP 2'), strapId: await mk('strap', '15L'), styleId: await mk('style', 'Kẹp'), note: 'đen, quai bạc, in logo nhỏ',
+  });
+  const sent = await pageApi(page, 'POST', `/api/orders/${o.id}/send-quote`, {});
+  await pageApi(page, 'POST', `/api/public/quote/${sent.url.split('/q/')[1]}/accept`, { version: 1 });
+  await openSheet(o.id);
+  await page.emulateMedia({ media: 'print' });
+  const clipped = await page.$$eval('.sheet-item, .sheet-page', (els) => els.filter((e) => e.scrollHeight > e.clientHeight + 1).length);
+  expect(clipped).toBe(0);
+  const text = await page.locator('.production-sheet').innerText();
+  for (let n = 1; n <= 5; n++) expect(text).toContain(`Mẫu ${n}`);
+  const sheetPages = await page.locator('.sheet-page').count();
+  const pdf = await page.pdf({ format: 'A4', preferCSSPageSize: true });
+  const counts = [...pdf.toString('latin1').matchAll(/\/Type\s*\/Pages[^>]*?\/Count\s+(\d+)|\/Count\s+(\d+)[^>]*?\/Type\s*\/Pages/g)]
+    .map((m) => Number(m[1] ?? m[2]));
+  expect(Math.max(...counts)).toBe(sheetPages);
+  await page.emulateMedia({ media: 'screen' });
+});

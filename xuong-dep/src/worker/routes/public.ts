@@ -1,5 +1,5 @@
 import { t } from '../../shared/i18n';
-import type { PublicQuote } from '../../shared/snapshot';
+import type { PublicQuote, QuoteSnapshot } from '../../shared/snapshot';
 import { LANGS, type Lang } from '../../shared/types';
 import type { Env } from '../env';
 import { err, json, nowIso } from '../http';
@@ -53,10 +53,15 @@ export function publicRoutes(r: Router) {
     return json({ ok: true, version: q.version, acceptedAt: at });
   });
 
-  r.on('GET', '/q/:token/img/:index', async (_req, env, p) => {
+  // Addressed by quote version: a version's photos never change, so they can be cached for good.
+  r.on('GET', '/q/:token/img/:version/:index', async (_req, env, p) => {
+    if (!/^\d+$/.test(p.version) || !/^\d+$/.test(p.index)) return err(404, 'Không tìm thấy ảnh');
     const f = await byToken(env, p.token);
-    const item = f?.q.data.items[Number(p.index)];
-    if (!f || !/^\d+$/.test(p.index) || !item?.cropKey) return err(404, 'Không tìm thấy ảnh');
-    return serveImage(env, item.cropKey, 'private, max-age=86400');
+    if (!f) return err(404, 'Không tìm thấy ảnh');
+    const row = await env.DB.prepare('SELECT snapshot FROM quotes WHERE order_id = ? AND version = ?')
+      .bind(f.o.id, Number(p.version)).first<{ snapshot: string }>();
+    const item = row ? (JSON.parse(row.snapshot) as QuoteSnapshot).items[Number(p.index)] : undefined;
+    if (!item?.cropKey) return err(404, 'Không tìm thấy ảnh');
+    return serveImage(env, item.cropKey, 'private, max-age=31536000, immutable');
   });
 }

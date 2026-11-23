@@ -52,7 +52,7 @@ test("switching to English shows 'Accept quote' and USD formatted $18.90", async
 test('accept → admin order shows Khách đã đồng ý', async () => {
   const { o, page, ctx } = await quoted({ customer: 'chị Nga', price: 47000 });
   await page.getByText('66.270.000 ₫').first().waitFor();
-  expect(await page.locator('img[src*="/img/0"]').count()).toBe(1);
+  expect(await page.locator('img[src*="/img/1/0"]').count()).toBe(1);
   await page.getByRole('button', { name: 'Đồng ý báo giá' }).click();
   await page.getByText(t('vi', 'accepted')).waitFor();
   expect(await page.getByRole('button', { name: 'Đồng ý báo giá' }).count()).toBe(0);

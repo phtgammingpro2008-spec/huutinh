@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS customers (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
+  name_search TEXT NOT NULL DEFAULT '', -- tên không dấu, chữ thường, để tìm kiếm
   zalo TEXT NOT NULL DEFAULT '',
   messenger TEXT NOT NULL DEFAULT '',
   country TEXT NOT NULL DEFAULT '',
@@ -80,6 +81,7 @@ CREATE TABLE IF NOT EXISTS designs (
   strap_id TEXT,
   style_id TEXT,
   note TEXT NOT NULL DEFAULT '',
+  note_search TEXT NOT NULL DEFAULT '', -- ghi chú không dấu, để tìm kiếm
   allow_public INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL
 );
