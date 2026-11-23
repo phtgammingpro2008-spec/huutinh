@@ -23,7 +23,7 @@ class SqliteStmt implements Stmt {
   }
 }
 
-export function sqliteDb(path: string): Db & { exec(sql: string): void } {
+export function sqliteDb(path: string): Db & { exec(sql: string): void; raw: Database } {
   const db = new Database(path, { create: true });
   db.exec('PRAGMA journal_mode = WAL;');
   db.exec('PRAGMA foreign_keys = ON;'); // D1 enforces foreign keys
@@ -34,5 +34,6 @@ export function sqliteDb(path: string): Db & { exec(sql: string): void } {
       return tx();
     },
     exec: (sql: string) => db.exec(sql),
+    raw: db,
   };
 }

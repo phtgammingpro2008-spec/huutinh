@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { sqliteDb } from './d1-sqlite';
 import { fsBucket } from './r2-fs';
+import { migrate } from './migrate';
 import type { Env } from '../src/worker/env';
 
 const ROOT = join(import.meta.dir, '..');
@@ -15,7 +16,7 @@ const { values } = parseArgs({
 const dataDir = resolve(ROOT, values.data!);
 await mkdir(join(dataDir, 'r2'), { recursive: true });
 const db = sqliteDb(join(dataDir, 'd1.sqlite'));
-db.exec(await Bun.file(join(ROOT, 'schema/schema.sql')).text());
+migrate(db);
 
 const mod = values.dist ? await import(join(ROOT, 'dist/worker.js')) : await import('../src/worker/index');
 const worker = mod.default as { fetch(req: Request, env: Env): Promise<Response> };
