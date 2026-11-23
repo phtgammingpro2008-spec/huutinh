@@ -16,6 +16,8 @@ Anh muốn một hệ thống khép kín: **chào hàng → báo giá → khách
 
 Phần kho, vận chuyển và mã QR trên bao là **giai đoạn sau**. Các quyết định anh đã chốt cho phần đó được ghi ở mục 10 để không mất.
 
+**Thương hiệu:** xưởng đã đăng ký bản quyền thương hiệu **HLUXURY** (anh cho biết 23/11/2026). Web dùng tên **HLUXURY** ở logo, tiêu đề trang, tin nhắn báo giá, email và tên miền (dự kiến). Logo chữ tạm theo phong cách mục 7; nếu xưởng có file logo đã đăng ký thì thay vào. Mẫu do xưởng tự thiết kế mang thương hiệu HLUXURY được công khai thoải mái.
+
 ## 2. Người dùng
 
 - **Anh (admin):** báo giá, quản lý đơn, khách, thư viện, nội dung trang chủ. Dùng iPhone là chính.
@@ -216,4 +218,4 @@ Cách render trang công khai cho Google đọc được; cấu trúc thư mục
 
 ## 12. Câu hỏi còn mở
 
-- **Tên miền để gửi email:** chờ anh quyết (mua tên miền và dùng dịch vụ gửi mail miễn phí, hay cách khác).
+- **Tên miền để gửi email:** anh chọn mua tên miền trên Cloudflare Registrar và dùng Resend (miễn phí 3.000 email/tháng). Chờ anh mua; gợi ý theo thương hiệu: `hluxury.com`, `hluxuryshoes.com`, `hluxurysandals.com`. Phần gửi email làm sau cùng nên không chặn các phần khác.
