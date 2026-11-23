@@ -33,7 +33,8 @@ test('theme toggle switches data-theme and persists after reload', async () => {
 test('theme follows prefers-color-scheme dark by default', async () => {
   const ctx = await (await getBrowser()).newContext({ colorScheme: 'dark', viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
-  await page.goto(app.url + '/quan-ly');
+  // the login page: /quan-ly would move a logged-out visitor on while we measure
+  await page.goto(app.url + '/dang-nhap');
   await page.waitForFunction(() => document.documentElement.dataset.theme === 'dark');
   expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(15, 31, 24)');
   await ctx.close();

@@ -11,6 +11,11 @@ const KEY_RE = /^(img|pub)\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.(jpg|png|webp)$/;
 export async function canViewKey(env: Env, user: SessionUser | null, key: string): Promise<boolean> {
   if (!KEY_RE.test(key)) return false;
   if (key.startsWith('pub/')) return true;
+  // pictures of published products are on the public site, even when the colour reuses a library crop
+  const shown = await env.DB.prepare(
+    'SELECT 1 FROM product_colors pc JOIN products p ON p.id = pc.product_id WHERE pc.image_key = ? AND p.published = 1 AND p.has_brand_logo = 0 LIMIT 1',
+  ).bind(key).first();
+  if (shown) return true;
   if (!user) return false;
   if (user.role === 'admin') return true;
   if (!user.customerId) return false;

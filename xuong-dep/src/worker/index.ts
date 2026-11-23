@@ -14,6 +14,7 @@ import { orderRoutes } from './routes/orders';
 import { paymentRoutes } from './routes/payments';
 import { publicRoutes } from './routes/public';
 import { quoteRoutes } from './routes/quotes';
+import { publicSiteRoutes } from './public/pages';
 
 export const router = new Router();
 quoteRoutes(router);
@@ -28,6 +29,7 @@ contentRoutes(router);
 userRoutes(router);
 orderRoutes(router);
 designRoutes(router);
+publicSiteRoutes(router);
 
 function decodeB64(s: string): Uint8Array {
   const bin = atob(s);
@@ -55,16 +57,8 @@ function serveAsset(req: Request): Response | null {
   return new Response(req.method === 'HEAD' ? null : (body as BodyInit), { headers: { 'content-type': a.type, 'cache-control': cache } });
 }
 
-/** Public home placeholder (Task 9 replaces it with the real site). Sends phase-1 bookmarks (/#/orders/…) to /quan-ly. */
-const LEGACY_REDIRECT = `<script>if(location.hash.indexOf('#/')===0)location.replace('/quan-ly'+location.hash)</script>`;
-function homePlaceholder(): Response {
-  return new Response(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${LEGACY_REDIRECT}<title>HLUXURY</title></head><body><h1>HLUXURY</h1><p><a href="/quan-ly">Quản lý</a></p></body></html>`,
-    { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
-}
-
 async function route(req: Request, env: Env): Promise<Response> {
   try {
-    if (req.method === 'GET' && new URL(req.url).pathname === '/') return homePlaceholder();
     const res = await router.handle(req, env, {});
     if (res) return res;
     const asset = serveAsset(req);
@@ -82,7 +76,9 @@ async function route(req: Request, env: Env): Promise<Response> {
 
 function secure(res: Response): Response {
   const out = new Response(res.body, res);
-  out.headers.set('X-Robots-Tag', 'noindex');
+  // only the public site pages (marked by src/worker/public) may be indexed; everything else stays out of search
+  if (out.headers.has('x-indexable')) out.headers.delete('x-indexable');
+  else out.headers.set('X-Robots-Tag', 'noindex');
   out.headers.set('X-Content-Type-Options', 'nosniff');
   out.headers.set('Referrer-Policy', 'no-referrer'); // quote links must not leak through Referer
   out.headers.set('X-Frame-Options', 'DENY');
