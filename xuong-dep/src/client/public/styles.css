@@ -555,3 +555,9 @@ body.modal-open { overflow: hidden; }
 .color-row { background: var(--surface-2); border: 0; }
 fieldset.card { margin: 0; }
 fieldset.card legend { font-weight: 700; padding: 0 4px; }
+.line-setting { margin-bottom: 10px; }
+.line-setting .size-box { width: 64px; text-align: center; }
+.token-help { gap: 6px; margin: 4px 0 10px; font-size: .85rem; color: var(--ink-2); }
+.token-help span { background: var(--surface-2); border-radius: 8px; padding: 4px 8px; }
+.token-help code { font-weight: 700; color: var(--ink); }
+.lang-tag-sm { width: 28px; min-height: 22px; font-size: .65rem; }

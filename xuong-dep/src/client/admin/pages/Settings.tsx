@@ -100,33 +100,44 @@ export function Settings() {
       {s && (
         <>
           <h2>Dải size mặc định</h2>
+          <p className="small muted" style={{ marginTop: -4 }}>Các dòng size để chọn khi nhập đơn và khi khách đặt hàng. Tên tiếng Anh và Khmer hiện cho khách nước ngoài.</p>
           {s.lines.map((l, i) => (
-            <div key={i} className="card" style={{ marginBottom: 8, padding: 10 }}>
-              <div className="row wrap">
-                <input aria-label={`Tên dòng ${i + 1}`} className="grow" value={l.label.vi} onChange={(e) => setLine(i, { ...l, label: { ...l.label, vi: e.target.value } })} />
-                <input aria-label={`Size từ – ${l.label.vi}`} inputMode="numeric" style={{ width: 64 }} value={String(l.sizeFrom)} onChange={(e) => setLine(i, { ...l, sizeFrom: parseInt(e.target.value, 10) || 0 })} />
-                <span>–</span>
-                <input aria-label={`Size đến – ${l.label.vi}`} inputMode="numeric" style={{ width: 64 }} value={String(l.sizeTo)} onChange={(e) => setLine(i, { ...l, sizeTo: parseInt(e.target.value, 10) || 0 })} />
+            <div key={l.key} className="card line-setting">
+              <div className="row">
+                <strong className="grow">{l.label.vi || `Dòng ${i + 1}`}</strong>
+                <span className="small muted">Size</span>
+                <input aria-label={`Size từ – ${l.label.vi}`} inputMode="numeric" className="num size-box" value={String(l.sizeFrom)} onChange={(e) => setLine(i, { ...l, sizeFrom: parseInt(e.target.value, 10) || 0 })} />
+                <span className="small muted">đến</span>
+                <input aria-label={`Size đến – ${l.label.vi}`} inputMode="numeric" className="num size-box" value={String(l.sizeTo)} onChange={(e) => setLine(i, { ...l, sizeTo: parseInt(e.target.value, 10) || 0 })} />
               </div>
-              <div className="row" style={{ marginTop: 6 }}>
-                <input aria-label={`Tên tiếng Anh – ${l.label.vi}`} placeholder="English" value={l.label.en} onChange={(e) => setLine(i, { ...l, label: { ...l.label, en: e.target.value } })} />
-                <input aria-label={`Tên tiếng Khmer – ${l.label.vi}`} placeholder="ខ្មែរ" value={l.label.km} onChange={(e) => setLine(i, { ...l, label: { ...l.label, km: e.target.value } })} />
-              </div>
+              {(['vi', 'en', 'km'] as Lang[]).map((lang) => (
+                <div key={lang} className="names3-row">
+                  <span className="lang-tag" aria-hidden="true">{lang.toUpperCase()}</span>
+                  <input lang={lang} aria-label={lang === 'vi' ? `Tên dòng ${i + 1}` : `Tên ${lang === 'en' ? 'tiếng Anh' : 'tiếng Khmer'} – ${l.label.vi}`}
+                    placeholder={lang === 'vi' ? 'Tên dòng, ví dụ Nam' : 'trống = dùng tiếng Việt'} value={l.label[lang]}
+                    onChange={(e) => setLine(i, { ...l, label: { ...l.label, [lang]: e.target.value } })} />
+                </div>
+              ))}
             </div>
           ))}
           <button type="button" className="btn-sm" onClick={() => setS({ ...s, lines: [...s.lines, { key: `dong_${Date.now().toString(36)}`, label: { vi: 'Dòng mới', en: '', km: '' }, sizeFrom: 35, sizeTo: 40 }] })}>+ Thêm dòng size</button>
 
           <h2>Tin nhắn gửi báo giá</h2>
-          <p className="small muted">Dùng {'{code}'} cho mã đơn, {'{total}'} cho tổng tiền, {'{url}'} cho đường link (bắt buộc).</p>
-          {LANGS.map((lang) => (
-            <div key={lang} className="field">
-              <label htmlFor={`qm-${lang}`}>{LANG_NAME[lang]}</label>
-              <textarea id={`qm-${lang}`} aria-label={`Tin nhắn báo giá – ${LANG_NAME[lang]}`} value={s.quoteMessage[lang]}
-                onChange={(e) => { setMsg(''); setS({ ...s, quoteMessage: { ...s.quoteMessage, [lang]: e.target.value } }); }} />
-            </div>
-          ))}
+          <p className="small muted" style={{ marginTop: -4 }}>Đoạn tin nhắn có sẵn khi anh bấm "Gửi báo giá", để chép gửi khách qua Zalo. Máy tự điền:</p>
+          <div className="row wrap token-help">
+            <span><code>{'{code}'}</code> mã đơn</span><span><code>{'{total}'}</code> tổng tiền</span><span><code>{'{url}'}</code> link báo giá (bắt buộc)</span>
+          </div>
+          <div className="card stack">
+            {LANGS.map((lang) => (
+              <div key={lang}>
+                <label htmlFor={`qm-${lang}`} className="row" style={{ gap: 8 }}><span className="lang-tag lang-tag-sm" aria-hidden="true">{lang.toUpperCase()}</span>{LANG_NAME[lang]}</label>
+                <textarea id={`qm-${lang}`} lang={lang} aria-label={`Tin nhắn báo giá – ${LANG_NAME[lang]}`} value={s.quoteMessage[lang]}
+                  onChange={(e) => { setMsg(''); setS({ ...s, quoteMessage: { ...s.quoteMessage, [lang]: e.target.value } }); }} />
+              </div>
+            ))}
+          </div>
           {error && <p className="error">{error}</p>}
-          <button type="button" className="btn-primary btn-block" onClick={saveSettings}>Lưu cài đặt</button>
+          <button type="button" className="btn-primary btn-block" style={{ marginTop: 12 }} onClick={saveSettings}>Lưu cài đặt</button>
           {msg && <p className="success">{msg}</p>}
         </>
       )}
