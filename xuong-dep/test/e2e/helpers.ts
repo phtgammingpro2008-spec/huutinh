@@ -17,6 +17,8 @@ export type App = { url: string; dataDir: string; stop(): Promise<void> };
 
 /** Starts the dev server on a free port with a fresh data dir. */
 export async function startApp(opts: { dist?: boolean } = {}): Promise<App> {
+  // E2E_BASE_URL points the tests at an already running server (wrangler dev, or a fresh deployment).
+  if (process.env.E2E_BASE_URL) return { url: process.env.E2E_BASE_URL.replace(/\/$/, ''), dataDir: '', stop: async () => {} };
   buildOnce();
   const dataDir = await mkdtemp(join(tmpdir(), 'xuong-dep-e2e-'));
   const args = ['bun', 'dev/server.ts', '--port', '0', '--data', dataDir];

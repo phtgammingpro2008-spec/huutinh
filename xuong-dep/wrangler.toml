@@ -1,0 +1,19 @@
+# Cấu hình Cloudflare Worker cho Xưởng dép.
+# Trước khi `wrangler deploy` lần đầu: tạo D1 và R2 (xem docs/TRIEN-KHAI.md) rồi dán database_id vào dưới.
+name = "xuong-dep"
+main = "dist/worker.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "xuong-dep"
+database_id = "00000000-0000-0000-0000-000000000000" # thay bằng id thật sau khi tạo D1
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "xuong-dep-anh"
+
+# Địa chỉ web dùng trong link báo giá. Bỏ trống thì lấy theo địa chỉ đang mở.
+# [vars]
+# APP_URL = "https://xuong-dep.ten-cua-anh.workers.dev"
