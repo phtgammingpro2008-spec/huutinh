@@ -8,7 +8,8 @@
     "e2e": "bun test test/e2e --timeout 60000",
     "build": "bun scripts/build.ts",
     "dev": "bun scripts/build.ts && bun dev/server.ts",
-    "deploy": "bun scripts/build.ts && wrangler deploy"
+    "deploy": "bun scripts/build.ts && wrangler deploy",
+    "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
     "react": "19",

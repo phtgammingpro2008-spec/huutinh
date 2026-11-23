@@ -2,9 +2,13 @@ import type { Env } from './env';
 import { HttpError, err } from './http';
 import { Router } from './router';
 import { authRoutes } from './routes/auth';
+import { catalogRoutes } from './routes/catalog';
+import { imageRoutes } from './routes/images';
 
 const router = new Router();
 authRoutes(router);
+catalogRoutes(router);
+imageRoutes(router);
 
 function withNoindex(res: Response): Response {
   const out = new Response(res.body, res);
