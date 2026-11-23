@@ -19,3 +19,9 @@ test('parseMoney abc → null', () => {
   expect(parseMoney('', 'USD')).toBeNull();
   expect(parseMoney('-5', 'VND')).toBeNull();
 });
+test('formatQty groups thousands with dots', async () => {
+  const { formatQty } = await import('../../src/shared/money');
+  expect(formatQty(1410)).toBe('1.410');
+  expect(formatQty(60)).toBe('60');
+  expect(formatQty(1234567)).toBe('1.234.567');
+});

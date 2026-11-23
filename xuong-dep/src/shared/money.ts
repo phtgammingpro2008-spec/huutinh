@@ -30,3 +30,6 @@ export function parseMoney(input: string, c: Currency): number | null {
   if (!/^\d{1,3}(,\d{3})*(\.\d{0,2})?$|^\d+(\.\d{0,2})?$/.test(s)) return null;
   return Math.round(parseFloat(s.replace(/,/g, '')) * 100);
 }
+
+/** Pair counts: 1410 → "1.410". */
+export const formatQty = (n: number) => group(String(Math.round(n)), '.');

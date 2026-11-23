@@ -35,7 +35,8 @@ function Placeholder({ title }: { title: string }) {
 function Screen({ route }: { route: Route }): ReactNode {
   const [a, b] = route.parts;
   if (!a) return <Placeholder title="Trang chủ" />;
-  if (a === 'orders' && b === 'new') return <OrderEditor key={route.path} />;
+  if (a === 'orders' && b === 'new') return <OrderEditor key={route.path + route.query} designId={route.query.get('design')} />;
+  if (a === 'orders' && b && route.parts[2] === 'edit') return <OrderEditor key={route.path} orderId={b} />;
   if (a === 'orders') return <Placeholder title="Đơn hàng" />;
   if (a === 'library') return <Placeholder title="Thư viện mẫu" />;
   if (a === 'customers') return <Placeholder title="Khách hàng" />;
