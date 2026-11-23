@@ -1,0 +1,26 @@
+{
+  "name": "xuong-dep",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test test/unit",
+    "e2e": "bun test test/e2e --timeout 60000",
+    "build": "bun scripts/build.ts",
+    "dev": "bun scripts/build.ts && bun dev/server.ts",
+    "deploy": "bun scripts/build.ts && wrangler deploy"
+  },
+  "dependencies": {
+    "react": "19",
+    "react-dom": "19"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.5",
+    "@types/react": "19",
+    "@types/react-dom": "19",
+    "playwright": "1.63.0",
+    "sharp": "^0.35.5",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.166.0"
+  }
+}

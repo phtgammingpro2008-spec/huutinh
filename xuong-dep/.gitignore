@@ -1,0 +1,6 @@
+node_modules
+dist
+dev-data
+src/worker/assets.gen.ts
+.wrangler
+*.zip
