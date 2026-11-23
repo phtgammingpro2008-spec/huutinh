@@ -4,6 +4,7 @@ import { Login, type Me } from './pages/Login';
 import { ProductionSheet } from './components/ProductionSheet';
 import { CustomerDetail, Customers } from './pages/Customers';
 import { Home } from './pages/Home';
+import { DesignDetail, Library } from './pages/Library';
 import { OrderDetail } from './pages/OrderDetail';
 import { OrderEditor } from './pages/OrderEditor';
 import { Orders } from './pages/Orders';
@@ -41,12 +42,13 @@ function Placeholder({ title }: { title: string }) {
 function Screen({ route }: { route: Route }): ReactNode {
   const [a, b] = route.parts;
   if (!a) return <Home />;
-  if (a === 'orders' && b === 'new') return <OrderEditor key={route.path + route.query} designId={route.query.get('design')} />;
+  if (a === 'orders' && b === 'new') return <OrderEditor key={route.path + route.query} designId={route.query.get('design')} libraryOnly={route.query.get('library') === '1'} />;
   if (a === 'orders' && b && route.parts[2] === 'sheet') return <ProductionSheet key={b} id={b} />;
   if (a === 'orders' && b && route.parts[2] === 'edit') return <OrderEditor key={route.path} orderId={b} />;
   if (a === 'orders' && b) return <OrderDetail key={b} id={b} />;
   if (a === 'orders') return <Orders />;
-  if (a === 'library') return <Placeholder title="Thư viện mẫu" />;
+  if (a === 'library' && b) return <DesignDetail key={b} id={b} />;
+  if (a === 'library') return <Library />;
   if (a === 'customers' && b) return <CustomerDetail key={b} id={b} />;
   if (a === 'customers') return <Customers />;
   if (a === 'settings') return <Settings />;

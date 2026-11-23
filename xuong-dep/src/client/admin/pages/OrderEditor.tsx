@@ -55,10 +55,10 @@ function itemFor(prev: Item | undefined, settings: Settings | null, base: Partia
   };
 }
 
-export function OrderEditor({ orderId, designId }: { orderId?: string; designId?: string | null }) {
+export function OrderEditor({ orderId, designId, libraryOnly }: { orderId?: string; designId?: string | null; libraryOnly?: boolean }) {
   const settings = useSettings();
   const [materials, reloadMaterials] = useMaterials();
-  const [s, setS] = useState<State | null>(orderId ? null : emptyState(crypto.randomUUID()));
+  const [s, setS] = useState<State | null>(orderId ? null : { ...emptyState(crypto.randomUUID()), libraryOnly: !!libraryOnly });
   const [offer, setOffer] = useState<State | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [picking, setPicking] = useState(false);
