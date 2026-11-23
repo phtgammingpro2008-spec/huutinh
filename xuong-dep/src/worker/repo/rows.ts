@@ -4,6 +4,7 @@ export type ItemRow = {
   id: string; order_id: string; design_id: string; image_id: string | null; tag_no: number;
   tap_x: number | null; tap_y: number | null; crop: string | null; crop_key: string;
   sole_id: string | null; strap_id: string | null; style_id: string | null; color_note: string; position: number;
+  is_private: number; product_id: string | null; color_id: string | null;
 };
 export type LineRow = {
   id: string; item_id: string; line_key: string; size_from: number; size_to: number; mode: LineMode;
@@ -25,6 +26,7 @@ export const mapItem = (r: ItemRow, lines: Line[]): Item => ({
   id: r.id, designId: r.design_id, imageId: r.image_id, tagNo: r.tag_no, tapX: r.tap_x, tapY: r.tap_y,
   crop: parseJson<Box | null>(r.crop, null), cropKey: r.crop_key, soleId: r.sole_id, strapId: r.strap_id,
   styleId: r.style_id, colorNote: r.color_note, lines,
+  isPrivate: !!r.is_private, productId: r.product_id, colorId: r.color_id,
 });
 
 export const mapImage = (r: ImageRow): OrderImage => ({ id: r.id, key: r.key, width: r.width, height: r.height });

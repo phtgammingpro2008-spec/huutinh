@@ -10,6 +10,7 @@ account_id = "241413186f1bf118da6e5be9745f4036"
 binding = "DB"
 database_name = "xuong-dep"
 database_id = "a3c21e80-1464-4321-b1ad-e170f192e993"
+migrations_dir = "migrations"
 
 [[r2_buckets]]
 binding = "IMAGES"

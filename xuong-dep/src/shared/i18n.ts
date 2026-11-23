@@ -123,10 +123,10 @@ export function t(lang: Lang, key: QuoteKey, vars: Record<string, string | numbe
 
 /** Must stay equal to the seed in schema/schema.sql (checked by a test). */
 export const DEFAULT_QUOTE_MESSAGE: Record<Lang, string> = {
-  vi: 'Xưởng gửi báo giá đơn {code}, tổng {total}. Mời anh/chị xem và bấm Đồng ý tại: {url}',
-  en: 'Here is the quote for order {code}, total {total}. Please review and tap Accept here: {url}',
+  vi: 'HLUXURY gửi báo giá đơn {code}, tổng {total}. Mời anh/chị xem và bấm Đồng ý tại: {url}',
+  en: 'HLUXURY: here is the quote for order {code}, total {total}. Please review and tap Accept here: {url}',
   // TODO-REVIEW-KM
-  km: 'នេះជាតារាងតម្លៃសម្រាប់ការបញ្ជាទិញ {code} សរុប {total}។ សូមពិនិត្យ ហើយចុចយល់ព្រមនៅទីនេះ៖ {url}',
+  km: 'HLUXURY៖ នេះជាតារាងតម្លៃសម្រាប់ការបញ្ជាទិញ {code} សរុប {total}។ សូមពិនិត្យ ហើយចុចយល់ព្រមនៅទីនេះ៖ {url}',
 };
 
 export function fillMessage(template: string, vars: { code: string; url: string; total: string }): string {

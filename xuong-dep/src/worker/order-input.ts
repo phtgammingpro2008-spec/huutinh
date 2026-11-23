@@ -52,6 +52,7 @@ export function parseItems(raw: unknown, opts: { requireLines: boolean }): Item[
       tapX: frac(v.tapX) ? v.tapX : null, tapY: frac(v.tapY) ? v.tapY : null, crop: box(v.crop),
       cropKey: str(v.cropKey, 200), soleId: optId(v.soleId), strapId: optId(v.strapId), styleId: optId(v.styleId),
       colorNote: str(v.colorNote, 1000), lines,
+      isPrivate: v.isPrivate === true, productId: optId(v.productId), colorId: optId(v.colorId),
     } satisfies Item;
   });
 }
@@ -76,6 +77,7 @@ export function parseOrderInput(b: any, orderId: string): OrderInput {
     neededBy,
     note: str(b.note, 4000),
     allowPublic: b.allowPublic === true,
+    deliverNote: b.deliverNote === undefined ? undefined : str(b.deliverNote, 1000), // absent = keep what the order has
     images: parseImages(b.images),
     items: parseItems(b.items, { requireLines: true }),
   };

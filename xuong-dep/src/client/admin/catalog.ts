@@ -11,6 +11,8 @@ export type Customer = {
 export type Design = {
   id: string; cropKey: string; imageId: string | null; imageKey: string | null; label: 'co_dinh' | 'dat_rieng';
   soleId: string | null; strapId: string | null; styleId: string | null; note: string; allowPublic: boolean; createdAt: string;
+  /** Phase 2a: who besides the workshop sees it. */
+  isPrivate?: boolean; hidden?: boolean; hasBrandLogo?: boolean;
 };
 
 export const KIND_LABEL: Record<MaterialKind, string> = { sole: 'Đế', strap: 'Quai', style: 'Kiểu' };

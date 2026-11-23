@@ -1,4 +1,6 @@
+import { ClipboardList, Home as HomeIcon, Images, Plus, Settings as SettingsIcon } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
+import { ThemeToggle } from '../ui/ThemeToggle';
 import { api, AUTH_LOST } from './api';
 import { Login, type Me } from './pages/Login';
 import { ProductionSheet } from './components/ProductionSheet';
@@ -9,16 +11,18 @@ import { OrderDetail } from './pages/OrderDetail';
 import { OrderEditor } from './pages/OrderEditor';
 import { Orders } from './pages/Orders';
 import { Settings } from './pages/Settings';
+import { Content } from './pages/Content';
+import { Users } from './pages/Users';
 import { useRoute, type Route } from './router';
 
 type Auth = { state: 'loading' } | { state: 'out'; needsSetup: boolean } | { state: 'in'; me: Me };
 
 const TABS = [
-  { href: '#/', label: 'Trang chủ', ico: '⌂', match: (r: Route) => r.parts.length === 0 },
-  { href: '#/orders', label: 'Đơn hàng', ico: '☰', match: (r: Route) => r.parts[0] === 'orders' && r.parts[1] !== 'new' },
-  { href: '#/orders/new', label: 'Đơn mới', ico: '+', match: (r: Route) => r.path === '/orders/new', plus: true },
-  { href: '#/library', label: 'Thư viện', ico: '▦', match: (r: Route) => r.parts[0] === 'library' },
-  { href: '#/settings', label: 'Cài đặt', ico: '⚙', match: (r: Route) => r.parts[0] === 'settings' || r.parts[0] === 'customers' },
+  { href: '#/', label: 'Trang chủ', ico: <HomeIcon size={22} />, match: (r: Route) => r.parts.length === 0 },
+  { href: '#/orders', label: 'Đơn hàng', ico: <ClipboardList size={22} />, match: (r: Route) => r.parts[0] === 'orders' && r.parts[1] !== 'new' },
+  { href: '#/orders/new', label: 'Đơn mới', ico: <Plus size={24} />, match: (r: Route) => r.path === '/orders/new', plus: true },
+  { href: '#/library', label: 'Thư viện', ico: <Images size={22} />, match: (r: Route) => r.parts[0] === 'library' },
+  { href: '#/settings', label: 'Cài đặt', ico: <SettingsIcon size={22} />, match: (r: Route) => ['settings', 'customers', 'users', 'content'].includes(r.parts[0]) },
 ];
 
 function TabBar({ route }: { route: Route }) {
@@ -52,6 +56,8 @@ function Screen({ route }: { route: Route }): ReactNode {
   if (a === 'customers' && b) return <CustomerDetail key={b} id={b} />;
   if (a === 'customers') return <Customers />;
   if (a === 'settings') return <Settings />;
+  if (a === 'users') return <Users />;
+  if (a === 'content') return <Content />;
   return <Placeholder title="Không tìm thấy trang" />;
 }
 
@@ -61,10 +67,15 @@ export function App() {
 
   async function check() {
     try {
-      setAuth({ state: 'in', me: await api<Me>('GET', '/api/me') });
+      const me = await api<Me>('GET', '/api/me');
+      // customers have their own area; the admin pages would only answer them with 404s
+      if (me.role === 'customer') { location.replace('/tai-khoan'); return; }
+      setAuth({ state: 'in', me });
     } catch {
       const s = await api<{ needsSetup: boolean }>('GET', '/api/setup-status').catch(() => ({ needsSetup: false }));
-      setAuth({ state: 'out', needsSetup: s.needsSetup });
+      // first run creates the admin here; after that everyone signs in on the shared login page
+      if (!s.needsSetup) { location.replace('/dang-nhap?next=' + encodeURIComponent('/quan-ly' + location.hash)); return; }
+      setAuth({ state: 'out', needsSetup: true });
     }
   }
 
@@ -81,6 +92,13 @@ export function App() {
   }
   return (
     <div className="app">
+      <header className="app-header">
+        <a className="brand" href="#/" aria-label="HLUXURY – quản lý">
+          <span className="brand-mark" aria-hidden="true">H</span>
+          <span><span className="brand-name">HLUXURY</span><span className="small muted" style={{ display: 'block' }}>Quản lý xưởng</span></span>
+        </a>
+        <ThemeToggle />
+      </header>
       <Screen route={route} />
       <TabBar route={route} />
     </div>

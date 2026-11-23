@@ -8,10 +8,12 @@ export type Design = {
   id: string; cropKey: string; imageId: string | null; imageKey: string | null; crop: Box | null;
   label: DesignLabel; soleId: string | null; strapId: string | null; styleId: string | null;
   note: string; allowPublic: boolean; createdAt: string;
+  isPrivate: boolean; hidden: boolean; hasBrandLogo: boolean; source: 'admin' | 'customer';
 };
 type Row = {
   id: string; crop_key: string; image_id: string | null; image_key: string | null; crop: string | null; label: DesignLabel;
   sole_id: string | null; strap_id: string | null; style_id: string | null; note: string; allow_public: number; created_at: string;
+  is_private: number; hidden: number; has_brand_logo: number; source: 'admin' | 'customer';
 };
 
 const SELECT = 'SELECT d.*, i.key AS image_key FROM designs d LEFT JOIN order_images i ON i.id = d.image_id';
@@ -20,6 +22,7 @@ const map = (r: Row): Design => ({
   id: r.id, cropKey: r.crop_key, imageId: r.image_id, imageKey: r.image_key, crop: parseJson(r.crop, null),
   label: r.label, soleId: r.sole_id, strapId: r.strap_id, styleId: r.style_id, note: r.note,
   allowPublic: !!r.allow_public, createdAt: r.created_at,
+  isPrivate: !!r.is_private, hidden: !!r.hidden, hasBrandLogo: !!r.has_brand_logo, source: r.source,
 });
 
 export async function getDesign(env: Env, id: string): Promise<Design | null> {
@@ -46,23 +49,25 @@ export async function listDesigns(env: Env, f: DesignFilter): Promise<Design[]> 
 
 export function updateDesignStmt(env: Env, d: Design): Stmt {
   return env.DB.prepare(
-    'UPDATE designs SET label = ?, note = ?, note_search = ?, allow_public = ?, sole_id = ?, strap_id = ?, style_id = ? WHERE id = ?',
-  ).bind(d.label, d.note, foldSearch(d.note), d.allowPublic ? 1 : 0, d.soleId, d.strapId, d.styleId, d.id);
+    `UPDATE designs SET label = ?, note = ?, note_search = ?, allow_public = ?, sole_id = ?, strap_id = ?, style_id = ?,
+       is_private = ?, hidden = ?, has_brand_logo = ? WHERE id = ?`,
+  ).bind(d.label, d.note, foldSearch(d.note), d.allowPublic ? 1 : 0, d.soleId, d.strapId, d.styleId,
+    d.isPrivate ? 1 : 0, d.hidden ? 1 : 0, d.hasBrandLogo ? 1 : 0, d.id);
 }
 
 /** One statement for any number of designs (D1 caps bound parameters at 100). Existing ids are left as they are. */
-export function insertDesignsStmt(env: Env, items: Item[], allowPublic: boolean, createdAt: string): Stmt {
+export function insertDesignsStmt(env: Env, items: Item[], source: 'admin' | 'customer', createdAt: string): Stmt {
   const rows = items.map((i) => ({
     id: i.designId, cropKey: i.cropKey, imageId: i.imageId, crop: i.crop, soleId: i.soleId, strapId: i.strapId,
-    styleId: i.styleId, note: i.colorNote, noteSearch: foldSearch(i.colorNote),
+    styleId: i.styleId, note: i.colorNote, noteSearch: foldSearch(i.colorNote), isPrivate: i.isPrivate ? 1 : 0,
   }));
   return env.DB.prepare(
-    `INSERT OR IGNORE INTO designs (id, crop_key, image_id, crop, label, sole_id, strap_id, style_id, note, note_search, allow_public, created_at)
+    `INSERT OR IGNORE INTO designs (id, crop_key, image_id, crop, label, sole_id, strap_id, style_id, note, note_search, is_private, source, created_at)
      SELECT json_extract(value, '$.id'), json_extract(value, '$.cropKey'), json_extract(value, '$.imageId'),
             json_extract(value, '$.crop'), 'dat_rieng', json_extract(value, '$.soleId'), json_extract(value, '$.strapId'),
-            json_extract(value, '$.styleId'), json_extract(value, '$.note'), json_extract(value, '$.noteSearch'), ?, ?
+            json_extract(value, '$.styleId'), json_extract(value, '$.note'), json_extract(value, '$.noteSearch'), json_extract(value, '$.isPrivate'), ?, ?
      FROM json_each(?)`,
-  ).bind(allowPublic ? 1 : 0, createdAt, JSON.stringify(rows));
+  ).bind(source, createdAt, JSON.stringify(rows));
 }
 
 export function insertImagesStmt(env: Env, orderId: string | null, images: OrderImage[]): Stmt {

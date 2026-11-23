@@ -23,7 +23,9 @@ type State = {
   currency: Currency;
   neededBy: string;
   note: string;
-  allowPublic: boolean;
+  /** Mẫu đặt riêng: the order's designs stay out of the customers' library. */
+  privateAll: boolean;
+  deliverNote: string;
   images: EditorImage[];
   items: Item[];
   /** item id → [imageId, crop] the stored crop was made from; skip re-uploading unchanged crops. */
@@ -34,7 +36,7 @@ type State = {
 const sig = (i: Item) => JSON.stringify([i.imageId, i.crop]);
 
 function emptyState(id: string): State {
-  return { id, isNew: true, libraryOnly: false, customer: null, currency: 'VND', neededBy: '', note: '', allowPublic: false, images: [], items: [], cropSigs: {} };
+  return { id, isNew: true, libraryOnly: false, customer: null, currency: 'VND', neededBy: '', note: '', privateAll: false, deliverNote: '', images: [], items: [], cropSigs: {} };
 }
 
 /** What goes to localStorage: no blobs; photos not yet stored can't survive a reload. */
@@ -74,7 +76,7 @@ export function OrderEditor({ orderId, designId, libraryOnly }: { orderId?: stri
       api<any>('GET', `/api/orders/${orderId}`).then((o) => {
         const fromServer: State = {
           id: o.id, isNew: false, libraryOnly: false, customer: o.customer, currency: o.currency, neededBy: o.neededBy ?? '',
-          note: o.note, allowPublic: o.allowPublic, status: o.status,
+          note: o.note, privateAll: o.items.length > 0 && o.items.every((i: Item) => i.isPrivate), deliverNote: o.deliverNote ?? '', status: o.status,
           images: o.images.map((i: any) => ({ ...i, name: '', url: imgUrl(i.key) })),
           items: o.items, cropSigs: Object.fromEntries(o.items.filter((i: Item) => i.cropKey && i.crop).map((i: Item) => [i.id, sig(i)])),
         };
@@ -193,7 +195,11 @@ export function OrderEditor({ orderId, designId, libraryOnly }: { orderId?: stri
       } else {
         await api('PUT', `/api/orders/${s.id}`, {
           customerId: s.customer!.id, currency: s.currency, neededBy: s.neededBy || null, note: s.note,
-          allowPublic: s.allowPublic, images, items,
+          allowPublic: false, deliverNote: s.deliverNote, images, items: items.map((i) => ({
+            ...i,
+            // ticked: every design private; unticked after being ticked: none; otherwise keep each design's own choice (customers tick per design)
+            isPrivate: s.privateAll ? true : s.items.length > 0 && s.items.every((x) => x.isPrivate) ? false : !!i.isPrivate,
+          })),
         });
         finishSaved(s.id);
         go(`/orders/${s.id}`);
@@ -290,10 +296,15 @@ export function OrderEditor({ orderId, designId, libraryOnly }: { orderId?: stri
             <label htmlFor="ord-note">Ghi chú chung</label>
             <textarea id="ord-note" value={s.note} onChange={(e) => update((st) => ({ ...st, note: e.target.value }))} />
           </div>
+          <div>
+            <label htmlFor="ord-deliver">Nơi nhận hàng bên Campuchia</label>
+            <input id="ord-deliver" value={s.deliverNote} placeholder="Địa chỉ hoặc bến xe" onChange={(e) => update((st) => ({ ...st, deliverNote: e.target.value }))} />
+          </div>
           <label className="check">
-            <input type="checkbox" checked={s.allowPublic} onChange={(e) => update((st) => ({ ...st, allowPublic: e.target.checked }))} />
-            Cho khách xem mẫu này (thư viện cho khách, giai đoạn 2)
+            <input type="checkbox" checked={s.privateAll} onChange={(e) => update((st) => ({ ...st, privateAll: e.target.checked }))} />
+            Mẫu đặt riêng (không hiện cho khách khác)
           </label>
+          <p className="small muted" style={{ marginTop: 0 }}>Không tick: các mẫu của đơn hiện trong thư viện cho khách đã đăng nhập tham khảo (chỉ ảnh đôi dép, không có ảnh gốc hay thông tin khách).</p>
         </section>
       )}
 

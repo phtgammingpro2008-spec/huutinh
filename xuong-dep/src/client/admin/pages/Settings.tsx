@@ -75,7 +75,11 @@ export function Settings() {
   return (
     <main className="page">
       <h1>Cài đặt</h1>
-      <a className="list-item" href="#/customers"><strong className="grow">Khách hàng</strong><span aria-hidden="true">›</span></a>
+      <ul className="list">
+        <li><a className="list-item" href="#/customers"><strong className="grow">Khách hàng</strong><span aria-hidden="true">›</span></a></li>
+        <li><a className="list-item" href="#/users"><span className="grow"><strong>Người dùng</strong><span className="small muted" style={{ display: 'block' }}>Tài khoản khách tự đăng ký: khóa, mở khóa, link đặt lại mật khẩu</span></span><span aria-hidden="true">›</span></a></li>
+        <li><a className="list-item" href="#/content"><span className="grow"><strong>Trang web</strong><span className="small muted" style={{ display: 'block' }}>Sản phẩm, bộ sưu tập, poster, thông tin xưởng</span></span><span aria-hidden="true">›</span></a></li>
+      </ul>
 
       <h2>Vật liệu</h2>
       <div className="row">

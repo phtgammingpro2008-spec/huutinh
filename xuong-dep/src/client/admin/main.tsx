@@ -4,5 +4,5 @@ import { App } from './App';
 createRoot(document.getElementById('root')!).render(<App />);
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('/sw.js').catch(() => { /* offline shell is optional */ });
+  navigator.serviceWorker.register('/sw.js', { scope: '/quan-ly' }).catch(() => { /* offline shell is optional */ });
 }

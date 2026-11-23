@@ -11,7 +11,7 @@ afterAll(async () => { await closeBrowser(); await app.stop(); });
 async function openWithPhoto(files: string[]) {
   const { ctx, page } = await phone();
   await setupAdmin(page, app);
-  await page.goto(app.url + '/#/orders/new');
+  await page.goto(app.url + '/quan-ly#/orders/new');
   await page.getByLabel('Chọn ảnh').setInputFiles(files.map((f) => join(FIX, f)));
   return { ctx, page };
 }
@@ -61,6 +61,8 @@ test("'Cả ảnh là 1 mẫu' creates one tag with full box", async () => {
 test('dragging a corner handle resizes the box', async () => {
   const { ctx, page } = await openWithPhoto(['grid-3000x2000.jpg']);
   await tapAt(page, 0.5, 0.5);
+  // like a person would: bring the corner into the clear middle of the screen (fixed bars cover the edges)
+  await page.locator('.tagger .handle[data-corner="se"]').evaluate((e) => e.scrollIntoView({ block: 'center' }));
   const before = (await page.locator('.tagger .box').boundingBox())!;
   const h = (await page.locator('.tagger .handle[data-corner="se"]').boundingBox())!;
   await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);

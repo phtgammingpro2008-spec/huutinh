@@ -1,7 +1,7 @@
 import { isDate, localDate } from '../../shared/dates';
 import { STATUSES, canTransition, rank } from '../../shared/status';
 import type { OrderStatus } from '../../shared/types';
-import { requireAuth } from '../auth';
+import { requireAdmin } from '../roles';
 import { err, json, newId, now, nowIso, readJson, str } from '../http';
 import { getOrderRow, loadOrder } from '../repo/orders';
 import { addPayment, deletePayment } from '../repo/payments';
@@ -11,7 +11,7 @@ import type { Router } from '../router';
 const TABLES = ['customers', 'materials', 'settings', 'orders', 'order_images', 'designs', 'order_items', 'item_lines', 'quotes', 'payments'];
 
 export function paymentRoutes(r: Router) {
-  r.on('POST', '/api/orders/:id/status', requireAuth(async (req, env, p) => {
+  r.on('POST', '/api/orders/:id/status', requireAdmin(async (req, env, p) => {
     const o = await getOrderRow(env, p.id);
     if (!o) return err(404, 'Không tìm thấy đơn');
     const to = (await readJson(req)).to as OrderStatus;
@@ -31,7 +31,7 @@ export function paymentRoutes(r: Router) {
     return json(await loadOrder(env, o.id));
   }));
 
-  r.on('POST', '/api/orders/:id/payments', requireAuth(async (req, env, p) => {
+  r.on('POST', '/api/orders/:id/payments', requireAdmin(async (req, env, p) => {
     if (!(await getOrderRow(env, p.id))) return err(404, 'Không tìm thấy đơn');
     const b = await readJson(req);
     if (!Number.isInteger(b.amount) || b.amount <= 0 || b.amount > 1e13) return err(400, 'Số tiền không hợp lệ');
@@ -41,13 +41,13 @@ export function paymentRoutes(r: Router) {
     return json(await loadOrder(env, p.id));
   }));
 
-  r.on('DELETE', '/api/orders/:id/payments/:pid', requireAuth(async (_req, env, p) => {
+  r.on('DELETE', '/api/orders/:id/payments/:pid', requireAdmin(async (_req, env, p) => {
     if (!(await getOrderRow(env, p.id))) return err(404, 'Không tìm thấy đơn');
     await deletePayment(env, p.id, p.pid);
     return json(await loadOrder(env, p.id));
   }));
 
-  r.on('GET', '/api/export', requireAuth(async (_req, env) => {
+  r.on('GET', '/api/export', requireAdmin(async (_req, env) => {
     const out: Record<string, unknown[]> = {};
     out.users = (await env.DB.prepare('SELECT id, name, role, created_at FROM users').all()).results;
     for (const t of TABLES) out[t] = (await env.DB.prepare(`SELECT * FROM ${t}`).all()).results;

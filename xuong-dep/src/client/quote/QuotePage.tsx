@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { t } from '../../shared/i18n';
 import { formatMoney, formatQty } from '../../shared/money';
 import type { Names, PublicQuote, SnapshotItem } from '../../shared/snapshot';
+import { uiT } from '../../shared/i18n-ui';
 import { LANGS, type Lang } from '../../shared/types';
+import { LangGlobe } from '../ui/LangGlobe';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 const LANG_KEY = 'quote-lang';
 const ACCEPTED_STATES = ['khach_dong_y', 'dang_san_xuat', 'da_giao', 'hoan_tat'];
@@ -84,7 +87,7 @@ export function QuotePage({ token }: { token: string }) {
   useEffect(() => { load(); }, [token]);
   useEffect(() => {
     document.documentElement.lang = lang;
-    document.title = `${t(lang, 'page.title')}${q ? ' ' + q.code : ''}`;
+    document.title = `${t(lang, 'page.title')}${q ? ' ' + q.code : ''} · HLUXURY`;
   }, [lang, q]);
 
   const choose = (l: Lang) => { setLang(l); writeLang(l); };
@@ -108,11 +111,11 @@ export function QuotePage({ token }: { token: string }) {
   }
 
   const switcher = (
-    <div className="lang-switch" role="group" aria-label={t(lang, 'language')}>
-      {LANGS.map((l) => (
-        <button key={l} type="button" className="chip" lang={l} aria-pressed={lang === l} onClick={() => choose(l)}>{t(l, `lang.${l}`)}</button>
-      ))}
-    </div>
+    <header className="quote-head">
+      <span className="brand"><span className="brand-mark" aria-hidden="true">H</span><span className="brand-name">HLUXURY</span></span>
+      <LangGlobe value={lang} onChange={choose} label={t(lang, 'language')} />
+      <ThemeToggle labels={{ toDark: uiT(lang, 'ui.to_dark'), toLight: uiT(lang, 'ui.to_light') }} />
+    </header>
   );
 
   if (state !== 'ready' || !q) {

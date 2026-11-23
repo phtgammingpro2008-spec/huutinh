@@ -39,7 +39,8 @@ test('customer with lang km sees Khmer accept button and Khmer font', async () =
 test("switching to English shows 'Accept quote' and USD formatted $18.90", async () => {
   const { page, ctx } = await quoted({ customer: 'John', lang: 'vi', currency: 'USD', price: 1890, counts: [1] });
   await page.getByRole('button', { name: 'Đồng ý báo giá' }).waitFor();
-  await page.getByRole('button', { name: 'English' }).click();
+  await page.getByRole('button', { name: 'Ngôn ngữ' }).click();
+  await page.getByRole('menuitemradio', { name: 'English' }).click();
   await page.getByRole('button', { name: 'Accept quote' }).waitFor();
   expect(await page.getByText('$18.90').count()).toBeGreaterThan(0);
   expect(await page.getByText('$113.40').count()).toBeGreaterThan(0); // 6 pairs × $18.90
@@ -56,7 +57,7 @@ test('accept → admin order shows Khách đã đồng ý', async () => {
   await page.getByRole('button', { name: 'Đồng ý báo giá' }).click();
   await page.getByText(t('vi', 'accepted')).waitFor();
   expect(await page.getByRole('button', { name: 'Đồng ý báo giá' }).count()).toBe(0);
-  await admin.goto(app.url + `/#/orders/${o.id}`);
+  await admin.goto(app.url + `/quan-ly#/orders/${o.id}`);
   await admin.reload();
   await admin.locator('.order-detail .badge', { hasText: 'Khách đã đồng ý' }).waitFor();
   await ctx.close();

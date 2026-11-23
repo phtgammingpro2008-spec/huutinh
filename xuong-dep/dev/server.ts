@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { sqliteDb } from './d1-sqlite';
 import { fsBucket } from './r2-fs';
+import { migrate } from './migrate';
 import type { Env } from '../src/worker/env';
 
 const ROOT = join(import.meta.dir, '..');
@@ -15,17 +16,18 @@ const { values } = parseArgs({
 const dataDir = resolve(ROOT, values.data!);
 await mkdir(join(dataDir, 'r2'), { recursive: true });
 const db = sqliteDb(join(dataDir, 'd1.sqlite'));
-db.exec(await Bun.file(join(ROOT, 'schema/schema.sql')).text());
+migrate(db);
 
 const mod = values.dist ? await import(join(ROOT, 'dist/worker.js')) : await import('../src/worker/index');
 const worker = mod.default as { fetch(req: Request, env: Env): Promise<Response> };
-const env: Env = { DB: db, IMAGES: fsBucket(join(dataDir, 'r2')) };
+// Emails are kept in memory and listed at /__dev/outbox (dev server only; never in the worker).
+const env: Env = { DB: db, IMAGES: fsBucket(join(dataDir, 'r2')), EMAIL_OUTBOX: [] };
 
 const server = Bun.serve({
   port: Number(values.port),
   hostname: '127.0.0.1',
   maxRequestBodySize: 20 * 1024 * 1024,
-  fetch: (req) => worker.fetch(req, env),
+  fetch: (req) => new URL(req.url).pathname === '/__dev/outbox' ? Response.json(env.EMAIL_OUTBOX) : worker.fetch(req, env),
 });
 const url = `http://127.0.0.1:${server.port}`;
 console.log(`READY ${url}${values.dist ? ' (dist/worker.js)' : ''}`);
