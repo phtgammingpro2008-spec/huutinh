@@ -75,7 +75,7 @@ Mẫu duyệt: artboard **A2** trong `https://claude.ai/artifact/3q4Py98W9xpu1td
 2. **Poster lớn vuốt được**, có nhiều poster: ảnh, nhãn nhỏ (ví dụ "MỚI · HÈ 2027"), tiêu đề chữ có chân, mô tả, 1–2 nút.
 3. **Thanh chọn kiểu dép** (lấy từ danh mục "Kiểu" trong vật liệu).
 4. **Theo chủ đề:** thẻ poster vuốt ngang, mỗi thẻ mở một bộ sưu tập.
-5. **Mẫu nổi bật:** lưới thẻ mẫu gồm ảnh, tên, dải size, chấm màu, nhãn MỚI và nút "Nhận báo giá".
+5. **Sản phẩm nổi bật:** lưới thẻ **sản phẩm** gồm ảnh, tên, dải size, chấm các màu có, nhãn MỚI và nút "Nhận báo giá".
 6. **Khối kho Phnom Penh:** hiển thị khi đã có dữ liệu tồn kho. Giai đoạn này **ẩn đi** và sẽ bật ở giai đoạn kho.
 7. **Đặt hàng trong 3 bước.**
 8. **Chân trang:** địa chỉ xưởng, Zalo, Messenger.
@@ -83,16 +83,20 @@ Mẫu duyệt: artboard **A2** trong `https://claude.ai/artifact/3q4Py98W9xpu1td
 
 Yêu cầu:
 
-- **Anh tự quản lý nội dung** trong khu quản lý: poster (ảnh, nhãn, tiêu đề, mô tả, nút, thứ tự, bật hoặc tắt), bộ sưu tập (tiêu đề, ảnh bìa, màu nền, danh sách mẫu), mẫu nổi bật, thông tin xưởng (Zalo, Messenger, địa chỉ xưởng, địa chỉ kho). Văn bản có 3 thứ tiếng; thiếu thứ tiếng nào thì hiện tiếng Việt.
+- **Anh tự quản lý nội dung** trong khu quản lý: poster (ảnh, nhãn, tiêu đề, mô tả, nút, thứ tự, bật hoặc tắt), bộ sưu tập (tiêu đề, ảnh bìa, màu nền, danh sách sản phẩm), sản phẩm nổi bật, thông tin xưởng (Zalo, Messenger, địa chỉ xưởng, địa chỉ kho). Văn bản có 3 thứ tiếng; thiếu thứ tiếng nào thì hiện tiếng Việt.
 - **Google tìm thấy được:** trang chủ, trang bộ sưu tập và trang mẫu công khai phải có nội dung chữ thật ngay trong HTML trả về (tiêu đề, mô tả, ảnh chia sẻ khi gửi link qua Zalo/Facebook), không chỉ một khung trống chờ JavaScript. Khu khách, khu quản lý, link báo giá và ảnh riêng **vẫn noindex** như giai đoạn 1.
 - Ảnh trên trang công khai là ảnh nén, có kích thước hợp lý để tải nhanh trên 4G.
 
-### 6.2 Thư viện công khai
+### 6.2 Sản phẩm và thư viện công khai
 
-- Trang danh sách mẫu (lọc theo kiểu dép, tìm theo tên hoặc ghi chú) và trang chi tiết từng mẫu (ảnh lớn, kiểu, đế, quai, dải size gợi ý, nút **"Đặt mẫu này"**).
-- **Chỉ hiện mẫu được phép:** `cho khách xem = bật` **và** `có logo thương hiệu = tắt`.
-- Thêm ô **"Mẫu có logo thương hiệu"** cho mỗi mẫu trong khu quản lý. Mẫu đã đánh dấu thì **không bao giờ** công khai, kể cả khi ai đó bật nhầm "cho khách xem". Máy chủ chặn chứ không chỉ ẩn ở giao diện.
-- Mẫu công khai cần thêm **tên** (3 thứ tiếng) và có thể có nhãn MỚI. Ảnh lấy từ ảnh cắt sẵn trong thư viện.
+Anh chốt: **khách được tự chọn màu và size**. Vì vậy thứ hiện ra ngoài là **sản phẩm**, không phải từng mẫu lẻ trong thư viện nội bộ.
+
+- **Sản phẩm** (anh tạo trong khu quản lý): tên (3 thứ tiếng), mô tả ngắn, kiểu dép, đế, quai, **các dòng size khách được chọn** (ví dụ Nam 39–44, Nữ 35–40; mặc định lấy từ cài đặt, anh sửa được cho từng sản phẩm), nhãn MỚI, bật hoặc tắt công khai, **có logo thương hiệu**.
+- **Màu của sản phẩm**: mỗi màu có tên màu (3 thứ tiếng), ảnh, và tùy chọn nối với một mẫu trong thư viện nội bộ. Ảnh do **anh tải lên** hoặc lấy từ ảnh cắt của mẫu do xưởng làm.
+- **Trang danh sách** (lọc theo kiểu dép, tìm theo tên) và **trang chi tiết sản phẩm**: ảnh lớn theo màu đang chọn, chấm chọn màu, các dòng size, nút **"Đặt sản phẩm này"**.
+- **Chỉ hiện sản phẩm được phép:** `công khai = bật` **và** `có logo thương hiệu = tắt`. Mẫu trong thư viện nội bộ cũng có ô **"có logo thương hiệu"**. Máy chủ chặn chứ không chỉ ẩn ở giao diện: sản phẩm có logo, hoặc màu nối với mẫu có logo, không bao giờ công khai.
+- **Ảnh và mẫu cắt từ ảnh khách tự gửi không bao giờ được dùng cho trang công khai.** Máy chủ từ chối nếu có ai cố gắn chúng vào sản phẩm.
+- Thư viện nội bộ (giai đoạn 1) giữ nguyên vai trò sổ lưu mẫu của anh.
 
 ### 6.3 Tài khoản khách
 
@@ -109,14 +113,16 @@ Yêu cầu:
 
 Màn "Đặt hàng mới" của khách dùng lại màn nhập đơn của giai đoạn 1, gọn lại:
 
-- Chọn ảnh, chạm gắn số từng đôi hoặc "Cả ảnh là 1 mẫu". Từ thư viện công khai thì "Đặt mẫu này" (không cần ảnh).
+- Hai cách bắt đầu, dùng chung trong một đơn:
+  - **Từ sản phẩm** ("Đặt sản phẩm này"): khách chọn **một hoặc nhiều màu**. Mỗi màu thành một mẫu trong đơn, có sẵn các dòng size của sản phẩm, khách chỉ nhập số đôi. Không cần ảnh.
+  - **Từ ảnh riêng**: chọn ảnh, chạm gắn số từng đôi hoặc "Cả ảnh là 1 mẫu", như màn hình của anh.
 - Mỗi mẫu: dòng số lượng (Nam / Nữ / dòng khác theo cài đặt), ba cách nhập (Đều mỗi size, Từng size, Tổng số đôi), màu và ghi chú. **Vật liệu** chọn được nếu khách biết, không bắt buộc.
 - Thông tin đơn: ngày cần hàng, ghi chú, **nơi nhận** (Việt Nam hoặc Campuchia) và địa chỉ hay bến nhận dạng chữ tự do. Phần này để chuẩn bị cho giai đoạn vận chuyển. **(em quyết)**
 - Khách **không thấy và không sửa được giá** khi đặt. Không có "lịch sử giá".
 - Tự lưu nháp. Bấm Gửi một lần chỉ tạo một đơn, giống giai đoạn 1.
 - Đơn khách gửi có trạng thái **Chờ báo giá**, ghi rõ **"Khách tự đặt"** ở khu quản lý, và đếm trong nhóm **"Đơn khách mới"** ở trang chủ quản lý.
 - Khách **sửa hoặc hủy** được đơn khi còn "Chờ báo giá". Sau khi đã có báo giá, muốn đổi thì nhắn xưởng; anh sửa theo luật giai đoạn 1 (sửa số thì báo giá phiên bản mới, khách đồng ý lại). **(em quyết)**
-- Mẫu khách gửi lên **chỉ là ảnh trong đơn của khách đó**. Mẫu vào thư viện nội bộ như giai đoạn 1 (mặc định không công khai). Ảnh khách gửi **chỉ khách đó và anh xem được**.
+- Mẫu khách gửi lên **chỉ là ảnh trong đơn của khách đó**, và vẫn vào thư viện nội bộ của anh như giai đoạn 1 để tra cứu. Ảnh khách gửi **chỉ khách đó và anh xem được**, không bao giờ công khai (6.2).
 
 ### 6.5 Khu tài khoản của khách
 
@@ -130,8 +136,9 @@ Màn "Đặt hàng mới" của khách dùng lại màn nhập đơn của giai 
 - Đường dẫn: khu quản lý chuyển sang `/quan-ly` vì `/` giờ là trang chủ công khai. Anh cài lại web lên màn hình chính iPhone với đường dẫn mới. **(em quyết)**
 - Trang chủ quản lý thêm nhóm **"Đơn khách mới"** (khách tự đặt, chưa xem).
 - Mục **Khách hàng** thêm: tài khoản đăng nhập (số điện thoại, ngày đăng ký, khóa/mở), "Gắn với khách cũ", "Tạo link đặt lại mật khẩu".
-- Mục **Trang chủ công khai** để quản lý poster, bộ sưu tập, mẫu nổi bật, thông tin xưởng (6.1).
-- Mỗi mẫu trong thư viện thêm: tên 3 thứ tiếng, **có logo thương hiệu**, nhãn MỚI.
+- Mục **Sản phẩm** để tạo và sửa sản phẩm, màu, dòng size, ảnh (6.2).
+- Mục **Trang chủ công khai** để quản lý poster, bộ sưu tập, sản phẩm nổi bật, thông tin xưởng (6.1).
+- Mỗi mẫu trong thư viện nội bộ thêm ô **có logo thương hiệu**.
 - Đăng nhập của anh và của khách **dùng chung một màn đăng nhập**. Máy tự đưa về đúng khu theo vai trò. Admin đăng nhập bằng tên như cũ. **(em quyết)**
 
 ## 7. Giao diện (phong cách Kho Việt)
@@ -148,12 +155,18 @@ Màn "Đặt hàng mới" của khách dùng lại màn nhập đơn của giai 
 - `users`: thêm `role` (`admin` | `customer`, cột đã có), `phone` (duy nhất, cho khách), `customer_id`, `locked`, `created_at`.
 - `customers`: thêm `country` đã có; tài khoản trỏ tới hồ sơ qua `users.customer_id`.
 - `orders`: thêm `source` (`admin` | `customer`), `seen_by_admin`, `deliver_to` (`vn` | `kh`), `deliver_note`.
-- `designs`: thêm `name_vi/en/km`, `has_brand_logo`, `is_new`.
+- `designs`: thêm `has_brand_logo`, và nguồn gốc (`xưởng` hay `khách gửi`) để chặn công khai mẫu từ ảnh khách.
+- Bảng mới `products` (tên 3 thứ tiếng, mô tả, kiểu, đế, quai, dòng size, nhãn MỚI, công khai, có logo, thứ tự) và `product_colors` (sản phẩm, tên màu 3 thứ tiếng, ảnh, mẫu thư viện nối tới nếu có, thứ tự).
+- `order_items`: ghi sản phẩm và màu mà khách chọn (nếu đặt từ sản phẩm).
 - `order_images` hoặc bảng ảnh: thêm người tải lên, để kiểm soát ai được xem ảnh.
-- Bảng mới: `posters`, `collections`, `collection_designs`, `password_resets`, bộ đếm giới hạn (đăng nhập sai, đăng ký, tải ảnh).
+- Bảng mới: `posters`, `collections`, `collection_products`, `password_resets`, bộ đếm giới hạn (đăng nhập sai, đăng ký, tải ảnh).
 - `settings`: thêm thông tin xưởng (Zalo, Messenger, địa chỉ xưởng, địa chỉ kho).
 
-Tên bảng, cột và cách làm migration để người code quyết, miễn là dữ liệu đang chạy thật không mất và có bản sao lưu trước khi chạy migration.
+Tên bảng và cột để người code quyết, miễn là dữ liệu đang chạy thật không mất.
+
+**Lên bản mới (em quyết):**
+- Migration chạy **tự động trong bước build của Cloudflare, trước khi đưa code mới lên** (`wrangler d1 migrations apply --remote` rồi `wrangler deploy`), để khu quản lý không bao giờ chạy code mới trên cơ sở dữ liệu cũ. Trước mỗi migration ghi lại mốc khôi phục D1 (Time Travel). Nếu khóa build thiếu quyền D1 thì báo anh thêm quyền.
+- Các mẫu giai đoạn 1 đang bật "cho khách xem" được **tắt hết** khi migration, vì chưa ai kiểm tra logo. Trang công khai chỉ dùng **sản phẩm** anh tạo mới, nên không mẫu cũ nào lộ ra Google.
 
 ## 9. Bảo mật và phân quyền
 
