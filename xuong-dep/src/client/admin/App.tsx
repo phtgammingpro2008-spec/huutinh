@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { api, AUTH_LOST } from './api';
 import { Login, type Me } from './pages/Login';
+import { ProductionSheet } from './components/ProductionSheet';
 import { CustomerDetail, Customers } from './pages/Customers';
 import { Home } from './pages/Home';
 import { OrderDetail } from './pages/OrderDetail';
@@ -41,6 +42,7 @@ function Screen({ route }: { route: Route }): ReactNode {
   const [a, b] = route.parts;
   if (!a) return <Home />;
   if (a === 'orders' && b === 'new') return <OrderEditor key={route.path + route.query} designId={route.query.get('design')} />;
+  if (a === 'orders' && b && route.parts[2] === 'sheet') return <ProductionSheet key={b} id={b} />;
   if (a === 'orders' && b && route.parts[2] === 'edit') return <OrderEditor key={route.path} orderId={b} />;
   if (a === 'orders' && b) return <OrderDetail key={b} id={b} />;
   if (a === 'orders') return <Orders />;
