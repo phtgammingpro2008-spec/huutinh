@@ -60,7 +60,7 @@ export const ADMIN = { name: 'anh', password: 'mat-khau-123' };
 
 /** Creates the admin through the API (inside the page's context, so the session cookie is set). */
 export async function setupAdmin(page: Page, app: App) {
-  await page.goto(app.url + '/');
+  await page.goto(app.url + '/quan-ly');
   await page.evaluate(async (a) => {
     await fetch('/api/setup', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(a) });
     await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(a) });

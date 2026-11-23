@@ -22,9 +22,9 @@ beforeAll(async () => {
 afterAll(async () => { await ctxClose(); await closeBrowser(); await app.stop(); });
 
 async function openNew(qs = '') {
-  await page.goto(app.url + '/#/');
+  await page.goto(app.url + '/quan-ly#/');
   await page.evaluate(() => localStorage.clear());
-  await page.goto(app.url + '/#/orders/new' + qs);
+  await page.goto(app.url + '/quan-ly#/orders/new' + qs);
   await page.getByRole('heading', { name: 'Đơn mới' }).waitFor();
 }
 
@@ -196,7 +196,7 @@ test('a saved order leaves no draft behind, even after the autosave delay', asyn
   await page.waitForURL(/#\/orders\/[0-9a-f-]{36}$/);
   await page.waitForTimeout(1300);
   expect(await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('draft:')))).toEqual([]);
-  await page.goto(app.url + '/#/orders/new');
+  await page.goto(app.url + '/quan-ly#/orders/new');
   await page.getByRole('heading', { name: 'Đơn mới' }).waitFor();
   await page.waitForTimeout(300);
   expect(await page.getByText('Tiếp tục đơn đang nhập dở?').count()).toBe(0);

@@ -56,7 +56,7 @@ test('accept → admin order shows Khách đã đồng ý', async () => {
   await page.getByRole('button', { name: 'Đồng ý báo giá' }).click();
   await page.getByText(t('vi', 'accepted')).waitFor();
   expect(await page.getByRole('button', { name: 'Đồng ý báo giá' }).count()).toBe(0);
-  await admin.goto(app.url + `/#/orders/${o.id}`);
+  await admin.goto(app.url + `/quan-ly#/orders/${o.id}`);
   await admin.reload();
   await admin.locator('.order-detail .badge', { hasText: 'Khách đã đồng ý' }).waitFor();
   await ctx.close();

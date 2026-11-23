@@ -21,7 +21,7 @@ beforeAll(async () => {
 afterAll(async () => { await done(); await closeBrowser(); await app.stop(); });
 
 async function openSheet(id: string) {
-  await page.goto(app.url + `/#/orders/${id}/sheet`);
+  await page.goto(app.url + `/quan-ly#/orders/${id}/sheet`);
   await page.reload();
   await page.locator('.production-sheet').waitFor();
 }
@@ -41,7 +41,7 @@ test("sheet for accepted sample order shows 1.410 đôi and contains no '₫' or
 
 test("sheet route for a Chờ báo giá order shows 'Đơn chưa chốt'", async () => {
   const o = await seedSampleOrder(page, { customer: 'anh Minh' });
-  await page.goto(app.url + `/#/orders/${o.id}/sheet`);
+  await page.goto(app.url + `/quan-ly#/orders/${o.id}/sheet`);
   await page.getByText('Đơn chưa chốt').waitFor();
   expect(await page.getByRole('button', { name: 'In phiếu' }).count()).toBe(0);
 });

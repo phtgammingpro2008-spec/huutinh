@@ -41,7 +41,7 @@ function serveAsset(req: Request): Response | null {
   if (req.method !== 'GET' && req.method !== 'HEAD') return null;
   const path = new URL(req.url).pathname;
   let name = path;
-  if (path === '/' || path === '/index.html') name = '/index.html';
+  if (path === '/quan-ly' || path === '/quan-ly/' || path === '/index.html') name = '/index.html';
   else if (/^\/q\/[A-Za-z0-9_-]+\/?$/.test(path)) name = '/quote.html';
   const a = ASSETS[name];
   if (!a) return null;
@@ -51,8 +51,16 @@ function serveAsset(req: Request): Response | null {
   return new Response(req.method === 'HEAD' ? null : (body as BodyInit), { headers: { 'content-type': a.type, 'cache-control': cache } });
 }
 
+/** Public home placeholder (Task 9 replaces it with the real site). Sends phase-1 bookmarks (/#/orders/…) to /quan-ly. */
+const LEGACY_REDIRECT = `<script>if(location.hash.indexOf('#/')===0)location.replace('/quan-ly'+location.hash)</script>`;
+function homePlaceholder(): Response {
+  return new Response(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${LEGACY_REDIRECT}<title>HLUXURY</title></head><body><h1>HLUXURY</h1><p><a href="/quan-ly">Quản lý</a></p></body></html>`,
+    { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
+}
+
 async function route(req: Request, env: Env): Promise<Response> {
   try {
+    if (req.method === 'GET' && new URL(req.url).pathname === '/') return homePlaceholder();
     const res = await router.handle(req, env, {});
     if (res) return res;
     const asset = serveAsset(req);

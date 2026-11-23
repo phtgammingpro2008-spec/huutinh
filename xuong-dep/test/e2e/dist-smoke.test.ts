@@ -8,14 +8,14 @@ afterAll(async () => { await closeBrowser(); await app.stop(); });
 test('dist smoke: server running dist/worker.js completes setup → create order → send quote → accept on quote page', async () => {
   expect(app.url).toBeTruthy();
   const { ctx, page } = await phone();
-  await page.goto(app.url + '/');
+  await page.goto(app.url + '/quan-ly');
   await page.getByLabel('Tên đăng nhập').fill(ADMIN.name);
   await page.getByLabel('Mật khẩu').fill(ADMIN.password);
   await page.getByRole('button', { name: 'Tạo tài khoản' }).click();
   await page.getByRole('heading', { name: 'Trang chủ' }).waitFor();
 
   const o = await seedSampleOrder(page, { customer: 'chị Nga', price: 47000 });
-  await page.goto(app.url + `/#/orders/${o.id}`);
+  await page.goto(app.url + `/quan-ly#/orders/${o.id}`);
   await page.getByRole('button', { name: 'Gửi báo giá' }).click();
   const message = await page.getByLabel('Tin nhắn gửi khách').inputValue();
   const url = message.match(/https?:\/\/\S+\/q\/[A-Za-z0-9_-]+/)![0];

@@ -26,3 +26,12 @@ test('default quote messages equal the schema seed', async () => {
   expect(JSON.parse(row!.value)).toEqual(DEFAULT_QUOTE_MESSAGE);
   for (const m of Object.values(DEFAULT_QUOTE_MESSAGE)) for (const v of ['{code}', '{url}', '{total}']) expect(m).toContain(v);
 });
+
+test('every uiT key exists in vi, en and km', async () => {
+  const { uiDict } = await import('../../src/shared/i18n-ui');
+  const keys = Object.keys(uiDict.vi);
+  for (const lang of ['en', 'km'] as const) {
+    expect(Object.keys(uiDict[lang]).sort()).toEqual([...keys].sort());
+    for (const k of keys) expect((uiDict[lang] as Record<string, string>)[k].length).toBeGreaterThan(0);
+  }
+});

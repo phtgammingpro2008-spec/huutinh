@@ -15,7 +15,7 @@ beforeAll(async () => {
 afterAll(async () => { await done(); await closeBrowser(); await app.stop(); });
 
 const openOrder = async (id: string) => {
-  await page.goto(app.url + `/#/orders/${id}`);
+  await page.goto(app.url + `/quan-ly#/orders/${id}`);
   await page.locator('.order-detail').waitFor();
 };
 
@@ -106,7 +106,7 @@ test('status buttons move the order forward and cancel asks first', async () => 
 
 test('changing currency on a priced order asks first and clears the old prices', async () => {
   const o = await seedSampleOrder(page, { customer: 'Mr Chan', price: 47000, counts: [10] });
-  await page.goto(app.url + `/#/orders/${o.id}/edit`);
+  await page.goto(app.url + `/quan-ly#/orders/${o.id}/edit`);
   await page.reload();
   await page.getByLabel('Loại tiền').waitFor();
   page.once('dialog', (d) => d.accept());

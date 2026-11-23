@@ -47,7 +47,8 @@ export async function build() {
   const quotePath = `/assets/quote.${hash(quoteJs)}.js`;
   const cssPath = `/assets/styles.${hash(css)}.css`;
   const version = hash(adminJs + quoteJs + css);
-  const fill = (s: string) => s.replaceAll('%ADMIN_JS%', adminPath).replaceAll('%QUOTE_JS%', quotePath)
+  const { THEME_BOOT } = await import('../src/client/ui/theme');
+  const fill = (s: string) => s.replaceAll('%THEME_BOOT%', THEME_BOOT).replaceAll('%ADMIN_JS%', adminPath).replaceAll('%QUOTE_JS%', quotePath)
     .replaceAll('%CSS%', cssPath).replaceAll('%VERSION%', version);
 
   const assets: Record<string, Asset> = {

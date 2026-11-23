@@ -7,7 +7,7 @@ afterAll(async () => { await closeBrowser(); await app.stop(); });
 
 test('first visit shows setup form, creating admin lands on Trang chủ', async () => {
   const { ctx, page } = await phone();
-  await page.goto(app.url + '/');
+  await page.goto(app.url + '/quan-ly');
   await page.getByText('Tạo tài khoản quản trị').first().waitFor();
   await page.getByLabel('Tên đăng nhập').fill(ADMIN.name);
   await page.getByLabel('Mật khẩu').fill(ADMIN.password);
@@ -27,7 +27,7 @@ test('first visit shows setup form, creating admin lands on Trang chủ', async 
 
 test("wrong password shows 'Sai mật khẩu', right password logs in", async () => {
   const { ctx, page } = await phone();
-  await page.goto(app.url + '/');
+  await page.goto(app.url + '/quan-ly');
   await page.getByRole('button', { name: 'Đăng nhập' }).waitFor();
   await page.getByLabel('Tên đăng nhập').fill(ADMIN.name);
   await page.getByLabel('Mật khẩu').fill('sai-roi-nhe');
@@ -41,7 +41,7 @@ test("wrong password shows 'Sai mật khẩu', right password logs in", async ()
 
 test('manifest is served and linked; pages are noindex', async () => {
   const { ctx, page } = await phone();
-  const res = await page.goto(app.url + '/');
+  const res = await page.goto(app.url + '/quan-ly');
   expect(res!.headers()['x-robots-tag']).toBe('noindex');
   expect(await page.locator('meta[name="robots"]').getAttribute('content')).toBe('noindex');
   const href = await page.locator('link[rel="manifest"]').getAttribute('href');
