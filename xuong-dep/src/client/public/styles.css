@@ -187,7 +187,8 @@ th { font-size: 0.8rem; color: var(--ink-2); font-weight: 600; }
 /* Quote page */
 .quote-body { background: var(--bg); }
 .quote { max-width: 720px; margin: 0 auto; padding: 16px; }
-.quote .lang-switch { display: flex; gap: 6px; justify-content: flex-end; margin-bottom: 8px; }
+.quote-head { display: flex; align-items: center; gap: 8px; margin: -4px 0 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.quote-head .brand { flex: 1; }
 .quote .item { display: grid; grid-template-columns: 112px 1fr; gap: 12px; }
 .quote .item img { width: 112px; height: 112px; object-fit: cover; border-radius: 10px; background: var(--surface-2); }
 .quote .total { font-size: 1.25rem; font-weight: 800; }

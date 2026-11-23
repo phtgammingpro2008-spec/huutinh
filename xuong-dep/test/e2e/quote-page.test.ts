@@ -39,7 +39,8 @@ test('customer with lang km sees Khmer accept button and Khmer font', async () =
 test("switching to English shows 'Accept quote' and USD formatted $18.90", async () => {
   const { page, ctx } = await quoted({ customer: 'John', lang: 'vi', currency: 'USD', price: 1890, counts: [1] });
   await page.getByRole('button', { name: 'Đồng ý báo giá' }).waitFor();
-  await page.getByRole('button', { name: 'English' }).click();
+  await page.getByRole('button', { name: 'Ngôn ngữ' }).click();
+  await page.getByRole('menuitemradio', { name: 'English' }).click();
   await page.getByRole('button', { name: 'Accept quote' }).waitFor();
   expect(await page.getByText('$18.90').count()).toBeGreaterThan(0);
   expect(await page.getByText('$113.40').count()).toBeGreaterThan(0); // 6 pairs × $18.90

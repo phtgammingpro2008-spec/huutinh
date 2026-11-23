@@ -1,0 +1,4 @@
+-- Phase 2a: the quote message is signed HLUXURY. Only replaces the untouched phase-1 default;
+-- a message the owner already edited in Cài đặt stays as it is.
+UPDATE settings SET value = '{"vi":"HLUXURY gửi báo giá đơn {code}, tổng {total}. Mời anh/chị xem và bấm Đồng ý tại: {url}","en":"HLUXURY: here is the quote for order {code}, total {total}. Please review and tap Accept here: {url}","km":"HLUXURY៖ នេះជាតារាងតម្លៃសម្រាប់ការបញ្ជាទិញ {code} សរុប {total}។ សូមពិនិត្យ ហើយចុចយល់ព្រមនៅទីនេះ៖ {url}"}'
+WHERE key = 'quote_message' AND value = '{"vi":"Xưởng gửi báo giá đơn {code}, tổng {total}. Mời anh/chị xem và bấm Đồng ý tại: {url}","en":"Here is the quote for order {code}, total {total}. Please review and tap Accept here: {url}","km":"នេះជាតារាងតម្លៃសម្រាប់ការបញ្ជាទិញ {code} សរុប {total}។ សូមពិនិត្យ ហើយចុចយល់ព្រមនៅទីនេះ៖ {url}"}';

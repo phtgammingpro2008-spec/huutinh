@@ -142,4 +142,4 @@ INSERT OR IGNORE INTO settings (key, value) VALUES ('lines',
   '[{"key":"nam","label":{"vi":"Nam","en":"Men","km":"បុរស"},"sizeFrom":39,"sizeTo":44},{"key":"nu","label":{"vi":"Nữ","en":"Women","km":"នារី"},"sizeFrom":35,"sizeTo":40}]');
 
 INSERT OR IGNORE INTO settings (key, value) VALUES ('quote_message',
-  '{"vi":"Xưởng gửi báo giá đơn {code}, tổng {total}. Mời anh/chị xem và bấm Đồng ý tại: {url}","en":"Here is the quote for order {code}, total {total}. Please review and tap Accept here: {url}","km":"នេះជាតារាងតម្លៃសម្រាប់ការបញ្ជាទិញ {code} សរុប {total}។ សូមពិនិត្យ ហើយចុចយល់ព្រមនៅទីនេះ៖ {url}"}');
+  '{"vi":"HLUXURY gửi báo giá đơn {code}, tổng {total}. Mời anh/chị xem và bấm Đồng ý tại: {url}","en":"HLUXURY: here is the quote for order {code}, total {total}. Please review and tap Accept here: {url}","km":"HLUXURY៖ នេះជាតារាងតម្លៃសម្រាប់ការបញ្ជាទិញ {code} សរុប {total}។ សូមពិនិត្យ ហើយចុចយល់ព្រមនៅទីនេះ៖ {url}"}');
