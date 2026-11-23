@@ -20,7 +20,11 @@ Phần kho, vận chuyển và mã QR trên bao là **giai đoạn sau**. Các q
 
 - **Anh (admin):** báo giá, quản lý đơn, khách, thư viện, nội dung trang chủ. Dùng iPhone là chính.
 - **Khách (customer):** khách sỉ ở Việt Nam và Campuchia, nói tiếng Việt, Anh hoặc Khmer, quen nhắn Zalo, dùng điện thoại là chính.
-- **Người lạ:** xem trang chủ và thư viện công khai, chưa đăng nhập.
+- **Khách chưa đăng nhập:** chỉ xem **một phần thông tin** (anh chốt). Bấm "Đặt hàng" hoặc bất kỳ nút cần tài khoản thì **hiện cửa sổ Đăng ký / Đăng nhập** ngay tại chỗ, đăng nhập xong quay lại đúng chỗ đang xem.
+
+**Khách chưa đăng nhập thấy gì (em quyết):** trang chủ (poster, bộ sưu tập), danh sách sản phẩm với ảnh, tên và kiểu dép. **Phải đăng nhập mới thấy:** đủ các màu và ảnh từng màu, dải size, trang chi tiết đầy đủ, đặt hàng, báo giá, đơn của mình.
+
+**Ba khu tách riêng (anh chốt):** trang công khai `/`, khu khách `/tai-khoan`, khu quản lý của anh `/quan-ly`. Khách không bao giờ vào được khu quản lý.
 
 ## 3. Mục tiêu, phần chưa làm, và thế nào là thất bại
 
@@ -56,6 +60,7 @@ Phần kho, vận chuyển và mã QR trên bao là **giai đoạn sau**. Các q
 - Chỉ VND và USD. Ba thứ tiếng vi, en, km cho mọi phần khách thấy.
 - Mọi đơn đều được báo giá, không có giá niêm yết. Thẻ sản phẩm ghi "Nhận báo giá".
 - Chạy tốt trên iPhone Safari, Android Chrome và máy tính.
+- **Gửi email** (xác nhận email, lấy lại mật khẩu) cần một dịch vụ gửi mail. Địa chỉ `*.workers.dev` không dùng làm địa chỉ gửi được, nên cần **một tên miền riêng** — xem câu hỏi còn mở ở cuối bản.
 
 ## 5. Các cách đã cân nhắc
 
@@ -100,13 +105,15 @@ Anh chốt: **khách được tự chọn màu và size**. Vì vậy thứ hiệ
 
 ### 6.3 Tài khoản khách
 
-- **Đăng ký:** số điện thoại, tên hiển thị, mật khẩu (ít nhất 8 ký tự), quốc gia (Việt Nam hoặc Campuchia), ngôn ngữ. Đăng ký xong là đăng nhập và đặt hàng được ngay.
-- Số điện thoại được chuẩn hóa (bỏ khoảng trắng, dấu; `+84`/`0` và `+855`/`0` quy về một dạng) để không trùng tài khoản. **(em quyết)**
+- **Đăng ký (bản "cao cấp", anh chốt):** họ tên, **số điện thoại**, **email**, mật khẩu và nhập lại mật khẩu (có nút hiện/ẩn và thanh báo độ mạnh), quốc gia, ngôn ngữ. Form đẹp theo phong cách Kho Việt (thẻ có ảnh, tiêu đề chữ có chân), báo lỗi ngay dưới từng ô bằng ngôn ngữ của khách.
+- **Một người chỉ một tài khoản:** số điện thoại **và** email đều không được trùng với tài khoản khác. Số điện thoại được chuẩn hóa (bỏ khoảng trắng, dấu; `+84`/`0` và `+855`/`0` quy về một dạng) trước khi so. Đăng ký trùng thì báo "Số điện thoại (hoặc email) này đã có tài khoản, vui lòng đăng nhập hoặc lấy lại mật khẩu".
+- **Xác nhận email (em quyết):** sau khi đăng ký, máy gửi link xác nhận vào email. Khách đặt hàng được ngay, nhưng **phải xác nhận email thì mới lấy lại mật khẩu bằng email được**. Như vậy email lấy lại mật khẩu chắc chắn là của chính khách.
+- **Đăng nhập** bằng số điện thoại **hoặc** email, kèm mật khẩu. Có ô "Ghi nhớ đăng nhập". Anh (admin) dùng chung màn này (anh đồng ý).
+- **Quên mật khẩu (anh chốt: ưu tiên email):** khách nhập email, máy gửi **link đặt lại mật khẩu** (dùng một lần, hết hạn sau 1 giờ). Đặt lại xong thì mọi phiên đăng nhập cũ bị đăng xuất. Dự phòng: anh vẫn tạo được link đặt lại trong khu quản lý cho khách nhắn qua Zalo.
+- **Gửi email** cần một dịch vụ gửi mail và một tên miền riêng (mục 4).
 - **Loại tiền mặc định** theo quốc gia: Việt Nam dùng VND, Campuchia dùng USD. Anh đổi được trong hồ sơ khách. **(em quyết)**
 - Mỗi tài khoản khách có **một hồ sơ khách** (bảng `customers` hiện có) để đơn, báo giá và tiền nhận dùng chung cấu trúc với giai đoạn 1.
-- **Không tự gắn vào hồ sơ khách cũ** chỉ vì trùng số điện thoại. Không có SMS xác thực, nên ai đó gõ số của chị Nga sẽ thấy hết đơn của chị Nga. Trong khu quản lý, anh bấm **"Gắn với khách cũ"** sau khi đã xác nhận qua Zalo; khi đó các đơn cũ hiện trong tài khoản của khách. **(em quyết)**
 - **Khóa / mở khóa** tài khoản. Tài khoản bị khóa không đăng nhập được và mọi phiên đang mở bị đăng xuất.
-- **Quên mật khẩu:** không có SMS, nên khách nhắn Zalo cho xưởng. Anh bấm "Tạo link đặt lại mật khẩu" (dùng một lần, hết hạn sau 24 giờ) và gửi cho khách. **(em quyết)**
 - **Chống phá:** giới hạn số lần đăng nhập sai và số lần đăng ký theo số điện thoại và địa chỉ IP, giới hạn số ảnh tải lên mỗi ngày cho mỗi tài khoản. Có thể dùng Cloudflare Turnstile (miễn phí) ở màn đăng ký nếu thấy cần. Con số cụ thể để người code chọn.
 
 ### 6.4 Khách đặt hàng
@@ -117,11 +124,13 @@ Màn "Đặt hàng mới" của khách dùng lại màn nhập đơn của giai 
   - **Từ sản phẩm** ("Đặt sản phẩm này"): khách chọn **một hoặc nhiều màu**. Mỗi màu thành một mẫu trong đơn, có sẵn các dòng size của sản phẩm, khách chỉ nhập số đôi. Không cần ảnh.
   - **Từ ảnh riêng**: chọn ảnh, chạm gắn số từng đôi hoặc "Cả ảnh là 1 mẫu", như màn hình của anh.
 - Mỗi mẫu: dòng số lượng (Nam / Nữ / dòng khác theo cài đặt), ba cách nhập (Đều mỗi size, Từng size, Tổng số đôi), màu và ghi chú. **Vật liệu** chọn được nếu khách biết, không bắt buộc.
-- Thông tin đơn: ngày cần hàng, ghi chú, **nơi nhận** (Việt Nam hoặc Campuchia) và địa chỉ hay bến nhận dạng chữ tự do. Phần này để chuẩn bị cho giai đoạn vận chuyển. **(em quyết)**
+- Thông tin đơn: ngày cần hàng, ghi chú, và **nơi nhận hàng bên Campuchia** (địa chỉ hoặc bến xe, chữ tự do). Anh chốt: **100% hàng đi Campuchia**, nên không có lựa chọn giao trong Việt Nam.
 - Khách **không thấy và không sửa được giá** khi đặt. Không có "lịch sử giá".
 - Tự lưu nháp. Bấm Gửi một lần chỉ tạo một đơn, giống giai đoạn 1.
 - Đơn khách gửi có trạng thái **Chờ báo giá**, ghi rõ **"Khách tự đặt"** ở khu quản lý, và đếm trong nhóm **"Đơn khách mới"** ở trang chủ quản lý.
-- Khách **sửa hoặc hủy** được đơn khi còn "Chờ báo giá". Sau khi đã có báo giá, muốn đổi thì nhắn xưởng; anh sửa theo luật giai đoạn 1 (sửa số thì báo giá phiên bản mới, khách đồng ý lại). **(em quyết)**
+- Khách **sửa** được đơn khi còn "Chờ báo giá".
+- Khách **hủy** được đơn khi còn "Chờ báo giá" **hoặc đã báo giá mà chưa đồng ý** (anh chốt: "báo giá rồi mà khách không chịu thì vẫn có thể hủy"). Khi khách bấm hủy, máy hỏi lý do (không bắt buộc) để anh xem.
+- **Khách đã đồng ý thì xưởng mới đưa vào làm**, nên sau khi đồng ý khách không tự hủy được; muốn đổi thì nhắn xưởng, anh sửa theo luật giai đoạn 1 (sửa số thì ra báo giá phiên bản mới, khách đồng ý lại).
 - Mẫu khách gửi lên **chỉ là ảnh trong đơn của khách đó**, và vẫn vào thư viện nội bộ của anh như giai đoạn 1 để tra cứu. Ảnh khách gửi **chỉ khách đó và anh xem được**, không bao giờ công khai (6.2).
 
 ### 6.5 Khu tài khoản của khách
@@ -135,11 +144,12 @@ Màn "Đặt hàng mới" của khách dùng lại màn nhập đơn của giai 
 
 - Đường dẫn: khu quản lý chuyển sang `/quan-ly` vì `/` giờ là trang chủ công khai. Anh cài lại web lên màn hình chính iPhone với đường dẫn mới. **(em quyết)**
 - Trang chủ quản lý thêm nhóm **"Đơn khách mới"** (khách tự đặt, chưa xem).
-- Mục **Khách hàng** thêm: tài khoản đăng nhập (số điện thoại, ngày đăng ký, khóa/mở), "Gắn với khách cũ", "Tạo link đặt lại mật khẩu".
+- Mục **Người dùng** riêng (anh chốt): danh sách tài khoản (tên, số điện thoại, email, đã xác nhận email chưa, ngày đăng ký, số đơn), tìm kiếm, **khóa / mở khóa**, "Tạo link đặt lại mật khẩu", mở hồ sơ khách và đơn của người đó.
 - Mục **Sản phẩm** để tạo và sửa sản phẩm, màu, dòng size, ảnh (6.2).
 - Mục **Trang chủ công khai** để quản lý poster, bộ sưu tập, sản phẩm nổi bật, thông tin xưởng (6.1).
 - Mỗi mẫu trong thư viện nội bộ thêm ô **có logo thương hiệu**.
-- Đăng nhập của anh và của khách **dùng chung một màn đăng nhập**. Máy tự đưa về đúng khu theo vai trò. Admin đăng nhập bằng tên như cũ. **(em quyết)**
+- Đăng nhập của anh và của khách **dùng chung một màn đăng nhập** (anh đồng ý), làm thật đẹp theo phong cách Kho Việt. Máy tự đưa về đúng khu theo vai trò. Admin đăng nhập bằng tên như cũ.
+- Dữ liệu thử giai đoạn 1 (khách Nga, Sola, đơn, thư viện, ảnh) **đã được xóa sạch** trên web thật ngày 23/11/2026 theo yêu cầu của anh; chỉ giữ tài khoản quản trị và cài đặt.
 
 ## 7. Giao diện (phong cách Kho Việt)
 
@@ -152,14 +162,14 @@ Màn "Đặt hàng mới" của khách dùng lại màn nhập đơn của giai 
 
 ## 8. Dữ liệu (dự kiến, migration cộng thêm)
 
-- `users`: thêm `role` (`admin` | `customer`, cột đã có), `phone` (duy nhất, cho khách), `customer_id`, `locked`, `created_at`.
+- `users`: thêm `role` (`admin` | `customer`, cột đã có), `phone` (duy nhất), `email` (duy nhất), `email_verified_at`, `customer_id`, `locked`, `created_at`.
 - `customers`: thêm `country` đã có; tài khoản trỏ tới hồ sơ qua `users.customer_id`.
-- `orders`: thêm `source` (`admin` | `customer`), `seen_by_admin`, `deliver_to` (`vn` | `kh`), `deliver_note`.
+- `orders`: thêm `source` (`admin` | `customer`), `seen_by_admin`, `deliver_note` (nơi nhận bên Campuchia), `cancel_reason`.
 - `designs`: thêm `has_brand_logo`, và nguồn gốc (`xưởng` hay `khách gửi`) để chặn công khai mẫu từ ảnh khách.
 - Bảng mới `products` (tên 3 thứ tiếng, mô tả, kiểu, đế, quai, dòng size, nhãn MỚI, công khai, có logo, thứ tự) và `product_colors` (sản phẩm, tên màu 3 thứ tiếng, ảnh, mẫu thư viện nối tới nếu có, thứ tự).
 - `order_items`: ghi sản phẩm và màu mà khách chọn (nếu đặt từ sản phẩm).
 - `order_images` hoặc bảng ảnh: thêm người tải lên, để kiểm soát ai được xem ảnh.
-- Bảng mới: `posters`, `collections`, `collection_products`, `password_resets`, bộ đếm giới hạn (đăng nhập sai, đăng ký, tải ảnh).
+- Bảng mới: `posters`, `collections`, `collection_products`, `password_resets`, `email_verifications`, bộ đếm giới hạn (đăng nhập sai, đăng ký, tải ảnh).
 - `settings`: thêm thông tin xưởng (Zalo, Messenger, địa chỉ xưởng, địa chỉ kho).
 
 Tên bảng và cột để người code quyết, miễn là dữ liệu đang chạy thật không mất.
@@ -188,3 +198,7 @@ Tên bảng và cột để người code quyết, miễn là dữ liệu đang 
 ## 11. Phần để người code tự quyết
 
 Cách render trang công khai cho Google đọc được; cấu trúc thư mục và tên route chi tiết (trừ `/`, `/quan-ly`, khu khách); thư viện biểu tượng nét mảnh; cách nén và cắt ảnh poster; con số giới hạn chống phá; cách viết migration; hiệu ứng chuyển trang; bố cục chi tiết khu quản lý (theo phong cách mục 7).
+
+## 12. Câu hỏi còn mở
+
+- **Tên miền để gửi email:** chờ anh quyết (mua tên miền và dùng dịch vụ gửi mail miễn phí, hay cách khác).
