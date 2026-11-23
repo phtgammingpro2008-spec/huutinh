@@ -6,8 +6,12 @@ import { catalogRoutes } from './routes/catalog';
 import { designRoutes } from './routes/designs';
 import { imageRoutes } from './routes/images';
 import { orderRoutes } from './routes/orders';
+import { publicRoutes } from './routes/public';
+import { quoteRoutes } from './routes/quotes';
 
 const router = new Router();
+quoteRoutes(router);
+publicRoutes(router);
 authRoutes(router);
 catalogRoutes(router);
 imageRoutes(router);
