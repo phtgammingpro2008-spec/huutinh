@@ -1,6 +1,6 @@
 import { ASSETS } from './assets.gen';
 import type { Env } from './env';
-import { HttpError, err } from './http';
+import { HttpError, err, json } from './http';
 import { Router } from './router';
 import { authRoutes } from './routes/auth';
 import { catalogRoutes } from './routes/catalog';
@@ -8,6 +8,7 @@ import { designRoutes } from './routes/designs';
 import { imageRoutes } from './routes/images';
 import { mediaRoutes } from './media';
 import { customerRoutes } from './routes/customer';
+import { contentRoutes } from './routes/content';
 import { orderRoutes } from './routes/orders';
 import { paymentRoutes } from './routes/payments';
 import { publicRoutes } from './routes/public';
@@ -22,6 +23,7 @@ catalogRoutes(router);
 imageRoutes(router);
 mediaRoutes(router);
 customerRoutes(router);
+contentRoutes(router);
 orderRoutes(router);
 designRoutes(router);
 
@@ -55,7 +57,10 @@ async function route(req: Request, env: Env): Promise<Response> {
     if (asset) return asset;
     return err(404, 'Không tìm thấy');
   } catch (e) {
-    if (e instanceof HttpError) return err(e.status, e.message);
+    if (e instanceof HttpError) {
+      const code = (e as HttpError & { code?: string }).code;
+      return code ? json({ error: e.message, code }, e.status) : err(e.status, e.message);
+    }
     console.error(e);
     return err(500, 'Lỗi máy chủ, vui lòng thử lại');
   }
