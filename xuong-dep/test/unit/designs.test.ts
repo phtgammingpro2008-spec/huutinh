@@ -28,10 +28,14 @@ test('saving creates designs with label dat_rieng and allow_public false by defa
   expect((await call(env, 'GET', '/api/designs', undefined, c)).body).toHaveLength(9);
 });
 
-test('order with allowPublic true marks its new designs allowPublic', async () => {
-  await saveOrder(env, c, sampleOrder(cust.id, { allowPublic: true }));
-  const ds = (await call(env, 'GET', '/api/designs', undefined, c)).body;
-  expect(ds.every((d: any) => d.allowPublic === true)).toBe(true);
+test('designs follow the item "Mẫu đặt riêng" flag (phase 2a), not the old order-level allowPublic', async () => {
+  const o = sampleOrder(cust.id, { allowPublic: true });
+  o.items[0].isPrivate = true;
+  await saveOrder(env, c, o);
+  const rows = (await env.DB.prepare('SELECT id, is_private, source FROM designs').all<any>()).results;
+  expect(rows.find((r: any) => r.id === o.items[0].designId).is_private).toBe(1);
+  expect(rows.filter((r: any) => r.is_private === 0)).toHaveLength(8);
+  expect(rows.every((r: any) => r.source === 'admin')).toBe(true);
 });
 
 test('library-only save creates designs and no order', async () => {

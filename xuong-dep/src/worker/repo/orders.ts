@@ -14,6 +14,7 @@ export type OrderRow = {
   id: string; code: string; customer_id: string; status: OrderStatus; currency: Currency; needed_by: string | null;
   note: string; allow_public: number; quote_token: string | null; quote_version: number; created_at: string;
   quoted_at: string | null; accepted_at: string | null; updated_at: string;
+  source: 'admin' | 'customer'; seen_by_admin: number; deliver_note: string; cancel_reason: string; cancelled_by: string | null;
 };
 
 export type Totals = { qty: number; amount: number; missingPrice: boolean };
@@ -21,12 +22,13 @@ export type Totals = { qty: number; amount: number; missingPrice: boolean };
 export type OrderView = OrderInput & {
   code: string; status: OrderStatus; quoteVersion: number; quoteToken: string | null; customer: Customer;
   totals: Totals; paid: number; due: number; payments: Payment[]; createdAt: string; quotedAt: string | null; acceptedAt: string | null;
+  source: 'admin' | 'customer'; seenByAdmin: boolean; cancelReason: string; cancelledBy: string | null;
 };
 
 export type OrderSummary = {
   id: string; code: string; status: OrderStatus; customerId: string; customerName: string; currency: Currency;
   createdAt: string; neededBy: string | null; acceptedAt: string | null; totalQty: number; amount: number;
-  missingPrice: boolean; paid: number; due: number; thumbKey: string | null;
+  missingPrice: boolean; paid: number; due: number; thumbKey: string | null; source: 'admin' | 'customer';
 };
 
 export const totalsOf = (items: Item[]): Totals => ({ qty: orderQty(items), ...orderAmount(items) });
@@ -74,6 +76,7 @@ export async function loadOrder(env: Env, id: string): Promise<OrderView | null>
     allowPublic: !!o.allow_public, images, items, code: o.code, status: o.status, quoteVersion: o.quote_version,
     quoteToken: o.quote_token, customer, totals, paid, due: Math.max(0, totals.amount - paid), payments,
     createdAt: o.created_at, quotedAt: o.quoted_at, acceptedAt: o.accepted_at,
+    deliverNote: o.deliver_note, source: o.source, seenByAdmin: !!o.seen_by_admin, cancelReason: o.cancel_reason, cancelledBy: o.cancelled_by,
   };
 }
 
@@ -99,7 +102,7 @@ export async function nextOrderCode(env: Env): Promise<string> {
 }
 
 /** Statements replacing an order's images, items and lines (and adding new designs). */
-export function replaceContentStmts(env: Env, o: OrderInput, at: string): Stmt[] {
+export function replaceContentStmts(env: Env, o: OrderInput, at: string, source: 'admin' | 'customer' = 'admin'): Stmt[] {
   const items = o.items.map((i, position) => ({ ...i, orderId: o.id, position }));
   const lines = o.items.flatMap((i) => i.lines.map((l, position) => ({ ...l, itemId: i.id, position })));
   return [
@@ -107,14 +110,15 @@ export function replaceContentStmts(env: Env, o: OrderInput, at: string): Stmt[]
     env.DB.prepare('DELETE FROM order_items WHERE order_id = ?').bind(o.id),
     env.DB.prepare('DELETE FROM order_images WHERE order_id = ?').bind(o.id),
     insertImagesStmt(env, o.id, o.images),
-    insertDesignsStmt(env, o.items, o.allowPublic, at),
+    insertDesignsStmt(env, o.items, source, at),
     env.DB.prepare(
-      `INSERT INTO order_items (id, order_id, design_id, image_id, tag_no, tap_x, tap_y, crop, crop_key, sole_id, strap_id, style_id, color_note, position)
+      `INSERT INTO order_items (id, order_id, design_id, image_id, tag_no, tap_x, tap_y, crop, crop_key, sole_id, strap_id, style_id, color_note, position, is_private, product_id, color_id)
        SELECT json_extract(value, '$.id'), json_extract(value, '$.orderId'), json_extract(value, '$.designId'),
               json_extract(value, '$.imageId'), json_extract(value, '$.tagNo'), json_extract(value, '$.tapX'),
               json_extract(value, '$.tapY'), json_extract(value, '$.crop'), json_extract(value, '$.cropKey'),
               json_extract(value, '$.soleId'), json_extract(value, '$.strapId'), json_extract(value, '$.styleId'),
-              json_extract(value, '$.colorNote'), json_extract(value, '$.position')
+              json_extract(value, '$.colorNote'), json_extract(value, '$.position'),
+              COALESCE(json_extract(value, '$.isPrivate'), 0), json_extract(value, '$.productId'), json_extract(value, '$.colorId')
        FROM json_each(?)`,
     ).bind(JSON.stringify(items)),
     env.DB.prepare(
@@ -157,7 +161,7 @@ async function summarize(env: Env, rows: (OrderRow & { customer_name: string })[
       id: o.id, code: o.code, status: o.status, customerId: o.customer_id, customerName: o.customer_name,
       currency: o.currency, createdAt: o.created_at, neededBy: o.needed_by, acceptedAt: o.accepted_at,
       totalQty: t.qty, amount: t.amount, missingPrice: t.missingPrice, paid: p, due: Math.max(0, t.amount - p),
-      thumbKey: its[0]?.cropKey || null,
+      thumbKey: its[0]?.cropKey || null, source: o.source,
     };
   });
 }
@@ -185,6 +189,7 @@ export async function dashboard(env: Env) {
   const accepted = STATUSES.filter((s) => s !== 'da_huy' && rank(s) >= rank('khach_dong_y'));
   const inList = (xs: string[]) => xs.map((s) => `'${s}'`).join(', '); // fixed status names, not user input
   return {
+    newFromCustomers: await summariesWhere(env, "o.source = 'customer' AND o.seen_by_admin = 0 AND o.status != 'da_huy'", []),
     waitingQuote: await summariesWhere(env, "o.status = 'cho_bao_gia'", []),
     justAccepted: await summariesWhere(env, "o.status = 'khach_dong_y' AND o.accepted_at >= ?", [weekAgo]),
     dueSoon: (await summariesWhere(env, "o.needed_by IS NOT NULL AND o.needed_by <= ? AND o.status NOT IN ('da_giao', 'hoan_tat', 'da_huy')", [addDays(today, 7)]))

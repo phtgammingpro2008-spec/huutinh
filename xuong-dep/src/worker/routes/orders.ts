@@ -26,7 +26,10 @@ async function resolveDesigns(env: Env, o: OrderInput) {
   }
 }
 
-export async function saveOrder(env: Env, o: OrderInput): Promise<Response> {
+export type SaveOpts = { source?: 'admin' | 'customer' };
+
+export async function saveOrder(env: Env, o: OrderInput, opts: SaveOpts = {}): Promise<Response> {
+  const source = opts.source ?? 'admin';
   if (!(await getCustomer(env, o.customerId))) return err(400, 'Không tìm thấy khách');
   await resolveDesigns(env, o);
   const at = nowIso(env);
@@ -38,13 +41,15 @@ export async function saveOrder(env: Env, o: OrderInput): Promise<Response> {
       try {
         await env.DB.batch([
           env.DB.prepare(
-            `INSERT INTO orders (id, code, customer_id, status, currency, needed_by, note, allow_public, created_at, updated_at)
-             VALUES (?, ?, ?, 'cho_bao_gia', ?, ?, ?, ?, ?, ?)
+            `INSERT INTO orders (id, code, customer_id, status, currency, needed_by, note, allow_public, created_at, updated_at,
+               source, seen_by_admin, deliver_note)
+             VALUES (?, ?, ?, 'cho_bao_gia', ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT(id) DO UPDATE SET customer_id = excluded.customer_id, currency = excluded.currency,
                needed_by = excluded.needed_by, note = excluded.note, allow_public = excluded.allow_public,
-               updated_at = excluded.updated_at`,
-          ).bind(o.id, code, o.customerId, o.currency, o.neededBy, o.note, o.allowPublic ? 1 : 0, at, at),
-          ...replaceContentStmts(env, o, at),
+               updated_at = excluded.updated_at, deliver_note = excluded.deliver_note`,
+          ).bind(o.id, code, o.customerId, o.currency, o.neededBy, o.note, o.allowPublic ? 1 : 0, at, at,
+            source, source === 'customer' ? 0 : 1, o.deliverNote ?? ''),
+          ...replaceContentStmts(env, o, at, source),
         ]);
         break;
       } catch (e) {
@@ -77,9 +82,10 @@ export async function saveOrder(env: Env, o: OrderInput): Promise<Response> {
   await env.DB.batch([
     env.DB.prepare(
       `UPDATE orders SET customer_id = ?, currency = ?, needed_by = ?, note = ?, allow_public = ?, updated_at = ?,
-         status = ?, accepted_at = CASE WHEN ? THEN NULL ELSE accepted_at END WHERE id = ?`,
-    ).bind(o.customerId, o.currency, o.neededBy, o.note, o.allowPublic ? 1 : 0, at, status, status !== old.status ? 1 : 0, o.id),
-    ...replaceContentStmts(env, o, at),
+         status = ?, accepted_at = CASE WHEN ? THEN NULL ELSE accepted_at END, deliver_note = ? WHERE id = ?`,
+    ).bind(o.customerId, o.currency, o.neededBy, o.note, o.allowPublic ? 1 : 0, at, status, status !== old.status ? 1 : 0,
+      o.deliverNote ?? old.deliver_note, o.id),
+    ...replaceContentStmts(env, o, at, source),
     ...requoteStmts,
   ]);
   return json(await loadOrder(env, o.id));
@@ -90,6 +96,7 @@ export function orderRoutes(r: Router) {
 
   r.on('GET', '/api/orders/:id', requireAdmin(async (_req, env, p) => {
     const o = await loadOrder(env, p.id);
+    if (o && !o.seenByAdmin) await env.DB.prepare('UPDATE orders SET seen_by_admin = 1 WHERE id = ?').bind(o.id).run();
     return o ? json(o) : err(404, 'Không tìm thấy đơn');
   }));
 

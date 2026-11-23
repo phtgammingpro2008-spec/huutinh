@@ -51,18 +51,18 @@ export function updateDesignStmt(env: Env, d: Design): Stmt {
 }
 
 /** One statement for any number of designs (D1 caps bound parameters at 100). Existing ids are left as they are. */
-export function insertDesignsStmt(env: Env, items: Item[], allowPublic: boolean, createdAt: string): Stmt {
+export function insertDesignsStmt(env: Env, items: Item[], source: 'admin' | 'customer', createdAt: string): Stmt {
   const rows = items.map((i) => ({
     id: i.designId, cropKey: i.cropKey, imageId: i.imageId, crop: i.crop, soleId: i.soleId, strapId: i.strapId,
-    styleId: i.styleId, note: i.colorNote, noteSearch: foldSearch(i.colorNote),
+    styleId: i.styleId, note: i.colorNote, noteSearch: foldSearch(i.colorNote), isPrivate: i.isPrivate ? 1 : 0,
   }));
   return env.DB.prepare(
-    `INSERT OR IGNORE INTO designs (id, crop_key, image_id, crop, label, sole_id, strap_id, style_id, note, note_search, allow_public, created_at)
+    `INSERT OR IGNORE INTO designs (id, crop_key, image_id, crop, label, sole_id, strap_id, style_id, note, note_search, is_private, source, created_at)
      SELECT json_extract(value, '$.id'), json_extract(value, '$.cropKey'), json_extract(value, '$.imageId'),
             json_extract(value, '$.crop'), 'dat_rieng', json_extract(value, '$.soleId'), json_extract(value, '$.strapId'),
-            json_extract(value, '$.styleId'), json_extract(value, '$.note'), json_extract(value, '$.noteSearch'), ?, ?
+            json_extract(value, '$.styleId'), json_extract(value, '$.note'), json_extract(value, '$.noteSearch'), json_extract(value, '$.isPrivate'), ?, ?
      FROM json_each(?)`,
-  ).bind(allowPublic ? 1 : 0, createdAt, JSON.stringify(rows));
+  ).bind(source, createdAt, JSON.stringify(rows));
 }
 
 export function insertImagesStmt(env: Env, orderId: string | null, images: OrderImage[]): Stmt {

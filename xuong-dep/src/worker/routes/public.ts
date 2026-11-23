@@ -5,7 +5,7 @@ import type { Env } from '../env';
 import { err, json, nowIso } from '../http';
 import { getCustomer } from '../repo/customers';
 import type { OrderRow } from '../repo/orders';
-import { latestQuote } from '../repo/quotes';
+import { latestQuote, type QuoteRow } from '../repo/quotes';
 import type { Router } from '../router';
 import { serveImage } from './images';
 
@@ -17,6 +17,21 @@ async function byToken(env: Env, token: string) {
   if (!q) return null;
   const customer = (await getCustomer(env, o.customer_id))!;
   return { o, q, customer };
+}
+
+/** Customer accepts quote `version` (link page or account). Same rules everywhere: latest version only, idempotent. */
+export async function acceptQuote(env: Env, o: OrderRow, q: QuoteRow, version: unknown, lang: Lang): Promise<Response> {
+  if (o.status === 'da_huy') return err(409, t(lang, 'cancelled'));
+  if (version !== o.quote_version || q.version !== o.quote_version) return err(409, t(lang, 'quote.changed'));
+  if (q.accepted_at) return json({ ok: true, version: q.version, acceptedAt: q.accepted_at }); // already accepted
+  if (o.status !== 'da_bao_gia') return err(409, t(lang, 'quote.changed'));
+  const at = nowIso(env);
+  await env.DB.batch([
+    env.DB.prepare("UPDATE orders SET status = 'khach_dong_y', accepted_at = ?, updated_at = ? WHERE id = ? AND quote_version = ?")
+      .bind(at, at, o.id, q.version),
+    env.DB.prepare('UPDATE quotes SET accepted_at = ? WHERE id = ? AND accepted_at IS NULL').bind(at, q.id),
+  ]);
+  return json({ ok: true, version: q.version, acceptedAt: at });
 }
 
 export function publicRoutes(r: Router) {
@@ -39,18 +54,7 @@ export function publicRoutes(r: Router) {
     try { b = await req.json(); } catch { /* empty body */ }
     const lang: Lang = LANGS.includes(b.lang as Lang) ? (b.lang as Lang) : (f?.customer.lang ?? 'vi');
     if (!f) return err(404, t(lang, 'notFound'));
-    const { o, q } = f;
-    if (o.status === 'da_huy') return err(409, t(lang, 'cancelled'));
-    if (b.version !== o.quote_version || q.version !== o.quote_version) return err(409, t(lang, 'quote.changed'));
-    if (q.accepted_at) return json({ ok: true, version: q.version, acceptedAt: q.accepted_at }); // already accepted
-    if (o.status !== 'da_bao_gia') return err(409, t(lang, 'quote.changed'));
-    const at = nowIso(env);
-    await env.DB.batch([
-      env.DB.prepare("UPDATE orders SET status = 'khach_dong_y', accepted_at = ?, updated_at = ? WHERE id = ? AND quote_version = ?")
-        .bind(at, at, o.id, q.version),
-      env.DB.prepare('UPDATE quotes SET accepted_at = ? WHERE id = ? AND accepted_at IS NULL').bind(at, q.id),
-    ]);
-    return json({ ok: true, version: q.version, acceptedAt: at });
+    return acceptQuote(env, f.o, f.q, b.version, lang);
   });
 
   // Addressed by quote version: a version's photos never change, so they can be cached for good.

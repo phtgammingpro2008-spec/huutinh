@@ -33,6 +33,11 @@ export type Item = {
   styleId: string | null;
   colorNote: string;
   lines: Line[];
+  /** "Mẫu đặt riêng": not shown to other customers in the library. */
+  isPrivate?: boolean;
+  /** Set when the item was ordered from a product colour. */
+  productId?: string | null;
+  colorId?: string | null;
 };
 
 export type OrderImage = { id: string; key: string; width: number; height: number };
@@ -46,6 +51,8 @@ export type OrderInput = {
   allowPublic: boolean;
   images: OrderImage[];
   items: Item[];
+  /** Where in Cambodia the goods are received (free text). */
+  deliverNote?: string;
 };
 
 export type LineSetting = { key: string; label: Record<Lang, string>; sizeFrom: number; sizeTo: number };

@@ -16,7 +16,7 @@ export function designRoutes(r: Router) {
     const missing = items.find((i) => !i.cropKey);
     if (missing) return err(400, `Mẫu số ${missing.tagNo} chưa có ảnh cắt`);
     const at = nowIso(env);
-    await env.DB.batch([insertImagesStmt(env, null, images), insertDesignsStmt(env, items, false, at)]);
+    await env.DB.batch([insertImagesStmt(env, null, images), insertDesignsStmt(env, items, 'admin', at)]);
     return json({ designIds: items.map((i) => i.designId) });
   }));
 
