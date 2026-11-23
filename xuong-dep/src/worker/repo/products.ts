@@ -15,7 +15,9 @@ export type Collection = { id: string; title: Names; subtitle: Names; coverKey: 
 export type Poster = {
   id: string; tag: Names; title: Names; body: Names; imageKey: string | null; ctaLabel: Names; ctaHref: string; published: boolean; position: number;
 };
-export type Shop = { zalo: string; messenger: string; workshopAddress: string; warehouseAddress: string };
+export type Contact = { name: string; phone: string };
+/** Contact block of the site: one address (empty = Phnom Penh), the CEO and the sales manager (phone = Zalo). */
+export type Shop = { address: string; messenger: string; ceo: Contact; sales: Contact };
 
 const bad = (msg: string, code?: string): never => { throw Object.assign(new HttpError(400, msg), { code }); };
 const names = (v: any, max = 200, required = false, what = 'tên'): Names => {
@@ -199,10 +201,19 @@ export async function deletePoster(env: Env, id: string) {
 // ---- shop info ----
 export async function getShop(env: Env): Promise<Shop> {
   const r = await env.DB.prepare("SELECT value FROM settings WHERE key = 'shop'").first<{ value: string }>();
-  return { zalo: '', messenger: '', workshopAddress: '', warehouseAddress: '', ...parseJson<Partial<Shop>>(r?.value, {}) };
+  const v = parseJson<any>(r?.value, {});
+  const contact = (c: any): Contact => ({ name: str(c?.name, 100), phone: str(c?.phone, 40) });
+  // before 2a.1 the block was one Zalo and two addresses: Zalo became the sales contact, the warehouse the address
+  return {
+    address: str(v.address ?? (v.warehouseAddress || v.workshopAddress), 300),
+    messenger: str(v.messenger, 200),
+    ceo: contact(v.ceo),
+    sales: v.sales ? contact(v.sales) : { name: '', phone: str(v.zalo, 40) },
+  };
 }
 export async function saveShop(env: Env, b: any): Promise<Shop> {
-  const shop: Shop = { zalo: str(b.zalo, 40), messenger: str(b.messenger, 200), workshopAddress: str(b.workshopAddress, 300), warehouseAddress: str(b.warehouseAddress, 300) };
+  const contact = (c: any): Contact => ({ name: str(c?.name, 100), phone: str(c?.phone, 40) });
+  const shop: Shop = { address: str(b.address, 300), messenger: str(b.messenger, 200), ceo: contact(b.ceo), sales: contact(b.sales) };
   await env.DB.prepare("INSERT INTO settings (key, value) VALUES ('shop', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").bind(JSON.stringify(shop)).run();
   return shop;
 }

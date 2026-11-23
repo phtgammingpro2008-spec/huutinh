@@ -17,7 +17,8 @@ type Product = {
 };
 type Collection = { id?: string; title: Names; subtitle: Names; coverKey: string | null; color: string; published: boolean; position: number; productIds: string[] };
 type Poster = { id?: string; tag: Names; title: Names; body: Names; imageKey: string | null; ctaLabel: Names; ctaHref: string; published: boolean; position: number };
-type Shop = { zalo: string; messenger: string; workshopAddress: string; warehouseAddress: string };
+type Contact = { name: string; phone: string };
+type Shop = { address: string; messenger: string; ceo: Contact; sales: Contact };
 
 /** One text in Vietnamese, English and Khmer. Empty languages fall back to Vietnamese on the site. */
 function NamesInput({ label, value, onChange, multiline }: { label: string; value: Names; onChange: (v: Names) => void; multiline?: boolean }) {
@@ -77,8 +78,9 @@ function Num({ label, value, onChange, width = 90 }: { label: string; value: num
 }
 
 /** List + editor for one kind of site content. */
-function Crud<T extends { id?: string; published: boolean }>({ path, noun, blank, title, form, after }: {
+function Crud<T extends { id?: string; published: boolean }>({ path, noun, blank, title, form, after, thumb }: {
   path: string; noun: string; blank: () => T; title: (x: T) => string; form: (x: T, set: (p: Partial<T>) => void) => ReactNode; after?: (x: T) => ReactNode;
+  thumb?: (x: T) => string | null | undefined;
 }) {
   const [list, setList] = useState<T[] | null>(null);
   const [edit, setEdit] = useState<T | null>(null);
@@ -129,6 +131,7 @@ function Crud<T extends { id?: string; published: boolean }>({ path, noun, blank
         {list?.map((x) => (
           <li key={x.id}>
             <button type="button" className="list-item btn-block" style={{ justifyContent: 'flex-start' }} onClick={() => setEdit(x)}>
+              {thumb && (thumb(x) ? <img className="thumb" src={imgUrl(thumb(x)!)} alt="" loading="lazy" /> : <span className="thumb" />)}
               <span className="grow" style={{ textAlign: 'left' }}>{title(x) || '(chưa đặt tên)'}</span>
               <span className={`badge ${x.published ? 's-khach_dong_y' : ''}`}>{x.published ? 'Đang hiện' : 'Đang ẩn'}</span>
             </button>
@@ -259,27 +262,40 @@ function ShopForm() {
   const [error, setError] = useState('');
   useEffect(() => { api<Shop>('GET', '/api/shop').then(setS).catch((e) => setError(e.message)); }, []);
   if (!s) return error ? <p className="error">{error}</p> : <div className="skeleton" style={{ height: 120 }} />;
-  const field = (k: keyof Shop, label: string, ph = '') => (
-    <div><label htmlFor={`shop-${k}`}>{label}</label><input id={`shop-${k}`} value={s[k]} placeholder={ph} onChange={(e) => { setMsg(''); setS({ ...s, [k]: e.target.value }); }} /></div>
+  const edit = (patch: Partial<Shop>) => { setMsg(''); setS({ ...s, ...patch }); };
+  const person = (key: 'ceo' | 'sales', title: string, hint: string) => (
+    <fieldset className="card stack">
+      <legend>{title}</legend>
+      <p className="small muted" style={{ margin: 0 }}>{hint}</p>
+      <div><label htmlFor={`shop-${key}-name`}>Tên</label>
+        <input id={`shop-${key}-name`} value={s[key].name} placeholder="Để trống nếu chưa muốn hiện tên" onChange={(e) => edit({ [key]: { ...s[key], name: e.target.value } } as Partial<Shop>)} /></div>
+      <div><label htmlFor={`shop-${key}-phone`}>Số điện thoại / Zalo</label>
+        <input id={`shop-${key}-phone`} type="tel" inputMode="tel" value={s[key].phone} placeholder="012 345 678" onChange={(e) => edit({ [key]: { ...s[key], phone: e.target.value } } as Partial<Shop>)} /></div>
+    </fieldset>
   );
   async function save() {
     setError('');
-    try { setS(await api<Shop>('PUT', '/api/shop', s)); setMsg('Đã lưu thông tin xưởng'); } catch (e) { setError(e instanceof ApiError ? e.message : 'Không lưu được'); }
+    try { setS(await api<Shop>('PUT', '/api/shop', s)); setMsg('Đã lưu thông tin liên hệ'); } catch (e) { setError(e instanceof ApiError ? e.message : 'Không lưu được'); }
   }
   return (
-    <section className="card stack">
-      {field('zalo', 'Số Zalo', '0901 234 567')}
-      {field('messenger', 'Link Messenger', 'm.me/hluxury')}
-      {field('workshopAddress', 'Địa chỉ xưởng')}
-      {field('warehouseAddress', 'Địa chỉ kho (Phnom Penh)')}
+    <section className="stack">
+      <p className="small muted" style={{ margin: 0 }}>Hiện ở chân trang web. Nút Zalo ở cuối màn hình gọi tới Quản lý bán hàng (chưa có thì Tổng giám đốc).</p>
+      {person('ceo', 'Tổng giám đốc', 'Liên hệ cho đối tác, đơn lớn.')}
+      {person('sales', 'Quản lý bán hàng', 'Khách hỏi giá, đặt hàng, nhắn Zalo.')}
+      <div className="card stack">
+        <div><label htmlFor="shop-address">Địa chỉ</label>
+          <input id="shop-address" value={s.address} placeholder="Để trống = Phnom Penh, Campuchia" onChange={(e) => edit({ address: e.target.value })} /></div>
+        <div><label htmlFor="shop-messenger">Link Messenger (nếu có)</label>
+          <input id="shop-messenger" value={s.messenger} placeholder="m.me/hluxury" onChange={(e) => edit({ messenger: e.target.value })} /></div>
+      </div>
       {error && <p className="error">{error}</p>}
       {msg && <p className="success" role="status">{msg}</p>}
-      <button type="button" className="btn-primary" onClick={save}>Lưu thông tin xưởng</button>
+      <button type="button" className="btn-primary" onClick={save}>Lưu thông tin liên hệ</button>
     </section>
   );
 }
 
-const TABS = [['products', 'Sản phẩm'], ['collections', 'Bộ sưu tập'], ['posters', 'Poster'], ['shop', 'Thông tin xưởng']] as const;
+const TABS = [['products', 'Sản phẩm'], ['collections', 'Bộ sưu tập'], ['posters', 'Poster'], ['shop', 'Liên hệ']] as const;
 type Tab = (typeof TABS)[number][0];
 
 /** Everything the public site shows: products, collections, posters, workshop info. */
@@ -296,18 +312,18 @@ export function Content() {
         ))}
       </div>
       {tab === 'products' && (
-        <Crud<Product> key="p" path="/api/products" noun="sản phẩm" title={(x) => x.name.vi}
+        <Crud<Product> key="p" path="/api/products" noun="sản phẩm" title={(x) => x.name.vi} thumb={(x) => x.colors[0]?.imageKey}
           blank={() => ({ name: N0(), desc: N0(), styleId: null, soleId: null, strapId: null, lines: [], isNew: true, published: false, hasBrandLogo: false, position: 0, colors: [] })}
           form={(x, set) => <ProductForm p={x} set={set} />}
           after={(x) => x.published && x.slug ? <a className="btn btn-block" href={`/san-pham/${x.slug}`} target="_blank" rel="noreferrer">Xem trên trang web</a> : null} />
       )}
       {tab === 'collections' && (
-        <Crud<Collection> key="c" path="/api/collections" noun="bộ sưu tập" title={(x) => x.title.vi}
+        <Crud<Collection> key="c" path="/api/collections" noun="bộ sưu tập" title={(x) => x.title.vi} thumb={(x) => x.coverKey}
           blank={() => ({ title: N0(), subtitle: N0(), coverKey: null, color: '#1b3b2c', published: false, position: 0, productIds: [] })}
           form={(x, set) => <CollectionForm c={x} set={set} products={products} />} />
       )}
       {tab === 'posters' && (
-        <Crud<Poster> key="o" path="/api/posters" noun="poster" title={(x) => x.title.vi}
+        <Crud<Poster> key="o" path="/api/posters" noun="poster" title={(x) => x.title.vi} thumb={(x) => x.imageKey}
           blank={() => ({ tag: N0(), title: N0(), body: N0(), imageKey: null, ctaLabel: N0(), ctaHref: '/san-pham', published: false, position: 0 })}
           form={(x, set) => <PosterForm p={x} set={set} />} />
       )}

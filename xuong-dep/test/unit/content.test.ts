@@ -35,12 +35,19 @@ test('collection keeps product order; poster order and publish; shop info', asyn
   const posterA = (await call(env, 'POST', '/api/posters', { title: { vi: 'Mùa hè' }, published: true, position: 2, imageKey: img }, admin)).body;
   await call(env, 'POST', '/api/posters', { title: { vi: 'Tết' }, published: true, position: 1 }, admin);
   await call(env, 'POST', '/api/posters', { title: { vi: 'Nháp' }, published: false, position: 0 }, admin);
-  expect((await call(env, 'PUT', '/api/shop', { zalo: '0901234567', messenger: 'm.me/hl', workshopAddress: 'Q.12', warehouseAddress: 'Phnom Penh' }, admin)).status).toBe(200);
+  expect((await call(env, 'PUT', '/api/shop', { address: 'Phnom Penh', messenger: 'm.me/hl', ceo: { name: 'Anh Tình', phone: '0901 234 567' }, sales: { name: 'Chị Hoa', phone: '012 345 678' } }, admin)).status).toBe(200);
   const { getPublicHome } = await import('../../src/worker/repo/products');
   const home = await getPublicHome(env);
   expect(home.posters.map((p) => p.title.vi)).toEqual(['Tết', 'Mùa hè']);
   expect(home.collections[0]).toMatchObject({ title: { vi: 'Đi biển cuối tuần' }, productIds: [p2.id, p1.id] });
-  expect(home.shop).toEqual({ zalo: '0901234567', messenger: 'm.me/hl', workshopAddress: 'Q.12', warehouseAddress: 'Phnom Penh' });
+  expect(home.shop).toEqual({ address: 'Phnom Penh', messenger: 'm.me/hl', ceo: { name: 'Anh Tình', phone: '0901 234 567' }, sales: { name: 'Chị Hoa', phone: '012 345 678' } });
   expect((await call(env, 'PUT', `/api/posters/${posterA.id}`, { ...posterA, published: false }, admin)).body.published).toBe(false);
   expect((await call(env, 'DELETE', `/api/collections/${col.id}`, undefined, admin)).status).toBe(200);
+});
+
+test('old shop info (one Zalo, two addresses) still reads: Zalo becomes the sales contact, warehouse the address', async () => {
+  await env.DB.prepare("INSERT INTO settings (key, value) VALUES ('shop', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
+    .bind(JSON.stringify({ zalo: '0901234567', messenger: '', workshopAddress: 'Q.12', warehouseAddress: 'Phnom Penh' })).run();
+  const shop = (await call(env, 'GET', '/api/shop', undefined, admin)).body;
+  expect(shop).toEqual({ address: 'Phnom Penh', messenger: '', ceo: { name: '', phone: '' }, sales: { name: '', phone: '0901234567' } });
 });

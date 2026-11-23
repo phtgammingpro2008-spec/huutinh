@@ -25,7 +25,7 @@ beforeEach(async () => { env = await createTestEnv(); admin = await loginCookie(
 test('home HTML contains poster title and product names server-side', async () => {
   await call(env, 'POST', '/api/posters', { title: { vi: 'Mùa hè rực rỡ', en: 'Bright summer' }, tag: { vi: 'MỚI · HÈ 2027' }, published: true, imageKey: await upPub() }, admin);
   await product('Kẹp đế êm');
-  await call(env, 'PUT', '/api/shop', { zalo: '0901234567', messenger: '', workshopAddress: 'Q.12, TP.HCM', warehouseAddress: '' }, admin);
+  await call(env, 'PUT', '/api/shop', { address: '', messenger: '', ceo: { name: 'Anh Tình', phone: '0901 234 567' }, sales: { name: 'Chị Hoa', phone: '012 345 678' } }, admin);
   const r = await call(env, 'GET', '/');
   expect(r.status).toBe(200);
   expect(r.headers.get('content-type')).toContain('text/html');
@@ -35,8 +35,15 @@ test('home HTML contains poster title and product names server-side', async () =
   expect(html).toContain('Mùa hè rực rỡ');
   expect(html).toContain('MỚI · HÈ 2027');
   expect(html).toContain('Kẹp đế êm');
-  expect(html).toContain('Q.12, TP.HCM');
+  // no address typed: the capital of Cambodia
+  expect(html).toContain('Phnom Penh, Campuchia');
+  expect(html).toContain('Tổng giám đốc');
+  expect(html).toContain('Anh Tình');
+  expect(html).toContain('Quản lý bán hàng');
+  expect(html).toContain('href="tel:012345678"');
   expect(html).toContain('Gửi ảnh nhận báo giá');
+  // the Zalo button reaches the sales manager
+  expect(html).toContain('href="https://zalo.me/012345678"');
   expect(html).toContain('href="https://zalo.me/0901234567"');
   // English by ?lang=
   const en = (await call(env, 'GET', '/?lang=en')).body as string;

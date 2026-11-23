@@ -22,8 +22,8 @@ export function OrderRow({ o, extra }: { o: OrderSummary; extra?: string }) {
     <a className="list-item order-row" href={`#/orders/${o.id}`}>
       {o.thumbKey ? <img className="thumb" src={imgUrl(o.thumbKey)} alt="" loading="lazy" /> : <div className="thumb" />}
       <div className="grow">
-        <div className="row"><strong className="grow">{o.code}</strong>{o.source === 'customer' && <span className="badge src-customer">Khách tự đặt</span>}<StatusBadge s={o.status} /></div>
-        <div className="small">{o.customerName} · <span className="num">{formatQty(o.totalQty)} đôi</span>
+        <div className="row wrap order-row-head"><strong className="grow code">{o.code}</strong>{o.source === 'customer' && <span className="badge src-customer">Khách tự đặt</span>}<StatusBadge s={o.status} /></div>
+        <div className="small">{o.customerName}{o.totalQty > 0 && <> · <span className="num">{formatQty(o.totalQty)} đôi</span></>}
           {o.amount > 0 && <> · <span className="num">{formatMoney(o.amount, o.currency, 'vi')}</span></>}</div>
         {extra && <div className="small muted">{extra}</div>}
       </div>

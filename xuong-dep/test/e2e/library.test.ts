@@ -25,7 +25,7 @@ async function openLibrary() {
 test('designs from the sample order appear (9 cards)', async () => {
   await openLibrary();
   await page.waitForFunction(() => document.querySelectorAll('.design-card').length === 9);
-  expect(await page.locator('.design-card .badge', { hasText: 'Mẫu đặt riêng' }).count()).toBe(9);
+  expect(await page.locator('.design-card .badge', { hasText: 'Mẫu theo đơn' }).count()).toBe(9);
 });
 
 test('filter by label Mẫu cố định after relabelling one shows 1', async () => {

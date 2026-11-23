@@ -1,7 +1,8 @@
 import { imgUrl } from '../api';
 import type { Design } from '../catalog';
 
-export const LABEL_VI = { co_dinh: 'Mẫu cố định', dat_rieng: 'Mẫu đặt riêng' } as const;
+/** Phase-1 label: made for one order vs. a fixed workshop design (not the privacy tick "Mẫu đặt riêng"). */
+export const LABEL_VI = { co_dinh: 'Mẫu cố định', dat_rieng: 'Mẫu theo đơn' } as const;
 
 export function DesignCard({ d }: { d: Design }) {
   return (

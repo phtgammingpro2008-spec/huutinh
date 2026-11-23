@@ -71,7 +71,7 @@ async function customerView(env: Env, v: OrderView, row: OrderRow) {
   return {
     id: v.id, code: v.code, status: v.status, createdAt: v.createdAt, neededBy: v.neededBy, note: v.note,
     deliverNote: v.deliverNote ?? '', currency: v.currency, cancelReason: v.cancelReason, cancelledBy: v.cancelledBy,
-    images: v.images,
+    images: v.images, productTitles: v.productTitles,
     items: v.items.map((i: Item) => ({ ...i, lines: i.lines.map((l) => ({ ...l, unitPrice: null })) })),
     totals: { qty: v.totals.qty },
     quote: quoted ? (q!.data as QuoteSnapshot) : null,

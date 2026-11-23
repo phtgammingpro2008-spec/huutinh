@@ -101,7 +101,7 @@ function posterDots() {
 /** Logged-in product page: tapping a colour shows its picture; the order link carries the chosen colours. */
 function colourPicker() {
   const img = document.getElementById('product-img') as HTMLImageElement | null;
-  const order = document.querySelector<HTMLAnchorElement>('.product-info a.btn-cta:not([data-need-login])');
+  const order = document.querySelector<HTMLAnchorElement>('.sticky-cta a.cta-main:not([data-need-login])');
   const boxes = [...document.querySelectorAll<HTMLInputElement>('.swatch input[name="mau"]')];
   if (!boxes.length) return;
   const base = order?.getAttribute('href') ?? '';

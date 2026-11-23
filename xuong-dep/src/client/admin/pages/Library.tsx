@@ -32,7 +32,7 @@ export function Library() {
       <div className="chips">
         <button type="button" className="chip" aria-pressed={label === ''} onClick={() => setLabel('')}>Tất cả</button>
         <button type="button" className="chip" aria-pressed={label === 'co_dinh'} onClick={() => setLabel('co_dinh')}>Mẫu cố định</button>
-        <button type="button" className="chip" aria-pressed={label === 'dat_rieng'} onClick={() => setLabel('dat_rieng')}>Mẫu đặt riêng</button>
+        <button type="button" className="chip" aria-pressed={label === 'dat_rieng'} onClick={() => setLabel('dat_rieng')}>Mẫu theo đơn</button>
       </div>
       <div className="row" style={{ margin: '8px 0' }}>
         {(['style', 'sole', 'strap'] as MaterialKind[]).map((k) => (
