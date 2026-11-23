@@ -35,8 +35,10 @@ export async function createSession(env: Env, userId: string): Promise<string> {
   return token;
 }
 
-export function sessionCookie(token: string, maxAge = SESSION_DAYS * 86400): string {
-  return `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+/** Secure is dropped only for plain-http local dev (browsers refuse Secure cookies there). */
+export function sessionCookie(req: Request, token: string, maxAge = SESSION_DAYS * 86400): string {
+  const secure = new URL(req.url).protocol === 'https:' ? ' Secure;' : '';
+  return `${COOKIE}=${token}; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=${maxAge}`;
 }
 
 export async function userIdFromRequest(req: Request, env: Env): Promise<string | null> {

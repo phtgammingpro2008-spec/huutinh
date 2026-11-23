@@ -50,6 +50,16 @@ test('login sets sid cookie with HttpOnly and 90-day Max-Age', async () => {
   expect(sc).toContain(`Max-Age=${90 * 24 * 3600}`);
 });
 
+test('over plain http (local dev) the cookie is not Secure, so browsers keep it', async () => {
+  const env = await createTestEnv();
+  const worker = (await import('../../src/worker/index')).default;
+  const body = JSON.stringify({ name: 'anh', password: 'mat-khau-123' });
+  const r = await worker.fetch(new Request('http://127.0.0.1:8787/api/setup', { method: 'POST', body, headers: { 'content-type': 'application/json' } }), env);
+  const sc = r.headers.get('set-cookie')!;
+  expect(sc).toContain('HttpOnly');
+  expect(sc).not.toContain('Secure');
+});
+
 test('GET /api/me without cookie → 401, with cookie → user name', async () => {
   const env = await createTestEnv();
   const r0 = await call(env, 'GET', '/api/me');

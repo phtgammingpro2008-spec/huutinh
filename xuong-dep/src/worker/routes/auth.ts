@@ -23,7 +23,7 @@ export function authRoutes(r: Router) {
     const row = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(id).first();
     if (!row) return err(409, 'Đã có tài khoản quản trị');
     const token = await createSession(env, id);
-    return json({ id, name }, 200, { 'set-cookie': sessionCookie(token) });
+    return json({ id, name }, 200, { 'set-cookie': sessionCookie(req, token) });
   });
 
   r.on('POST', '/api/login', async (req, env) => {
@@ -34,13 +34,13 @@ export function authRoutes(r: Router) {
       .bind(name).first<{ id: string; name: string; password_hash: string }>();
     if (!u || !(await verifyPassword(password, u.password_hash))) return err(401, 'Sai mật khẩu');
     const token = await createSession(env, u.id);
-    return json({ id: u.id, name: u.name }, 200, { 'set-cookie': sessionCookie(token) });
+    return json({ id: u.id, name: u.name }, 200, { 'set-cookie': sessionCookie(req, token) });
   });
 
   r.on('POST', '/api/logout', async (req, env) => {
     const token = getCookie(req, COOKIE);
     if (token) await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
-    return json({ ok: true }, 200, { 'set-cookie': sessionCookie('', 0) });
+    return json({ ok: true }, 200, { 'set-cookie': sessionCookie(req, '', 0) });
   });
 
   r.on('GET', '/api/me', requireAuth(async (_req, env, _p, ctx) => {
