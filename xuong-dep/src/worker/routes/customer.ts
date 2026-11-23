@@ -70,7 +70,7 @@ async function customerView(env: Env, v: OrderView, row: OrderRow) {
   const quoted = !!q && row.status !== 'cho_bao_gia';
   return {
     id: v.id, code: v.code, status: v.status, createdAt: v.createdAt, neededBy: v.neededBy, note: v.note,
-    deliverNote: v.deliverNote ?? '', currency: v.currency, cancelReason: v.cancelReason,
+    deliverNote: v.deliverNote ?? '', currency: v.currency, cancelReason: v.cancelReason, cancelledBy: v.cancelledBy,
     images: v.images,
     items: v.items.map((i: Item) => ({ ...i, lines: i.lines.map((l) => ({ ...l, unitPrice: null })) })),
     totals: { qty: v.totals.qty },
@@ -110,6 +110,13 @@ export function customerRoutes(r: Router) {
     for (const it of input.items) for (const l of it.lines) l.unitPrice = oldPrice.get(l.id) ?? null;
     const res = await saveOrder(env, input, { source: 'customer' });
     if (!res.ok) return res;
+    // the first order of a product colour gives it its library design; later orders reuse that one design
+    const linked = input.items.filter((i) => i.colorId).map((i) => ({ c: i.colorId, d: i.designId }));
+    if (linked.length) {
+      await env.DB.prepare(
+        "UPDATE product_colors SET design_id = json_extract(j.value, '$.d') FROM json_each(?) j WHERE product_colors.id = json_extract(j.value, '$.c') AND product_colors.design_id IS NULL",
+      ).bind(JSON.stringify(linked)).run();
+    }
     const row = (await getOrderRow(env, p.id))!;
     return json(await customerView(env, (await loadOrder(env, p.id))!, row));
   }));

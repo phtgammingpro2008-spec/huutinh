@@ -35,3 +35,20 @@ export function safeNext(raw: string | null): string | null {
     return u.origin === location.origin ? u.pathname + u.search + u.hash : null;
   } catch { return null; }
 }
+
+/** Uploads one of the customer's photos (or a crop of it). Retries twice on network trouble. */
+export async function uploadImage(blob: Blob, width: number, height: number, id?: string): Promise<{ id: string; key: string }> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(`/api/c/images?w=${width}&h=${height}${id ? `&id=${id}` : ''}`, {
+        method: 'POST', body: blob, headers: { 'content-type': blob.type || 'image/jpeg' }, credentials: 'same-origin',
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new ApiError(res.status, data?.error ?? `HTTP ${res.status}`, data?.code);
+      return data;
+    } catch (e) {
+      if (attempt >= 2 || (e instanceof ApiError && e.status > 0 && e.status < 500)) throw e instanceof ApiError ? e : new ApiError(0, '', 'network');
+      await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+    }
+  }
+}

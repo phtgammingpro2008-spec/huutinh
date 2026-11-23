@@ -1,5 +1,7 @@
 import { err, json, readJson } from '../http';
 import { listLibrary } from '../repo/library';
+import { listMaterials } from '../repo/materials';
+import { getSettings } from '../repo/settings';
 import {
   deleteCollection, deletePoster, deleteProduct, getProduct, getShop, listCollections, listPosters, listProducts,
   saveCollection, savePoster, saveProduct, saveShop,
@@ -38,6 +40,14 @@ export function contentRoutes(r: Router) {
       styleId: g('styleId'), soleId: g('soleId'), strapId: g('strapId'), q: g('q'),
       sort: sp.get('sort') === 'popular' ? 'popular' : 'new', offset: Number(sp.get('cursor') ?? 0) || 0,
     }));
+  }));
+  /** Size lines and visible materials, for the customer's order form and library filters. */
+  r.on('GET', '/api/c/catalog', requireCustomer(async (_req, env) => {
+    const [settings, mats] = await Promise.all([getSettings(env), listMaterials(env)]);
+    return json({
+      lines: settings.lines,
+      materials: mats.map((m) => ({ id: m.id, kind: m.kind, name: { vi: m.nameVi, en: m.nameEn, km: m.nameKm } })),
+    });
   }));
   r.on('GET', '/api/c/products', requireCustomer(async (_req, env) => json(await listProducts(env, { publicOnly: true }))));
   r.on('GET', '/api/c/products/:slug', requireCustomer(async (_req, env, p) => {

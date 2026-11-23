@@ -2,8 +2,10 @@ import type { Box } from '../../../shared/types';
 import { imgUrl } from '../api';
 
 /** Shows the crop of a photo with CSS only (no extra download), or a stored crop image. */
-export function CropThumb({ image, crop, cropKey, size = 64 }: {
+export function CropThumb({ image, crop, cropKey, size = 64, urlOf = imgUrl }: {
   image?: { url: string; width: number; height: number } | null; crop?: Box | null; cropKey?: string; size?: number;
+  /** Where a stored key is served: /img/… for the admin, /media/… for customers. */
+  urlOf?: (key: string) => string;
 }) {
   if (image && crop) {
     const ratio = (crop.w * image.width) / (crop.h * image.height);
@@ -17,6 +19,6 @@ export function CropThumb({ image, crop, cropKey, size = 64 }: {
       }} />
     );
   }
-  if (cropKey) return <img className="thumb" src={imgUrl(cropKey)} alt="" style={{ width: size, height: size }} loading="lazy" />;
+  if (cropKey) return <img className="thumb" src={urlOf(cropKey)} alt="" style={{ width: size, height: size }} loading="lazy" />;
   return <div className="thumb" style={{ width: size, height: size }} />;
 }

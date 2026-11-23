@@ -13,7 +13,9 @@ export type EditorImage = {
 };
 
 /** "Chọn ảnh": compresses each photo on the phone and hands it over at once. Unreadable files get a message; the rest still load. */
-export function PhotoPicker({ onAdded, label = 'Chọn ảnh' }: { onAdded: (img: EditorImage) => void; label?: string }) {
+export function PhotoPicker({ onAdded, label = 'Chọn ảnh', busyText = (n) => `Đang xử lý ${n} ảnh…`, badText }: {
+  onAdded: (img: EditorImage) => void; label?: string; busyText?: (n: number) => string; badText?: (fileName: string) => string;
+}) {
   const [errors, setErrors] = useState<string[]>([]);
   const [busy, setBusy] = useState(0);
 
@@ -27,7 +29,7 @@ export function PhotoPicker({ onAdded, label = 'Chọn ảnh' }: { onAdded: (img
         const { blob, width, height } = await compressImage(file);
         onAdded({ id: crypto.randomUUID(), name: file.name, width, height, url: URL.createObjectURL(blob), key: null, blob });
       } catch (err) {
-        setErrors((xs) => [...xs, err instanceof ImageError ? err.message : `Không đọc được ảnh này: ${file.name}`]);
+        setErrors((xs) => [...xs, badText ? badText(file.name) : err instanceof ImageError ? err.message : `Không đọc được ảnh này: ${file.name}`]);
       } finally {
         setBusy((n) => n - 1);
       }
@@ -39,7 +41,7 @@ export function PhotoPicker({ onAdded, label = 'Chọn ảnh' }: { onAdded: (img
       <label htmlFor="photo-input" className="btn btn-block btn-primary" style={{ display: 'flex' }}>{label}</label>
       <input id="photo-input" type="file" accept="image/*" multiple onChange={onChange} aria-label={label}
         style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
-      {busy > 0 && <p className="muted small">Đang xử lý {busy} ảnh…</p>}
+      {busy > 0 && <p className="muted small">{busyText(busy)}</p>}
       {errors.map((m) => <p key={m} className="error" role="alert" style={{ marginTop: 8 }}>{m}</p>)}
     </div>
   );

@@ -158,3 +158,23 @@ test('reorder a visible library design without a photo', async () => {
   expect(r.body.items[0].cropKey).toBe(oa.items[0].cropKey);
   expect(r.body.images).toEqual([]);
 });
+
+test('ordering a product colour twice reuses one library design (the colour gets linked on first order)', async () => {
+  const pub = (await call(env, 'POST', '/api/content/images?w=1&h=1', jpeg, admin, { 'content-type': 'image/jpeg' })).body.key as string;
+  const p = (await call(env, 'POST', '/api/products', { name: { vi: 'Kẹp' }, published: true, colors: [{ name: { vi: 'Đen' }, imageKey: pub }] }, admin)).body;
+  const colorId = p.colors[0].id as string;
+  const fromProduct = () => ({
+    id: uid('order'), neededBy: null, note: '', deliverNote: '', images: [],
+    items: [item(1, { designId: uid('d'), imageId: null, crop: null, cropKey: '', productId: p.id, colorId, lines: [line({ qtyEach: 5 })] })],
+  });
+  const a = await customer(1), b = await customer(2);
+  const o1 = fromProduct(), o2 = fromProduct();
+  expect((await call(env, 'PUT', `/api/c/orders/${o1.id}`, o1, a.c)).status).toBe(200);
+  expect((await call(env, 'PUT', `/api/c/orders/${o2.id}`, o2, b.c)).status).toBe(200);
+  const d1 = (await call(env, 'GET', `/api/c/orders/${o1.id}`, undefined, a.c)).body.items[0].designId;
+  const d2 = (await call(env, 'GET', `/api/c/orders/${o2.id}`, undefined, b.c)).body.items[0].designId;
+  expect(d2).toBe(d1);
+  const lib = (await call(env, 'GET', '/api/c/library', undefined, a.c)).body.items.filter((x: any) => x.id === d1);
+  expect(lib).toHaveLength(1);
+  expect(lib[0].orderCount).toBe(2);
+});

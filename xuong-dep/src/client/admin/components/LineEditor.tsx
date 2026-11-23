@@ -3,10 +3,23 @@ import { formatQty } from '../../../shared/money';
 import { lineQty, resizeLine, sizesOf } from '../../../shared/totals';
 import type { Line, LineMode } from '../../../shared/types';
 
-const MODES: { mode: LineMode; label: string }[] = [
-  { mode: 'even', label: 'Đều mỗi size' },
-  { mode: 'per_size', label: 'Từng size' },
-  { mode: 'total', label: 'Tổng số đôi' },
+/** Every word the line editor shows; the admin uses Vietnamese, the customer area passes its language. */
+export type LineText = {
+  even: string; perSize: string; total: string; size: string; to: string;
+  sizeFrom: (l: string) => string; sizeTo: (l: string) => string; each: (l: string) => string; totalOf: (l: string) => string;
+  sizeOf: (s: number, l: string) => string; xSizes: (n: number) => string; split: string; eq: (n: string) => string;
+  remove: (l: string) => string; mode: (l: string) => string;
+};
+export const LINE_TEXT_VI: LineText = {
+  even: 'Đều mỗi size', perSize: 'Từng size', total: 'Tổng số đôi', size: 'Size', to: 'đến',
+  sizeFrom: (l) => `Size từ – ${l}`, sizeTo: (l) => `Size đến – ${l}`, each: (l) => `Số đôi mỗi size – ${l}`, totalOf: (l) => `Tổng số đôi – ${l}`,
+  sizeOf: (s, l) => `Size ${s} – ${l}`, xSizes: (n) => `× ${n} size`, split: 'Chia size theo chuẩn xưởng · ', eq: (n) => `= ${n} đôi`,
+  remove: (l) => `Xóa dòng ${l}`, mode: (l) => `Cách nhập – ${l}`,
+};
+const MODES: { mode: LineMode; key: 'even' | 'perSize' | 'total' }[] = [
+  { mode: 'even', key: 'even' },
+  { mode: 'per_size', key: 'perSize' },
+  { mode: 'total', key: 'total' },
 ];
 
 const toInt = (s: string) => {
@@ -36,8 +49,8 @@ function SizeInput({ label, value, onCommit, disabled }: { label: string; value:
 }
 
 /** One quantity line (e.g. Nam 39–44): range, entry mode and counts. */
-export function LineEditor({ line, label, onChange, onRemove, locked }: {
-  line: Line; label: string; onChange: (l: Line) => void; onRemove?: () => void; locked?: boolean;
+export function LineEditor({ line, label, onChange, onRemove, locked, text: x = LINE_TEXT_VI }: {
+  line: Line; label: string; onChange: (l: Line) => void; onRemove?: () => void; locked?: boolean; text?: LineText;
 }) {
   const setMode = (mode: LineMode) => {
     if (mode === line.mode) return;
@@ -54,41 +67,41 @@ export function LineEditor({ line, label, onChange, onRemove, locked }: {
     <div className="card" style={{ padding: 10, background: 'var(--surface-2)', border: 0 }}>
       <div className="row wrap">
         <strong className="grow">{label}</strong>
-        <span className="small muted">Size</span>
-        <SizeInput label={`Size từ – ${label}`} value={line.sizeFrom} disabled={locked}
+        <span className="small muted">{x.size}</span>
+        <SizeInput label={x.sizeFrom(label)} value={line.sizeFrom} disabled={locked}
           onCommit={(n) => onChange(resizeLine(line, n, line.sizeTo))} />
-        <span className="small muted">đến</span>
-        <SizeInput label={`Size đến – ${label}`} value={line.sizeTo} disabled={locked}
+        <span className="small muted">{x.to}</span>
+        <SizeInput label={x.sizeTo(label)} value={line.sizeTo} disabled={locked}
           onCommit={(n) => onChange(resizeLine(line, line.sizeFrom, n))} />
-        {onRemove && !locked && <button type="button" className="btn-sm btn-ghost" aria-label={`Xóa dòng ${label}`} onClick={onRemove}>✕</button>}
+        {onRemove && !locked && <button type="button" className="btn-sm btn-ghost" aria-label={x.remove(label)} onClick={onRemove}>✕</button>}
       </div>
-      <div className="seg" role="group" aria-label={`Cách nhập – ${label}`} style={{ margin: '8px 0' }}>
+      <div className="seg" role="group" aria-label={x.mode(label)} style={{ margin: '8px 0' }}>
         {MODES.map((m) => (
-          <button key={m.mode} type="button" aria-pressed={line.mode === m.mode} disabled={locked} onClick={() => setMode(m.mode)}>{m.label}</button>
+          <button key={m.mode} type="button" aria-pressed={line.mode === m.mode} disabled={locked} onClick={() => setMode(m.mode)}>{x[m.key]}</button>
         ))}
       </div>
       {line.mode === 'even' && (
         <div className="row">
-          <div className="grow"><QtyInput label={`Số đôi mỗi size – ${label}`} value={line.qtyEach} disabled={locked} onChange={(n) => onChange({ ...line, qtyEach: n })} /></div>
-          <span className="muted small">× {sizesOf(line).length} size</span>
+          <div className="grow"><QtyInput label={x.each(label)} value={line.qtyEach} disabled={locked} onChange={(n) => onChange({ ...line, qtyEach: n })} /></div>
+          <span className="muted small">{x.xSizes(sizesOf(line).length)}</span>
         </div>
       )}
       {line.mode === 'total' && (
-        <QtyInput label={`Tổng số đôi – ${label}`} value={line.qtyEach} disabled={locked} onChange={(n) => onChange({ ...line, qtyEach: n })} />
+        <QtyInput label={x.totalOf(label)} value={line.qtyEach} disabled={locked} onChange={(n) => onChange({ ...line, qtyEach: n })} />
       )}
       {line.mode === 'per_size' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 6 }}>
           {sizesOf(line).map((s) => (
             <div key={s}>
               <div className="small muted" style={{ textAlign: 'center' }}>{s}</div>
-              <QtyInput label={`Size ${s} – ${label}`} value={line.perSize[String(s)] ?? 0} disabled={locked}
+              <QtyInput label={x.sizeOf(s, label)} value={line.perSize[String(s)] ?? 0} disabled={locked}
                 onChange={(n) => onChange({ ...line, perSize: { ...line.perSize, [String(s)]: n } })} />
             </div>
           ))}
         </div>
       )}
       <p className="small right" style={{ margin: '6px 0 0' }}>
-        {line.mode === 'total' ? 'Chia size theo chuẩn xưởng · ' : ''}<strong className="num">= {formatQty(qty)} đôi</strong>
+        {line.mode === 'total' ? x.split : ''}<strong className="num">{x.eq(formatQty(qty))}</strong>
       </p>
     </div>
   );

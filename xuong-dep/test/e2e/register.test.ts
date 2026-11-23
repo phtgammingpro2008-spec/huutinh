@@ -34,6 +34,7 @@ test('register with phone written with spaces then log out and log in by email',
   await page.waitForURL(/\/tai-khoan/);
   await page.getByText('Xin chào, Chị Lan').waitFor();
 
+  await page.getByRole('link', { name: 'Hồ sơ' }).click();
   await page.getByRole('button', { name: 'Đăng xuất' }).click();
   await page.waitForURL(/\/dang-nhap/);
   await page.getByLabel('Số điện thoại hoặc email').fill('lan@example.com');

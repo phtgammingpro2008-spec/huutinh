@@ -1,22 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Lang } from '../../shared/types';
-import { LangGlobe } from '../ui/LangGlobe';
-import { ThemeToggle } from '../ui/ThemeToggle';
-import { useLang, type T } from '../ui/lang';
+import { saveLang, useLang, type T } from '../ui/lang';
+import { Account } from './Account';
+import { Controls } from './Controls';
 import { api, safeNext, type Me } from './api';
 import { ForgotForm, LoginForm, RegisterForm, ResetForm } from './pages/Auth';
 
 const homeOf = (role: string) => (role === 'admin' ? '/quan-ly' : '/tai-khoan');
-
-/** Header controls shared by every customer page: language globe + light/dark. */
-export function Controls({ t, lang, setLang }: { t: T; lang: Lang; setLang: (l: Lang) => void }) {
-  return (
-    <div className="row">
-      <LangGlobe value={lang} onChange={setLang} label={t('ui.lang')} />
-      <ThemeToggle labels={{ toDark: t('ui.to_dark'), toLight: t('ui.to_light') }} />
-    </div>
-  );
-}
 
 /** Premium two-part screen: dark brand band (left on wide screens) + the form card. */
 function AuthShell({ t, lang, setLang, title, sub, tabs, children, foot }: {
@@ -59,29 +49,6 @@ function AuthShell({ t, lang, setLang, title, sub, tabs, children, foot }: {
 const go = (url: string) => location.assign(url);
 const afterLogin = (role: string) => go(safeNext(new URLSearchParams(location.search).get('next')) ?? homeOf(role));
 
-/** Placeholder account home; Task 10 replaces it with the customer area. */
-function AccountHome({ me, t, lang, setLang }: { me: Me; t: T; lang: Lang; setLang: (l: Lang) => void }) {
-  async function logout() {
-    await api('POST', '/api/logout').catch(() => {});
-    go('/dang-nhap');
-  }
-  return (
-    <div className="app">
-      <header className="app-header">
-        <a className="brand" href="/" aria-label="HLUXURY">
-          <span className="brand-mark" aria-hidden="true">H</span>
-          <span className="brand-name">HLUXURY</span>
-        </a>
-        <Controls t={t} lang={lang} setLang={setLang} />
-      </header>
-      <main className="page">
-        <h1>{t('acc.hello', { name: me.name })}</h1>
-        <button type="button" className="btn" onClick={logout}>{t('acc.logout')}</button>
-      </main>
-    </div>
-  );
-}
-
 export function App() {
   const { lang, setLang, t } = useLang();
   const path = location.pathname.replace(/\/+$/, '') || '/';
@@ -89,7 +56,11 @@ export function App() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
 
   useEffect(() => {
-    api<Me>('GET', '/api/me').then(setMe, () => setMe(null));
+    api<Me>('GET', '/api/me').then((m) => {
+      if (m.role === 'customer' && m.lang && m.lang !== lang && path === '/tai-khoan') { saveLang(m.lang); setLang(m.lang); }
+      setMe(m);
+    }, () => setMe(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // signed-in people never see the login/register pages; the account needs a signed-in customer
@@ -132,6 +103,13 @@ export function App() {
       </AuthShell>
     );
   }
-  if (!me || me.role !== 'customer') return <main className="page muted">{t('acc.loading')}</main>;
-  return <AccountHome me={me} {...shell} />;
+  if (!me || me.role !== 'customer') return <main className="page"><div className="skeleton" style={{ height: 200 }} /></main>;
+  // a signed-in customer's language lives in their profile: the globe saves it there too
+  const setAccountLang = (l: Lang) => {
+    setLang(l);
+    document.cookie = `hl-lang=${l}; path=/; max-age=31536000; samesite=lax`;
+    setMe({ ...me, lang: l });
+    api('PUT', '/api/c/profile', { lang: l }).catch(() => {});
+  };
+  return <Account me={me} t={t} lang={lang} setLang={setAccountLang} onMe={setMe} />;
 }

@@ -5,7 +5,7 @@ import { LANGS, type Lang } from '../../shared/types';
 import { hashPassword, verifyPassword } from '../auth';
 import { emailFor, sendEmail } from '../email';
 import type { Env } from '../env';
-import { err, json, newToken, now, nowIso, readJson } from '../http';
+import { err, json, newToken, now, nowIso, readJson, str } from '../http';
 import { hitLimit } from '../ratelimit';
 import { deleteSessionsOf, getUser } from '../repo/users';
 import { requireAdmin, requireCustomer } from '../roles';
@@ -92,6 +92,19 @@ export function userRoutes(r: Router) {
     if (password.length < 8) return json({ error: uiT('vi', 'err.weak_password'), code: 'weak_password', field: 'password' }, 400);
     await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(await hashPassword(password), u.id).run();
     return json({ ok: true });
+  }));
+
+  /** Name and language of the signed-in customer (the customer record the workshop also sees). */
+  r.on('PUT', '/api/c/profile', requireCustomer(async (req, env, _p, ctx) => {
+    const b = await readJson(req);
+    const c = (await env.DB.prepare('SELECT name, lang FROM customers WHERE id = ?').bind(ctx.user!.customerId).first<{ name: string; lang: Lang }>())!;
+    const name = b.name === undefined ? c.name : str(b.name, 100);
+    if (!name) return json({ error: uiT(c.lang, 'err.bad_name'), code: 'bad_name', field: 'name' }, 400);
+    if (b.lang !== undefined && !LANGS.includes(b.lang)) return err(400, 'Ngôn ngữ không hợp lệ');
+    const lang: Lang = b.lang ?? c.lang;
+    await env.DB.prepare('UPDATE customers SET name = ?, name_search = ?, lang = ? WHERE id = ?')
+      .bind(name, foldSearch(name), lang, ctx.user!.customerId).run();
+    return json({ name, lang });
   }));
 
   // ---- admin: user management ----

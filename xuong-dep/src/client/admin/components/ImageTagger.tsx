@@ -18,6 +18,8 @@ export function ImageTagger(props: {
   onBoxChange: (tagNo: number, box: Box) => void;
   onWholeImage: () => void;
   readOnly?: boolean;
+  /** Hint and button text; Vietnamese by default (the customer area passes its language). */
+  text?: { hint: string; whole: string };
 }) {
   const { image, tags, selected } = props;
   const ref = useRef<HTMLDivElement>(null);
@@ -91,8 +93,8 @@ export function ImageTagger(props: {
     </div>
     {!props.readOnly && (
       <div className="row" style={{ marginTop: 8 }}>
-        <p className="muted small grow">Chạm vào từng đôi dép để gắn số.</p>
-        <button type="button" className="btn-sm" onClick={props.onWholeImage}>Cả ảnh là 1 mẫu</button>
+        <p className="muted small grow">{props.text?.hint ?? 'Chạm vào từng đôi dép để gắn số.'}</p>
+        <button type="button" className="btn-sm" onClick={props.onWholeImage}>{props.text?.whole ?? 'Cả ảnh là 1 mẫu'}</button>
       </div>
     )}
     </div>

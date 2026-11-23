@@ -15,6 +15,8 @@ const pageLang = (): Lang => (LANGS.includes(document.documentElement.lang as La
 function chooseLang(l: Lang) {
   document.cookie = `hl-lang=${l}; path=/; max-age=31536000; samesite=lax`;
   try { localStorage.setItem(LANG_KEY, l); } catch { /* storage blocked */ }
+  // a signed-in customer's profile keeps the language too (guests and the admin get a harmless 401/403)
+  fetch('/api/c/profile', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ lang: l }), credentials: 'same-origin' }).catch(() => {});
   const u = new URL(location.href);
   u.searchParams.delete('lang');
   location.replace(u.pathname + u.search + u.hash);
