@@ -25,26 +25,28 @@ test('first visit shows setup form, creating admin lands on Trang chủ', async 
   await ctx.close();
 });
 
-test("wrong password shows 'Sai mật khẩu', right password logs in", async () => {
+test("wrong password shows an error on the shared login page, right password returns to /quan-ly", async () => {
   const { ctx, page } = await phone();
   await page.goto(app.url + '/quan-ly');
-  await page.getByRole('button', { name: 'Đăng nhập' }).waitFor();
-  await page.getByLabel('Tên đăng nhập').fill(ADMIN.name);
-  await page.getByLabel('Mật khẩu').fill('sai-roi-nhe');
-  await page.getByRole('button', { name: 'Đăng nhập' }).click();
-  await page.getByText('Sai mật khẩu').waitFor();
-  await page.getByLabel('Mật khẩu').fill(ADMIN.password);
-  await page.getByRole('button', { name: 'Đăng nhập' }).click();
+  await page.waitForURL(/\/dang-nhap\?next=%2Fquan-ly/);
+  await page.getByLabel('Số điện thoại hoặc email').fill(ADMIN.name);
+  await page.getByLabel('Mật khẩu', { exact: true }).fill('sai-roi-nhe');
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+  await page.getByText('Sai thông tin đăng nhập hoặc mật khẩu').waitFor();
+  await page.getByLabel('Mật khẩu', { exact: true }).fill(ADMIN.password);
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await page.getByRole('heading', { name: 'Trang chủ' }).waitFor();
+  expect(new URL(page.url()).pathname).toBe('/quan-ly');
   await ctx.close();
 });
 
 test('manifest is served and linked; pages are noindex', async () => {
   const { ctx, page } = await phone();
-  const res = await page.goto(app.url + '/quan-ly');
-  expect(res!.headers()['x-robots-tag']).toBe('noindex');
-  expect(await page.locator('meta[name="robots"]').getAttribute('content')).toBe('noindex');
-  const href = await page.locator('link[rel="manifest"]').getAttribute('href');
+  const res = await page.request.get(app.url + '/quan-ly');
+  expect(res.headers()['x-robots-tag']).toBe('noindex');
+  const html = await res.text();
+  expect(html).toContain('<meta name="robots" content="noindex">');
+  const href = html.match(/<link rel="manifest" href="([^"]+)"/)![1];
   expect(href).toBe('/manifest.webmanifest');
   const m = await (await page.request.get(app.url + href)).json();
   expect(m.display).toBe('standalone');

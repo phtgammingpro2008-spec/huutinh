@@ -63,10 +63,15 @@ export function App() {
 
   async function check() {
     try {
-      setAuth({ state: 'in', me: await api<Me>('GET', '/api/me') });
+      const me = await api<Me>('GET', '/api/me');
+      // customers have their own area; the admin pages would only answer them with 404s
+      if (me.role === 'customer') { location.replace('/tai-khoan'); return; }
+      setAuth({ state: 'in', me });
     } catch {
       const s = await api<{ needsSetup: boolean }>('GET', '/api/setup-status').catch(() => ({ needsSetup: false }));
-      setAuth({ state: 'out', needsSetup: s.needsSetup });
+      // first run creates the admin here; after that everyone signs in on the shared login page
+      if (!s.needsSetup) { location.replace('/dang-nhap?next=' + encodeURIComponent('/quan-ly' + location.hash)); return; }
+      setAuth({ state: 'out', needsSetup: true });
     }
   }
 

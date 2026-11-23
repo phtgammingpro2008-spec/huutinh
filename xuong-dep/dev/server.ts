@@ -20,13 +20,14 @@ migrate(db);
 
 const mod = values.dist ? await import(join(ROOT, 'dist/worker.js')) : await import('../src/worker/index');
 const worker = mod.default as { fetch(req: Request, env: Env): Promise<Response> };
-const env: Env = { DB: db, IMAGES: fsBucket(join(dataDir, 'r2')) };
+// Emails are kept in memory and listed at /__dev/outbox (dev server only; never in the worker).
+const env: Env = { DB: db, IMAGES: fsBucket(join(dataDir, 'r2')), EMAIL_OUTBOX: [] };
 
 const server = Bun.serve({
   port: Number(values.port),
   hostname: '127.0.0.1',
   maxRequestBodySize: 20 * 1024 * 1024,
-  fetch: (req) => worker.fetch(req, env),
+  fetch: (req) => new URL(req.url).pathname === '/__dev/outbox' ? Response.json(env.EMAIL_OUTBOX) : worker.fetch(req, env),
 });
 const url = `http://127.0.0.1:${server.port}`;
 console.log(`READY ${url}${values.dist ? ' (dist/worker.js)' : ''}`);

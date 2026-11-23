@@ -36,6 +36,9 @@ function decodeB64(s: string): Uint8Array {
   return out;
 }
 
+/** Login, sign-up, password pages and the customer area share one shell (src/client/customer). */
+const ACCOUNT_PAGES = /^\/(dang-nhap|dang-ky|quen-mat-khau|dat-lai-mat-khau|tai-khoan)\/?$/;
+
 /** Embedded client files: `/` → admin app, `/q/<token>` → quote page, plus /assets, icons, manifest, sw. */
 function serveAsset(req: Request): Response | null {
   if (req.method !== 'GET' && req.method !== 'HEAD') return null;
@@ -43,6 +46,7 @@ function serveAsset(req: Request): Response | null {
   let name = path;
   if (path === '/quan-ly' || path === '/quan-ly/' || path === '/index.html') name = '/index.html';
   else if (/^\/q\/[A-Za-z0-9_-]+\/?$/.test(path)) name = '/quote.html';
+  else if (ACCOUNT_PAGES.test(path)) name = '/account.html';
   const a = ASSETS[name];
   if (!a) return null;
   const cache = a.immutable ? 'public, max-age=31536000, immutable'

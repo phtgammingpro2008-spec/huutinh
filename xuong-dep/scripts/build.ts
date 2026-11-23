@@ -41,19 +41,22 @@ export async function build() {
   const started = performance.now();
   const adminJs = await bundleClient('src/client/admin/main.tsx');
   const quoteJs = await bundleClient('src/client/quote/main.tsx');
+  const customerJs = await bundleClient('src/client/customer/main.tsx');
   const css = await Bun.file(join(PUB, 'styles.css')).text();
 
   const adminPath = `/assets/admin.${hash(adminJs)}.js`;
   const quotePath = `/assets/quote.${hash(quoteJs)}.js`;
+  const customerPath = `/assets/customer.${hash(customerJs)}.js`;
   const cssPath = `/assets/styles.${hash(css)}.css`;
-  const version = hash(adminJs + quoteJs + css);
+  const version = hash(adminJs + quoteJs + customerJs + css);
   const { THEME_BOOT } = await import('../src/client/ui/theme');
-  const fill = (s: string) => s.replaceAll('%THEME_BOOT%', THEME_BOOT).replaceAll('%ADMIN_JS%', adminPath).replaceAll('%QUOTE_JS%', quotePath)
+  const fill = (s: string) => s.replaceAll('%THEME_BOOT%', THEME_BOOT).replaceAll('%ADMIN_JS%', adminPath).replaceAll('%QUOTE_JS%', quotePath).replaceAll('%CUSTOMER_JS%', customerPath)
     .replaceAll('%CSS%', cssPath).replaceAll('%VERSION%', version);
 
   const assets: Record<string, Asset> = {
     [adminPath]: { type: TYPES.js, body: adminJs, immutable: true },
     [quotePath]: { type: TYPES.js, body: quoteJs, immutable: true },
+    [customerPath]: { type: TYPES.js, body: customerJs, immutable: true },
     [cssPath]: { type: TYPES.css, body: css, immutable: true },
   };
   for (const file of await walk(PUB)) {
