@@ -4,11 +4,12 @@ name = "xuong-dep"
 main = "dist/worker.js"
 compatibility_date = "2026-11-01"
 workers_dev = true
+account_id = "241413186f1bf118da6e5be9745f4036"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "xuong-dep"
-database_id = "00000000-0000-0000-0000-000000000000" # thay bằng id thật sau khi tạo D1
+database_id = "a3c21e80-1464-4321-b1ad-e170f192e993"
 
 [[r2_buckets]]
 binding = "IMAGES"

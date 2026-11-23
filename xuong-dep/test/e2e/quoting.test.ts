@@ -26,7 +26,11 @@ test('price the sample order at 47k → total 66.270.000 ₫', async () => {
   await page.getByLabel('Đơn giá – Mẫu 1 Nam').fill('47k');
   await page.getByLabel('Giá cho mọi dòng').fill('47k');
   await page.getByRole('button', { name: 'Áp dụng cho mọi dòng' }).click();
-  await page.getByRole('button', { name: 'Lưu giá' }).click();
+  // wait for the save itself: the total on screen is a preview before that
+  await Promise.all([
+    page.waitForResponse((r) => r.url().endsWith(`/api/orders/${o.id}/prices`) && r.request().method() === 'PUT'),
+    page.getByRole('button', { name: 'Lưu giá' }).click(),
+  ]);
   await page.getByText('Tổng tiền: 66.270.000 ₫').waitFor();
   const v = await pageApi(page, 'GET', `/api/orders/${o.id}`);
   expect(v.totals.amount).toBe(66_270_000);
