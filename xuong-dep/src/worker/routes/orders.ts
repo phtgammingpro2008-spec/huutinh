@@ -1,0 +1,96 @@
+import { qtyPriceLocked } from '../../shared/status';
+import type { OrderInput, OrderStatus } from '../../shared/types';
+import { requireAuth } from '../auth';
+import type { Env } from '../env';
+import { HttpError, err, json, nowIso, readJson } from '../http';
+import { parseOrderInput } from '../order-input';
+import { getCustomer } from '../repo/customers';
+import { getDesignsByIds } from '../repo/designs';
+import {
+  dashboard, getOrderRow, itemsByOrder, listOrders, loadOrder, nextOrderCode, qtyPriceSignature,
+  replaceContentStmts, totalsOf,
+} from '../repo/orders';
+import { createQuoteVersion } from '../repo/quotes';
+import type { Router } from '../router';
+
+export const LOCKED_MSG = 'Đơn đang sản xuất, không sửa số lượng/giá được';
+export const lockedMessage = (s: OrderStatus) => (s === 'da_huy' ? 'Đơn đã hủy, không sửa số lượng/giá được' : LOCKED_MSG);
+
+/** Items that reuse a library design take its crop; brand-new designs must bring their own. */
+async function resolveDesigns(env: Env, o: OrderInput) {
+  const existing = await getDesignsByIds(env, o.items.map((i) => i.designId));
+  for (const i of o.items) {
+    const d = existing.get(i.designId);
+    if (d && !i.cropKey) i.cropKey = d.cropKey;
+    if (!i.cropKey) throw new HttpError(400, `Mẫu số ${i.tagNo} chưa có ảnh cắt`);
+  }
+}
+
+export async function saveOrder(env: Env, o: OrderInput): Promise<Response> {
+  if (!(await getCustomer(env, o.customerId))) return err(400, 'Không tìm thấy khách');
+  await resolveDesigns(env, o);
+  const at = nowIso(env);
+  const old = await getOrderRow(env, o.id);
+
+  if (!old) {
+    for (let attempt = 0; ; attempt++) {
+      const code = await nextOrderCode(env);
+      try {
+        await env.DB.batch([
+          env.DB.prepare(
+            `INSERT INTO orders (id, code, customer_id, status, currency, needed_by, note, allow_public, created_at, updated_at)
+             VALUES (?, ?, ?, 'cho_bao_gia', ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET customer_id = excluded.customer_id, currency = excluded.currency,
+               needed_by = excluded.needed_by, note = excluded.note, allow_public = excluded.allow_public,
+               updated_at = excluded.updated_at`,
+          ).bind(o.id, code, o.customerId, o.currency, o.neededBy, o.note, o.allowPublic ? 1 : 0, at, at),
+          ...replaceContentStmts(env, o, at),
+        ]);
+        break;
+      } catch (e) {
+        // Another order took this code in the meantime: try the next one.
+        if (attempt < 5 && /UNIQUE/i.test(String(e)) && /code/i.test(String(e))) continue;
+        throw e;
+      }
+    }
+    return json(await loadOrder(env, o.id));
+  }
+
+  const oldItems = (await itemsByOrder(env, [o.id])).get(o.id) ?? [];
+  const changed = qtyPriceSignature(old.currency, oldItems) !== qtyPriceSignature(o.currency, o.items);
+  if (changed && qtyPriceLocked(old.status)) return err(409, lockedMessage(old.status));
+
+  let status = old.status;
+  let requote = false;
+  if (changed && old.quote_version > 0 && (old.status === 'da_bao_gia' || old.status === 'khach_dong_y')) {
+    // A quote was sent: the customer must see (and accept) the new numbers.
+    if (totalsOf(o.items).missingPrice) status = 'cho_bao_gia';
+    else { status = 'da_bao_gia'; requote = true; }
+  }
+  await env.DB.batch([
+    env.DB.prepare(
+      `UPDATE orders SET customer_id = ?, currency = ?, needed_by = ?, note = ?, allow_public = ?, updated_at = ?,
+         status = ?, accepted_at = CASE WHEN ? THEN NULL ELSE accepted_at END WHERE id = ?`,
+    ).bind(o.customerId, o.currency, o.neededBy, o.note, o.allowPublic ? 1 : 0, at, status, status !== old.status ? 1 : 0, o.id),
+    ...replaceContentStmts(env, o, at),
+  ]);
+  if (requote) await createQuoteVersion(env, o.id);
+  return json(await loadOrder(env, o.id));
+}
+
+export function orderRoutes(r: Router) {
+  r.on('PUT', '/api/orders/:id', requireAuth(async (req, env, p) => saveOrder(env, parseOrderInput(await readJson(req), p.id))));
+
+  r.on('GET', '/api/orders/:id', requireAuth(async (_req, env, p) => {
+    const o = await loadOrder(env, p.id);
+    return o ? json(o) : err(404, 'Không tìm thấy đơn');
+  }));
+
+  r.on('GET', '/api/orders', requireAuth(async (req, env) => {
+    const sp = new URL(req.url).searchParams;
+    const g = (k: string) => sp.get(k) || undefined;
+    return json(await listOrders(env, { status: g('status'), customerId: g('customerId'), q: g('q'), from: g('from'), to: g('to') }));
+  }));
+
+  r.on('GET', '/api/dashboard', requireAuth(async (_req, env) => json(await dashboard(env))));
+}

@@ -25,7 +25,7 @@ export async function getMaterialsByIds(env: Env, ids: (string | null)[]): Promi
   const want = [...new Set(ids.filter((x): x is string => !!x))];
   const out = new Map<string, Material>();
   if (!want.length) return out;
-  const r = await env.DB.prepare(`SELECT * FROM materials WHERE id IN (${want.map(() => '?').join(',')})`).bind(...want).all<Row>();
+  const r = await env.DB.prepare('SELECT * FROM materials WHERE id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(want)).all<Row>();
   for (const row of r.results) out.set(row.id, map(row));
   return out;
 }

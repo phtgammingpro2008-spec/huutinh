@@ -3,12 +3,16 @@ import { HttpError, err } from './http';
 import { Router } from './router';
 import { authRoutes } from './routes/auth';
 import { catalogRoutes } from './routes/catalog';
+import { designRoutes } from './routes/designs';
 import { imageRoutes } from './routes/images';
+import { orderRoutes } from './routes/orders';
 
 const router = new Router();
 authRoutes(router);
 catalogRoutes(router);
 imageRoutes(router);
+orderRoutes(router);
+designRoutes(router);
 
 function withNoindex(res: Response): Response {
   const out = new Response(res.body, res);
