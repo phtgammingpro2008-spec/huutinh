@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { api, AUTH_LOST } from './api';
 import { Login, type Me } from './pages/Login';
+import { OrderEditor } from './pages/OrderEditor';
 import { useRoute, type Route } from './router';
 
 type Auth = { state: 'loading' } | { state: 'out'; needsSetup: boolean } | { state: 'in'; me: Me };
@@ -34,7 +35,8 @@ function Placeholder({ title }: { title: string }) {
 function Screen({ route }: { route: Route }): ReactNode {
   const [a, b] = route.parts;
   if (!a) return <Placeholder title="Trang chủ" />;
-  if (a === 'orders') return <Placeholder title={b === 'new' ? 'Đơn mới' : 'Đơn hàng'} />;
+  if (a === 'orders' && b === 'new') return <OrderEditor key={route.path} />;
+  if (a === 'orders') return <Placeholder title="Đơn hàng" />;
   if (a === 'library') return <Placeholder title="Thư viện mẫu" />;
   if (a === 'customers') return <Placeholder title="Khách hàng" />;
   if (a === 'settings') return <Placeholder title="Cài đặt" />;

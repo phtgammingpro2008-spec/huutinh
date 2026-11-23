@@ -25,7 +25,9 @@ export function imageRoutes(r: Router) {
     if (body.byteLength > MAX_IMAGE_BYTES) return err(413, 'Ảnh quá lớn (tối đa 8 MB)');
     if (body.byteLength === 0) return err(400, 'Ảnh trống');
     const d = now(env);
-    const id = newId();
+    const wanted = new URL(req.url).searchParams.get('id');
+    if (wanted && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(wanted)) return err(400, 'Mã ảnh không hợp lệ');
+    const id = wanted ?? newId();
     const key = `img/${d.getUTCFullYear()}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${id}.${ext}`;
     await env.IMAGES.put(key, body, { httpMetadata: { contentType: type } });
     return json({ id, key });

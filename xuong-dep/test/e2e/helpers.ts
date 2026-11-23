@@ -63,6 +63,8 @@ export async function setupAdmin(page: Page, app: App) {
     await fetch('/api/setup', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(a) });
     await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(a) });
   }, ADMIN);
+  await page.reload();
+  await page.getByRole('navigation').waitFor();
 }
 
 /** JSON API call from inside the page (uses its session cookie). */

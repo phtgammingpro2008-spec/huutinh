@@ -30,10 +30,10 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
 }
 
 /** Uploads a binary image, returns its id and storage key. */
-export async function uploadImage(blob: Blob, width: number, height: number): Promise<{ id: string; key: string }> {
+export async function uploadImage(blob: Blob, width: number, height: number, id?: string): Promise<{ id: string; key: string }> {
   for (let attempt = 0; ; attempt++) {
     try {
-      const res = await fetch(`/api/images?w=${width}&h=${height}`, {
+      const res = await fetch(`/api/images?w=${width}&h=${height}${id ? `&id=${id}` : ''}`, {
         method: 'POST', body: blob, headers: { 'content-type': blob.type || 'image/jpeg' }, credentials: 'same-origin',
       });
       const data = await res.json().catch(() => null);

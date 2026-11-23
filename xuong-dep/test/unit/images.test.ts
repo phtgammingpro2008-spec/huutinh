@@ -40,6 +40,15 @@ test('uploaded image served back with same bytes and requires auth', async () =>
   expect((await call(env, 'GET', '/img/2026/01/khong-co.jpg', undefined, c)).status).toBe(404);
 });
 
+test('client may choose the image id (uuid) so drafts can reference it before upload ends', async () => {
+  const id = crypto.randomUUID();
+  const up = await call(env, 'POST', `/api/images?w=10&h=10&id=${id}`, jpegBytes, c, { 'content-type': 'image/jpeg' });
+  expect(up.body.id).toBe(id);
+  expect(up.body.key).toContain(id);
+  const bad = await call(env, 'POST', '/api/images?w=10&h=10&id=../../x', jpegBytes, c, { 'content-type': 'image/jpeg' });
+  expect(bad.status).toBe(400);
+});
+
 test('png and webp get matching extensions', async () => {
   const png = await call(env, 'POST', '/api/images?w=1&h=1', jpegBytes, c, { 'content-type': 'image/png' });
   expect(png.body.key).toMatch(/\.png$/);
