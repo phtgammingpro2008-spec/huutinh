@@ -1,6 +1,8 @@
 import type { Env } from './env';
 
-export type Ctx = { userId?: string };
+import type { SessionUser } from './roles';
+
+export type Ctx = { userId?: string; user?: SessionUser };
 export type Handler = (req: Request, env: Env, p: Record<string, string>, ctx: Ctx) => Promise<Response>;
 
 type Route = { method: string; parts: string[]; h: Handler };
@@ -11,6 +13,14 @@ export class Router {
   on(method: string, pattern: string, h: Handler): this {
     this.routes.push({ method, parts: pattern.split('/').filter(Boolean), h });
     return this;
+  }
+
+  /** Registered routes; `adminOnly` marks handlers wrapped by requireAdmin (used by the authorization tests). */
+  list(): { method: string; pattern: string; adminOnly: boolean }[] {
+    return this.routes.map((r) => ({
+      method: r.method, pattern: '/' + r.parts.join('/'),
+      adminOnly: !!(r.h as unknown as Record<symbol, unknown>)[Symbol.for('xuong-dep.adminOnly')],
+    }));
   }
 
   /** Returns null when no route matches the path; 405 json when the path matches another method. */

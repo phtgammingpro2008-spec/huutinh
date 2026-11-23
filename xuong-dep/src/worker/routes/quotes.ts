@@ -2,7 +2,7 @@ import { localDate } from '../../shared/dates';
 import { fillMessage } from '../../shared/i18n';
 import { formatMoney } from '../../shared/money';
 import { qtyPriceLocked } from '../../shared/status';
-import { requireAuth } from '../auth';
+import { requireAdmin } from '../roles';
 import type { Env } from '../env';
 import { err, json, newToken, nowIso, readJson } from '../http';
 import { loadOrder } from '../repo/orders';
@@ -58,7 +58,7 @@ async function sendQuote(env: Env, req: Request, orderId: string): Promise<Respo
 }
 
 export function quoteRoutes(r: Router) {
-  r.on('PUT', '/api/orders/:id/prices', requireAuth(async (req, env, p) => {
+  r.on('PUT', '/api/orders/:id/prices', requireAdmin(async (req, env, p) => {
     const o = await loadOrder(env, p.id);
     if (!o) return err(404, 'Không tìm thấy đơn');
     if (qtyPriceLocked(o.status)) return err(409, lockedMessage(o.status));
@@ -78,9 +78,9 @@ export function quoteRoutes(r: Router) {
     return saveOrder(env, { ...o, items });
   }));
 
-  r.on('POST', '/api/orders/:id/send-quote', requireAuth(async (req, env, p) => sendQuote(env, req, p.id)));
+  r.on('POST', '/api/orders/:id/send-quote', requireAdmin(async (req, env, p) => sendQuote(env, req, p.id)));
 
-  r.on('GET', '/api/price-history', requireAuth(async (req, env) => {
+  r.on('GET', '/api/price-history', requireAdmin(async (req, env) => {
     const sp = new URL(req.url).searchParams;
     const g = (k: string) => sp.get(k) || null;
     const rows = (await env.DB.prepare(

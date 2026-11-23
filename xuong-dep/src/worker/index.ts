@@ -11,7 +11,7 @@ import { paymentRoutes } from './routes/payments';
 import { publicRoutes } from './routes/public';
 import { quoteRoutes } from './routes/quotes';
 
-const router = new Router();
+export const router = new Router();
 quoteRoutes(router);
 paymentRoutes(router);
 publicRoutes(router);

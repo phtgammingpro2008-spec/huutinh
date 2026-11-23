@@ -1,4 +1,4 @@
-import { requireAuth } from '../auth';
+import { requireAdmin } from '../roles';
 import { err, json, nowIso, readJson, str } from '../http';
 import { parseImages, parseItems } from '../order-input';
 import { designOrders, getDesign, insertDesignsStmt, insertImagesStmt, listDesigns, updateDesignStmt, type DesignLabel } from '../repo/designs';
@@ -9,7 +9,7 @@ const LABELS: DesignLabel[] = ['co_dinh', 'dat_rieng'];
 
 export function designRoutes(r: Router) {
   /** "Chỉ lưu vào thư viện": designs (and their source photos) without an order. */
-  r.on('POST', '/api/library', requireAuth(async (req, env) => {
+  r.on('POST', '/api/library', requireAdmin(async (req, env) => {
     const b = await readJson(req);
     const images = parseImages(b.images);
     const items = parseItems(b.items, { requireLines: false });
@@ -20,19 +20,19 @@ export function designRoutes(r: Router) {
     return json({ designIds: items.map((i) => i.designId) });
   }));
 
-  r.on('GET', '/api/designs', requireAuth(async (req, env) => {
+  r.on('GET', '/api/designs', requireAdmin(async (req, env) => {
     const sp = new URL(req.url).searchParams;
     const g = (k: string) => sp.get(k) || undefined;
     return json(await listDesigns(env, { label: g('label'), soleId: g('soleId'), strapId: g('strapId'), styleId: g('styleId'), q: g('q') }));
   }));
 
-  r.on('GET', '/api/designs/:id', requireAuth(async (_req, env, p) => {
+  r.on('GET', '/api/designs/:id', requireAdmin(async (_req, env, p) => {
     const d = await getDesign(env, p.id);
     if (!d) return err(404, 'Không tìm thấy mẫu');
     return json({ ...d, orders: await designOrders(env, d.id) });
   }));
 
-  r.on('PUT', '/api/designs/:id', requireAuth(async (req, env, p) => {
+  r.on('PUT', '/api/designs/:id', requireAdmin(async (req, env, p) => {
     const d = await getDesign(env, p.id);
     if (!d) return err(404, 'Không tìm thấy mẫu');
     const b = await readJson(req);

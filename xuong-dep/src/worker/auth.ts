@@ -1,6 +1,5 @@
 import type { Env } from './env';
-import { b64url, err, fromB64url, getCookie, newToken, now } from './http';
-import type { Handler } from './router';
+import { b64url, fromB64url, newToken, now } from './http';
 
 const ITER = 100_000; // Cloudflare Workers caps PBKDF2 at 100k iterations
 export const SESSION_DAYS = 90;
@@ -39,22 +38,4 @@ export async function createSession(env: Env, userId: string): Promise<string> {
 export function sessionCookie(req: Request, token: string, maxAge = SESSION_DAYS * 86400): string {
   const secure = new URL(req.url).protocol === 'https:' ? ' Secure;' : '';
   return `${COOKIE}=${token}; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=${maxAge}`;
-}
-
-export async function userIdFromRequest(req: Request, env: Env): Promise<string | null> {
-  const token = getCookie(req, COOKIE);
-  if (!token) return null;
-  const row = await env.DB.prepare('SELECT user_id, expires_at FROM sessions WHERE token = ?')
-    .bind(token).first<{ user_id: string; expires_at: string }>();
-  if (!row || row.expires_at <= now(env).toISOString()) return null;
-  return row.user_id;
-}
-
-/** Wraps a handler so it only runs for a logged-in user. */
-export function requireAuth(h: Handler): Handler {
-  return async (req, env, p, ctx) => {
-    const userId = await userIdFromRequest(req, env);
-    if (!userId) return err(401, 'Chưa đăng nhập');
-    return h(req, env, p, { ...ctx, userId });
-  };
 }

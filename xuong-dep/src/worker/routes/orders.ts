@@ -1,6 +1,6 @@
 import { qtyPriceLocked } from '../../shared/status';
 import type { OrderInput, OrderStatus } from '../../shared/types';
-import { requireAuth } from '../auth';
+import { requireAdmin } from '../roles';
 import type { Env } from '../env';
 import { HttpError, err, json, nowIso, readJson } from '../http';
 import { parseOrderInput } from '../order-input';
@@ -86,18 +86,18 @@ export async function saveOrder(env: Env, o: OrderInput): Promise<Response> {
 }
 
 export function orderRoutes(r: Router) {
-  r.on('PUT', '/api/orders/:id', requireAuth(async (req, env, p) => saveOrder(env, parseOrderInput(await readJson(req), p.id))));
+  r.on('PUT', '/api/orders/:id', requireAdmin(async (req, env, p) => saveOrder(env, parseOrderInput(await readJson(req), p.id))));
 
-  r.on('GET', '/api/orders/:id', requireAuth(async (_req, env, p) => {
+  r.on('GET', '/api/orders/:id', requireAdmin(async (_req, env, p) => {
     const o = await loadOrder(env, p.id);
     return o ? json(o) : err(404, 'Không tìm thấy đơn');
   }));
 
-  r.on('GET', '/api/orders', requireAuth(async (req, env) => {
+  r.on('GET', '/api/orders', requireAdmin(async (req, env) => {
     const sp = new URL(req.url).searchParams;
     const g = (k: string) => sp.get(k) || undefined;
     return json(await listOrders(env, { status: g('status'), customerId: g('customerId'), q: g('q'), from: g('from'), to: g('to') }));
   }));
 
-  r.on('GET', '/api/dashboard', requireAuth(async (_req, env) => json(await dashboard(env))));
+  r.on('GET', '/api/dashboard', requireAdmin(async (_req, env) => json(await dashboard(env))));
 }

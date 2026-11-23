@@ -1,4 +1,4 @@
-import { requireAuth } from '../auth';
+import { requireAdmin } from '../roles';
 import { err, json, newId, now } from '../http';
 import type { Router } from '../router';
 import type { Env } from '../env';
@@ -15,7 +15,7 @@ export async function serveImage(env: Env, key: string, cache = 'private, max-ag
 }
 
 export function imageRoutes(r: Router) {
-  r.on('POST', '/api/images', requireAuth(async (req, env) => {
+  r.on('POST', '/api/images', requireAdmin(async (req, env) => {
     const type = (req.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
     const ext = EXT[type];
     if (!ext) return err(415, 'Chỉ nhận ảnh JPEG, PNG hoặc WebP');
@@ -33,5 +33,5 @@ export function imageRoutes(r: Router) {
     return json({ id, key });
   }));
 
-  r.on('GET', '/img/*', requireAuth(async (_req, env, p) => serveImage(env, 'img/' + p['*'])));
+  r.on('GET', '/img/*', requireAdmin(async (_req, env, p) => serveImage(env, 'img/' + p['*'])));
 }
