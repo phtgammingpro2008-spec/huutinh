@@ -6,6 +6,7 @@ import { authRoutes } from './routes/auth';
 import { catalogRoutes } from './routes/catalog';
 import { designRoutes } from './routes/designs';
 import { imageRoutes } from './routes/images';
+import { mediaRoutes } from './media';
 import { orderRoutes } from './routes/orders';
 import { paymentRoutes } from './routes/payments';
 import { publicRoutes } from './routes/public';
@@ -18,6 +19,7 @@ publicRoutes(router);
 authRoutes(router);
 catalogRoutes(router);
 imageRoutes(router);
+mediaRoutes(router);
 orderRoutes(router);
 designRoutes(router);
 
