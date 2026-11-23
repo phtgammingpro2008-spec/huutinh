@@ -178,3 +178,14 @@ test('ordering a product colour twice reuses one library design (the colour gets
   expect(lib).toHaveLength(1);
   expect(lib[0].orderCount).toBe(2);
 });
+
+test("an admin edit that doesn't send deliverNote keeps the customer's delivery place", async () => {
+  const a = await customer(1);
+  const o = await photoOrder(a.c);
+  expect((await call(env, 'PUT', `/api/c/orders/${o.id}`, o, a.c)).status).toBe(200);
+  const v = (await call(env, 'GET', `/api/orders/${o.id}`, undefined, admin)).body;
+  const { deliverNote: _drop, ...rest } = v;
+  const r = await call(env, 'PUT', `/api/orders/${o.id}`, { ...rest, note: 'anh sửa' }, admin);
+  expect(r.status).toBe(200);
+  expect(r.body).toMatchObject({ note: 'anh sửa', deliverNote: 'Bến xe Phnom Penh', source: 'customer' });
+});

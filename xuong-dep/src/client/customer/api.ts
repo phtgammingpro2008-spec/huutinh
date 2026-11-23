@@ -23,6 +23,10 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
   const text = await res.text();
   let data: any = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+  if (res.status === 401 && !/^\/api\/(login|register|me|password|email)\b/.test(path)) {
+    // the session ended (logged out elsewhere, or the workshop locked the account)
+    location.assign('/dang-nhap?next=' + encodeURIComponent(location.pathname + location.hash));
+  }
   if (!res.ok) throw new ApiError(res.status, data?.error ?? `HTTP ${res.status}`, data?.code, data?.field);
   return data as T;
 }

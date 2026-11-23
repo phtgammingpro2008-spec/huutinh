@@ -3,12 +3,12 @@ import { formatMoney } from '../../../shared/money';
 import { api } from '../api';
 import { OrderList, viDate, type OrderSummary } from '../components/OrderRow';
 
-type Dashboard = { waitingQuote: OrderSummary[]; justAccepted: OrderSummary[]; dueSoon: OrderSummary[]; unpaid: OrderSummary[] };
+type Dashboard = { newFromCustomers: OrderSummary[]; waitingQuote: OrderSummary[]; justAccepted: OrderSummary[]; dueSoon: OrderSummary[]; unpaid: OrderSummary[] };
 
 function Bucket({ title, orders, empty, extra }: { title: string; orders: OrderSummary[] | undefined; empty: string; extra?: (o: OrderSummary) => string | undefined }) {
   return (
     <section aria-label={title} style={{ marginTop: 20 }}>
-      <h2>{title}{orders && orders.length > 0 && <span className="badge" style={{ marginLeft: 8 }}>{orders.length}</span>}</h2>
+      <h2>{title}{orders && orders.length > 0 && <span className="badge count" style={{ marginLeft: 8 }}>{orders.length}</span>}</h2>
       <OrderList orders={orders ?? null} empty={empty} extra={extra} />
     </section>
   );
@@ -25,6 +25,11 @@ export function Home() {
         <a className="btn btn-sm btn-primary" href="#/orders/new">+ Đơn mới</a>
       </div>
       {error && <p className="error">{error}</p>}
+      {d && d.newFromCustomers.length > 0 && (
+        <div className="highlight-bucket">
+          <Bucket title="Đơn khách mới" orders={d.newFromCustomers} empty="" extra={(o) => `Đặt ${viDate(o.createdAt)} · chưa xem`} />
+        </div>
+      )}
       <Bucket title="Chờ báo giá" orders={d?.waitingQuote} empty="Không có đơn chờ báo giá." />
       <Bucket title="Khách vừa đồng ý" orders={d?.justAccepted} empty="Chưa có khách đồng ý trong 7 ngày qua."
         extra={(o) => (o.acceptedAt ? `Đồng ý ${viDate(o.acceptedAt)}` : undefined)} />

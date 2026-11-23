@@ -34,7 +34,10 @@ test('filter by label Mẫu cố định after relabelling one shows 1', async (
   await page.locator(`.design-card[data-design-id="${designId}"]`).click();
   await page.getByLabel('Nhãn').selectOption('co_dinh');
   await page.getByLabel('Ghi chú mẫu').fill('mẫu kẹp đỏ bán chạy');
-  expect(await page.getByLabel('Cho khách xem mẫu này').isChecked()).toBe(false);
+  // phase 2a flags: shown to logged-in customers unless marked private or hidden
+  expect(await page.getByLabel('Mẫu đặt riêng (không hiện cho khách khác)').isChecked()).toBe(false);
+  expect(await page.getByLabel('Ẩn khỏi thư viện').isChecked()).toBe(false);
+  expect(await page.getByLabel('Có logo thương hiệu').isChecked()).toBe(false);
   await page.getByRole('button', { name: 'Lưu mẫu' }).click();
   await page.getByText('Đã lưu mẫu').waitFor();
   await page.getByText(order.code).waitFor(); // orders that used it

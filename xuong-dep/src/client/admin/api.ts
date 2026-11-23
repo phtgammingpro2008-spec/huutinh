@@ -48,4 +48,5 @@ export async function uploadImage(blob: Blob, width: number, height: number, id?
   }
 }
 
-export const imgUrl = (key: string) => '/' + key;
+/** Order photos and crops are served at /img/…; site pictures (pub/…, e.g. product colours) at /media/…. */
+export const imgUrl = (key: string) => (key.startsWith('img/') ? '/' + key : '/media/' + key);

@@ -15,6 +15,7 @@ export type OrderView = OrderInput & {
   code: string; status: OrderStatus; quoteVersion: number; quoteToken: string | null; customer: Customer;
   totals: { qty: number; amount: number; missingPrice: boolean }; paid: number; due: number; payments: Payment[];
   createdAt: string; quotedAt: string | null; acceptedAt: string | null;
+  source?: 'admin' | 'customer'; cancelReason?: string; cancelledBy?: string | null;
 };
 type SendResult = { url: string; message: string; zaloUrl: string | null; messengerUrl: string | null; version: number };
 
@@ -114,11 +115,16 @@ export function OrderDetail({ id }: { id: string }) {
     <main className="page order-detail">
       <div className="topbar">
         <h1>{o.code}</h1>
+        {o.source === 'customer' && <span className="badge src-customer">Khách tự đặt</span>}
         <StatusBadge s={o.status} />
       </div>
       <p><a href={`#/customers/${o.customer.id}`}>{o.customer.name}</a>
         {o.neededBy && <> · Cần hàng: <strong>{viDate(o.neededBy)}</strong></>}</p>
+      {o.deliverNote && <p>Nơi nhận hàng: <strong>{o.deliverNote}</strong></p>}
       {o.note && <p className="muted">{o.note}</p>}
+      {o.status === 'da_huy' && o.cancelledBy === 'customer' && (
+        <p className="notice">Khách đã hủy đơn{o.cancelReason ? <>. Lý do: <strong>{o.cancelReason}</strong></> : ' (không ghi lý do)'}.</p>
+      )}
 
       <div className="row wrap" style={{ margin: '12px 0' }}>
         <a className="btn btn-sm" href={`#/orders/${id}/edit`}>Sửa đơn</a>

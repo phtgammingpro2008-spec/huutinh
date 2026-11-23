@@ -11,6 +11,8 @@ import { OrderDetail } from './pages/OrderDetail';
 import { OrderEditor } from './pages/OrderEditor';
 import { Orders } from './pages/Orders';
 import { Settings } from './pages/Settings';
+import { Content } from './pages/Content';
+import { Users } from './pages/Users';
 import { useRoute, type Route } from './router';
 
 type Auth = { state: 'loading' } | { state: 'out'; needsSetup: boolean } | { state: 'in'; me: Me };
@@ -20,7 +22,7 @@ const TABS = [
   { href: '#/orders', label: 'Đơn hàng', ico: <ClipboardList size={22} />, match: (r: Route) => r.parts[0] === 'orders' && r.parts[1] !== 'new' },
   { href: '#/orders/new', label: 'Đơn mới', ico: <Plus size={24} />, match: (r: Route) => r.path === '/orders/new', plus: true },
   { href: '#/library', label: 'Thư viện', ico: <Images size={22} />, match: (r: Route) => r.parts[0] === 'library' },
-  { href: '#/settings', label: 'Cài đặt', ico: <SettingsIcon size={22} />, match: (r: Route) => r.parts[0] === 'settings' || r.parts[0] === 'customers' },
+  { href: '#/settings', label: 'Cài đặt', ico: <SettingsIcon size={22} />, match: (r: Route) => ['settings', 'customers', 'users', 'content'].includes(r.parts[0]) },
 ];
 
 function TabBar({ route }: { route: Route }) {
@@ -54,6 +56,8 @@ function Screen({ route }: { route: Route }): ReactNode {
   if (a === 'customers' && b) return <CustomerDetail key={b} id={b} />;
   if (a === 'customers') return <Customers />;
   if (a === 'settings') return <Settings />;
+  if (a === 'users') return <Users />;
+  if (a === 'content') return <Content />;
   return <Placeholder title="Không tìm thấy trang" />;
 }
 

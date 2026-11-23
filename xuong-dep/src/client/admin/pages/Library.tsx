@@ -68,7 +68,8 @@ export function DesignDetail({ id }: { id: string }) {
     setError('');
     try {
       const u = await api<Design>('PUT', `/api/designs/${id}`, {
-        label: current.label, note: current.note, allowPublic: current.allowPublic,
+        label: current.label, note: current.note,
+        isPrivate: !!current.isPrivate, hidden: !!current.hidden, hasBrandLogo: !!current.hasBrandLogo,
         soleId: current.soleId, strapId: current.strapId, styleId: current.styleId,
       });
       setD({ ...current, ...u, orders: current.orders });
@@ -101,11 +102,22 @@ export function DesignDetail({ id }: { id: string }) {
           <label htmlFor="d-note">Ghi chú mẫu</label>
           <textarea id="d-note" value={d.note} onChange={(e) => set({ note: e.target.value })} />
         </div>
-        <label className="check">
-          <input type="checkbox" checked={d.allowPublic} onChange={(e) => set({ allowPublic: e.target.checked })} />
-          Cho khách xem mẫu này
-        </label>
-        <p className="small muted" style={{ marginTop: 0 }}>Giai đoạn 1 chỉ anh xem được thư viện. Mẫu có logo thương hiệu thì đừng bật.</p>
+        <fieldset className="flags">
+          <legend>Khách đã đăng nhập có thấy mẫu này không</legend>
+          <label className="check">
+            <input type="checkbox" checked={!!d.isPrivate} onChange={(e) => set({ isPrivate: e.target.checked })} />
+            Mẫu đặt riêng (không hiện cho khách khác)
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={!!d.hidden} onChange={(e) => set({ hidden: e.target.checked })} />
+            Ẩn khỏi thư viện
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={!!d.hasBrandLogo} onChange={(e) => set({ hasBrandLogo: e.target.checked })} />
+            Có logo thương hiệu
+          </label>
+          <p className="small muted" style={{ margin: 0 }}>Mẫu có logo không bao giờ lên trang web công khai (kể cả màu sản phẩm dùng ảnh này). Muốn khách đăng nhập cũng không thấy thì tick thêm "Ẩn khỏi thư viện".</p>
+        </fieldset>
         {error && <p className="error">{error}</p>}
         <div className="row"><button type="button" className="btn-primary grow" onClick={save}>Lưu mẫu</button>{msg && <span className="success">{msg}</span>}</div>
       </section>

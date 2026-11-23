@@ -77,7 +77,7 @@ export function parseOrderInput(b: any, orderId: string): OrderInput {
     neededBy,
     note: str(b.note, 4000),
     allowPublic: b.allowPublic === true,
-    deliverNote: str(b.deliverNote, 1000),
+    deliverNote: b.deliverNote === undefined ? undefined : str(b.deliverNote, 1000), // absent = keep what the order has
     images: parseImages(b.images),
     items: parseItems(b.items, { requireLines: true }),
   };

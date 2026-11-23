@@ -6,7 +6,7 @@ import { imgUrl } from '../api';
 export type OrderSummary = {
   id: string; code: string; status: OrderStatus; customerId: string; customerName: string; currency: Currency;
   createdAt: string; neededBy: string | null; acceptedAt: string | null; totalQty: number; amount: number;
-  missingPrice: boolean; paid: number; due: number; thumbKey: string | null;
+  missingPrice: boolean; paid: number; due: number; thumbKey: string | null; source?: 'admin' | 'customer';
 };
 
 export const StatusBadge = ({ s }: { s: OrderStatus }) => <span className={`badge s-${s}`}>{STATUS_LABEL_VI[s]}</span>;
@@ -22,7 +22,7 @@ export function OrderRow({ o, extra }: { o: OrderSummary; extra?: string }) {
     <a className="list-item order-row" href={`#/orders/${o.id}`}>
       {o.thumbKey ? <img className="thumb" src={imgUrl(o.thumbKey)} alt="" loading="lazy" /> : <div className="thumb" />}
       <div className="grow">
-        <div className="row"><strong className="grow">{o.code}</strong><StatusBadge s={o.status} /></div>
+        <div className="row"><strong className="grow">{o.code}</strong>{o.source === 'customer' && <span className="badge src-customer">Khách tự đặt</span>}<StatusBadge s={o.status} /></div>
         <div className="small">{o.customerName} · <span className="num">{formatQty(o.totalQty)} đôi</span>
           {o.amount > 0 && <> · <span className="num">{formatMoney(o.amount, o.currency, 'vi')}</span></>}</div>
         {extra && <div className="small muted">{extra}</div>}
