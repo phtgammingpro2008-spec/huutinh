@@ -27,7 +27,7 @@ beforeAll(async () => {
   });
   slug = p.slug;
   await adminApi(cookie, 'POST', '/api/posters', { title: { vi: 'Hè rực rỡ' }, tag: { vi: 'MỚI · HÈ 2027' }, published: true, ctaLabel: { vi: 'Xem sản phẩm' }, ctaHref: '/san-pham' });
-  await adminApi(cookie, 'PUT', '/api/shop', { zalo: '0901234567', messenger: '', workshopAddress: 'TP.HCM', warehouseAddress: 'Phnom Penh' });
+  await adminApi(cookie, 'PUT', '/api/shop', { address: '', messenger: '', ceo: { name: 'Anh Tình', phone: '0901234567' }, sales: { name: 'Chị Hoa', phone: '0901234567' } });
 });
 afterAll(async () => { await closeBrowser(); await app.stop(); });
 

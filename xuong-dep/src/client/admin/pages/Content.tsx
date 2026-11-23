@@ -17,7 +17,8 @@ type Product = {
 };
 type Collection = { id?: string; title: Names; subtitle: Names; coverKey: string | null; color: string; published: boolean; position: number; productIds: string[] };
 type Poster = { id?: string; tag: Names; title: Names; body: Names; imageKey: string | null; ctaLabel: Names; ctaHref: string; published: boolean; position: number };
-type Shop = { zalo: string; messenger: string; workshopAddress: string; warehouseAddress: string };
+type Contact = { name: string; phone: string };
+type Shop = { address: string; messenger: string; ceo: Contact; sales: Contact };
 
 /** One text in Vietnamese, English and Khmer. Empty languages fall back to Vietnamese on the site. */
 function NamesInput({ label, value, onChange, multiline }: { label: string; value: Names; onChange: (v: Names) => void; multiline?: boolean }) {
@@ -261,27 +262,40 @@ function ShopForm() {
   const [error, setError] = useState('');
   useEffect(() => { api<Shop>('GET', '/api/shop').then(setS).catch((e) => setError(e.message)); }, []);
   if (!s) return error ? <p className="error">{error}</p> : <div className="skeleton" style={{ height: 120 }} />;
-  const field = (k: keyof Shop, label: string, ph = '') => (
-    <div><label htmlFor={`shop-${k}`}>{label}</label><input id={`shop-${k}`} value={s[k]} placeholder={ph} onChange={(e) => { setMsg(''); setS({ ...s, [k]: e.target.value }); }} /></div>
+  const edit = (patch: Partial<Shop>) => { setMsg(''); setS({ ...s, ...patch }); };
+  const person = (key: 'ceo' | 'sales', title: string, hint: string) => (
+    <fieldset className="card stack">
+      <legend>{title}</legend>
+      <p className="small muted" style={{ margin: 0 }}>{hint}</p>
+      <div><label htmlFor={`shop-${key}-name`}>Tên</label>
+        <input id={`shop-${key}-name`} value={s[key].name} placeholder="Để trống nếu chưa muốn hiện tên" onChange={(e) => edit({ [key]: { ...s[key], name: e.target.value } } as Partial<Shop>)} /></div>
+      <div><label htmlFor={`shop-${key}-phone`}>Số điện thoại / Zalo</label>
+        <input id={`shop-${key}-phone`} type="tel" inputMode="tel" value={s[key].phone} placeholder="012 345 678" onChange={(e) => edit({ [key]: { ...s[key], phone: e.target.value } } as Partial<Shop>)} /></div>
+    </fieldset>
   );
   async function save() {
     setError('');
-    try { setS(await api<Shop>('PUT', '/api/shop', s)); setMsg('Đã lưu thông tin xưởng'); } catch (e) { setError(e instanceof ApiError ? e.message : 'Không lưu được'); }
+    try { setS(await api<Shop>('PUT', '/api/shop', s)); setMsg('Đã lưu thông tin liên hệ'); } catch (e) { setError(e instanceof ApiError ? e.message : 'Không lưu được'); }
   }
   return (
-    <section className="card stack">
-      {field('zalo', 'Số Zalo', '0901 234 567')}
-      {field('messenger', 'Link Messenger', 'm.me/hluxury')}
-      {field('workshopAddress', 'Địa chỉ xưởng')}
-      {field('warehouseAddress', 'Địa chỉ kho (Phnom Penh)')}
+    <section className="stack">
+      <p className="small muted" style={{ margin: 0 }}>Hiện ở chân trang web. Nút Zalo ở cuối màn hình gọi tới Quản lý bán hàng (chưa có thì Tổng giám đốc).</p>
+      {person('ceo', 'Tổng giám đốc', 'Liên hệ cho đối tác, đơn lớn.')}
+      {person('sales', 'Quản lý bán hàng', 'Khách hỏi giá, đặt hàng, nhắn Zalo.')}
+      <div className="card stack">
+        <div><label htmlFor="shop-address">Địa chỉ</label>
+          <input id="shop-address" value={s.address} placeholder="Để trống = Phnom Penh, Campuchia" onChange={(e) => edit({ address: e.target.value })} /></div>
+        <div><label htmlFor="shop-messenger">Link Messenger (nếu có)</label>
+          <input id="shop-messenger" value={s.messenger} placeholder="m.me/hluxury" onChange={(e) => edit({ messenger: e.target.value })} /></div>
+      </div>
       {error && <p className="error">{error}</p>}
       {msg && <p className="success" role="status">{msg}</p>}
-      <button type="button" className="btn-primary" onClick={save}>Lưu thông tin xưởng</button>
+      <button type="button" className="btn-primary" onClick={save}>Lưu thông tin liên hệ</button>
     </section>
   );
 }
 
-const TABS = [['products', 'Sản phẩm'], ['collections', 'Bộ sưu tập'], ['posters', 'Poster'], ['shop', 'Thông tin xưởng']] as const;
+const TABS = [['products', 'Sản phẩm'], ['collections', 'Bộ sưu tập'], ['posters', 'Poster'], ['shop', 'Liên hệ']] as const;
 type Tab = (typeof TABS)[number][0];
 
 /** Everything the public site shows: products, collections, posters, workshop info. */

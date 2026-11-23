@@ -81,16 +81,24 @@ ${account}
 </div></header>`;
 }
 
+const telHref = (p: string) => (p.replace(/[^\d+]/g, '') ? 'tel:' + p.replace(/[^\d+]/g, '') : '');
+/** Who answers on Zalo: the sales manager, else the CEO. */
+const zaloOf = (s: PageCtx['shop']) => zaloHref(s.sales.phone || s.ceo.phone);
+
 function footer(c: PageCtx): Html {
   const s = c.shop;
-  const z = zaloHref(s.zalo), m = messengerHref(s.messenger);
+  const m = messengerHref(s.messenger);
+  const person = (role: UiKey, p: { name: string; phone: string }) => (p.name || p.phone ? html`<li class="contact">${icon('user', 16)}<span>
+<strong>${tr(c, role)}</strong>${p.name ? html`<br>${p.name}` : ''}
+${p.phone ? html`<br><a href="${telHref(p.phone)}">${p.phone}</a>${zaloHref(p.phone) ? html` · <a href="${zaloHref(p.phone)}" rel="noopener" target="_blank">Zalo</a>` : ''}` : ''}
+</span></li>` : '');
   return html`<footer class="site-footer"><div class="site-footer-in">
 <p class="site-footer-brand">HLUXURY</p>
 <p class="muted-on-dark">${tr(c, 'ui.tagline')}</p>
 <ul class="footer-list">
-${s.workshopAddress ? html`<li>${icon('pin', 16)}<span><strong>${tr(c, 'pub.workshop')}:</strong> ${s.workshopAddress}</span></li>` : ''}
-${s.warehouseAddress ? html`<li>${icon('pin', 16)}<span><strong>${tr(c, 'pub.warehouse')}:</strong> ${s.warehouseAddress}</span></li>` : ''}
-${z ? html`<li>${icon('chat', 16)}<a href="${z}" rel="noopener" target="_blank">Zalo ${s.zalo}</a></li>` : ''}
+${person('pub.ceo', s.ceo)}
+${person('pub.sales', s.sales)}
+<li>${icon('pin', 16)}<span><strong>${tr(c, 'pub.address')}:</strong> ${s.address || tr(c, 'pub.default_address')}</span></li>
 ${m ? html`<li>${icon('chat', 16)}<a href="${m}" rel="noopener" target="_blank">Messenger</a></li>` : ''}
 </ul>
 <p class="small muted-on-dark">© ${new Date().getUTCFullYear()} HLUXURY</p>
@@ -100,7 +108,7 @@ ${m ? html`<li>${icon('chat', 16)}<a href="${m}" rel="noopener" target="_blank">
 /** The bar at the bottom of the screen: "send a photo" by default, the page's own main action when it has one. */
 export type StickyAction = { label: string; next: string; kind: string };
 function stickyCta(c: PageCtx, action?: StickyAction): Html {
-  const z = zaloHref(c.shop.zalo);
+  const z = zaloOf(c.shop);
   const main = action
     ? orderLink(c, html`<span>${action.label}</span>`, 'cta-main', action.next, action.kind)
     : orderLink(c, html`${icon('camera', 18)}<span>${tr(c, 'pub.cta')}</span>`, 'cta-main');
