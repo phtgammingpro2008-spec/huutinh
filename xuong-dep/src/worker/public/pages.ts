@@ -57,14 +57,63 @@ function productCard(c: PageCtx, p: Product): Html {
 
 const grid = (c: PageCtx, ps: Product[]) => html`<div class="pgrid">${ps.map((p) => productCard(c, p))}</div>`;
 
-function posterBlock(c: PageCtx, posters: Poster[]): Html {
+/** A poster in the printed-poster look: copy + photo, stats and the colour grid of its product, brand bar. */
+function promoPoster(c: PageCtx, p: Poster, i: number, total: number, byId: Map<string, Product>): Html {
+  const prod = p.productId ? byId.get(p.productId) : undefined; // hidden or logo products drop out of the public list
+  const title = pick(p.title, c.lang), hl = pick(p.highlight, c.lang), badge = pick(p.badge, c.lang), body = pick(p.body, c.lang);
+  const photo = p.imageKey ?? prod?.colors[0]?.imageKey ?? null;
+  const href = p.ctaHref || (prod ? `/san-pham/${prod.slug}` : '/san-pham');
+  const cta = pick(p.ctaLabel, c.lang) || tr(c, 'pub.get_quote');
+  const range = prod ? sizeRange(prod) : '';
+  const heading = html`${title}${hl ? html`<br><span class="hl">${hl}</span>` : ''}`;
+  const host = new URL(c.origin).host;
+  return html`<article class="poster promo" style="--accent:${p.accent}" aria-roledescription="slide" aria-label="${i + 1} / ${total}">
+<div class="promo-top">
+<div class="promo-copy">
+${pick(p.tag, c.lang) ? html`<span class="promo-tag">${pick(p.tag, c.lang)}</span>` : ''}
+${i === 0 ? html`<h1 class="promo-title">${heading}</h1>` : html`<p class="promo-title">${heading}</p>`}
+${body ? html`<p class="promo-body">${body}</p>` : ''}
+${prod ? html`<div class="promo-stats"><div class="promo-stat"><strong>${prod.colors.length}</strong><span>${tr(c, 'pub.stat_colors')}</span></div>${range ? html`<div class="promo-sep" aria-hidden="true"></div><div class="promo-stat"><strong>${range}</strong><span>${tr(c, 'pub.stat_size')}</span></div>` : ''}</div>` : ''}
+<a class="promo-cta" href="${href}">${cta} ${icon('arrow', 18)}</a>
+</div>
+<div class="promo-photo">${photo ? html`<img src="${mediaUrl(photo)}" alt="" ${i === 0 ? raw('fetchpriority="high"') : raw('loading="lazy"')} decoding="async">` : html`<div class="hero-art" aria-hidden="true">${sandal('#E2B65B', '#0C110E', 150)}${sandal('#c96a3a', '#0C110E', 150)}</div>`}
+${badge ? html`<span class="promo-badge">${badge}</span>` : ''}</div>
+</div>
+${prod && prod.colors.length > 1 ? html`<div class="promo-palette"><div class="promo-palette-head"><span>${tr(c, 'pub.palette')}</span>${prod.colors.length ? html`<span>${tr(c, 'pub.real_photos')}</span>` : ''}</div>
+<div class="promo-grid">${prod.colors.slice(0, 8).map((col) => html`<div class="promo-swatch"><img src="${mediaUrl(col.imageKey)}" alt="" loading="lazy" decoding="async"><span>${pick(col.name, c.lang)}</span></div>`)}</div></div>` : ''}
+<div class="promo-bar"><span>${tr(c, 'pub.order_at')} <strong>${host}</strong></span><strong class="promo-brand">HLUXURY</strong></div>
+</article>`;
+}
+
+/** Two sandals drawn as gold lines; they draw themselves once when the page opens (still for reduced motion). */
+const lineSandals = () => raw(`<svg viewBox="0 0 320 300" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<g transform="rotate(-16 105 150)"><path class="draw" pathLength="1" d="M105 22c40 0 62 34 62 84 0 44-14 70-20 108-6 34-20 52-42 52s-36-18-42-52c-6-38-20-64-20-108 0-50 22-84 62-84z" stroke="#E2B65B" stroke-width="5"/>
+<path class="draw d2" pathLength="1" d="M105 72c-8 38-36 66-56 82M105 72c8 38 36 66 56 82" stroke="#F2EEE5" stroke-width="7"/></g>
+<g transform="rotate(12 225 160)"><path class="draw d3" pathLength="1" d="M225 34c40 0 62 34 62 84 0 44-14 70-20 108-6 34-20 52-42 52s-36-18-42-52c-6-38-20-64-20-108 0-50 22-84 62-84z" stroke="#c96a3a" stroke-width="5"/>
+<path class="draw d4" pathLength="1" d="M190 120h70" stroke="#F2EEE5" stroke-width="12"/></g></svg>`);
+
+function why(c: PageCtx): Html {
+  const items = [['factory', 'pub.why1_t', 'pub.why1_d'], ['image', 'pub.why2_t', 'pub.why2_d'], ['truck', 'pub.why3_t', 'pub.why3_d']] as const;
+  return html`<section class="why" aria-label="HLUXURY"><ul>${items.map(([ic, t, d]) =>
+    html`<li><span class="why-ico">${icon(ic, 26)}</span><div><strong>${tr(c, t)}</strong><p>${tr(c, d)}</p></div></li>`)}</ul></section>`;
+}
+
+function band(c: PageCtx): Html {
+  return html`<section class="band"><div><h2>${tr(c, 'pub.band_title')}</h2><p>${tr(c, 'pub.band_body')}</p></div>
+${orderLink(c, html`${icon('camera', 18)}<span>${tr(c, 'pub.cta')}</span>`, 'btn-gold')}</section>`;
+}
+
+function posterBlock(c: PageCtx, posters: Poster[], products: Product[] = []): Html {
+  const byId = new Map(products.map((x) => [x.id, x]));
   if (!posters.length) {
-    return html`<section class="hero hero-default"><div class="hero-art" aria-hidden="true">${sandal('#c96a3a', '#1b3b2c', 170)}${sandal('#f2d7a6', '#1b3b2c', 170)}</div>
-<div class="hero-copy"><span class="chip-lime">HLUXURY</span><h1>${tr(c, 'pub.default_title')}</h1><p>${tr(c, 'pub.default_body')}</p>
-<div class="hero-actions"><a class="btn-cta" href="/san-pham">${tr(c, 'pub.see_products')} ${icon('arrow', 18)}</a></div></div></section>`;
+    return html`<section class="hero-night">
+<div class="hero-night-copy"><p class="hero-brand">HLUXURY</p><h1>${tr(c, 'pub.default_title')}</h1><p class="hero-lead">${tr(c, 'pub.default_body')}</p>
+<div class="hero-actions"><a class="btn-gold" href="/san-pham">${tr(c, 'pub.see_products')}</a>${orderLink(c, tr(c, 'pub.cta'), 'btn-line')}</div></div>
+<div class="hero-night-art" aria-hidden="true">${lineSandals()}</div></section>`;
   }
   return html`<section class="posters-wrap" aria-roledescription="carousel" aria-label="HLUXURY">
 <div class="posters" tabindex="0">${posters.map((p, i) => {
+    if (p.layout === 'promo') return promoPoster(c, p, i, posters.length, byId);
     const title = pick(p.title, c.lang), cta = pick(p.ctaLabel, c.lang);
     return html`<article class="poster" aria-roledescription="slide" aria-label="${i + 1} / ${posters.length}">
 <div class="poster-img">${p.imageKey ? html`<img src="${mediaUrl(p.imageKey)}" alt="" ${i === 0 ? raw('fetchpriority="high"') : raw('loading="lazy"')} decoding="async">` : html`<div class="hero-art" aria-hidden="true">${sandal('#c96a3a', '#1b3b2c', 150)}${sandal('#f2d7a6', '#1b3b2c', 150)}</div>`}
@@ -95,7 +144,7 @@ ${col.coverKey ? html`<img src="${mediaUrl(col.coverKey)}" alt="" loading="lazy"
 
 function steps(c: PageCtx): Html {
   const s = [['pub.step1', 'pub.step1_sub'], ['pub.step2', 'pub.step2_sub'], ['pub.step3', 'pub.step3_sub']] as const;
-  return html`<section class="section"><h2>${tr(c, 'pub.steps_title')}</h2><ol class="steps">${s.map(([a, b], i) =>
+  return html`<section class="steps-band"><h2>${tr(c, 'pub.steps_title')}</h2><ol class="steps">${s.map(([a, b], i) =>
     html`<li><span class="step-n">${i + 1}</span><strong>${tr(c, a)}</strong><span>${tr(c, b)}</span></li>`)}</ol></section>`;
 }
 
@@ -105,13 +154,15 @@ async function home(req: Request, env: Env): Promise<Response> {
   const h = await getPublicHome(env);
   const cols = h.collections.filter((x) => x.productIds.length);
   const body = html`
-${posterBlock(c, h.posters)}
+${posterBlock(c, h.posters, h.products)}
+${why(c)}
 ${h.products.length ? styleChips(c, h.styles, null) : ''}
 ${cols.length ? html`<section class="section" id="chu-de"><div class="section-head"><h2>${tr(c, 'pub.collections')}</h2></div>
 <div class="hscroll">${cols.map((col) => collectionCard(c, col))}</div></section>` : ''}
 ${h.products.length ? html`<section class="section" id="noi-bat"><div class="section-head"><h2>${tr(c, 'pub.featured')}</h2><a href="/san-pham">${tr(c, 'pub.see_all')} →</a></div>
 ${grid(c, h.products.slice(0, 12))}</section>` : ''}
-${steps(c)}`;
+${steps(c)}
+${band(c)}`;
   const legacy = raw(`<script>if(location.hash.indexOf('#/')===0)location.replace('/quan-ly'+location.hash)</script>`);
   const og = h.posters.find((p) => p.imageKey)?.imageKey ?? h.products[0]?.colors[0]?.imageKey;
   return send(renderPage(c, { title: 'HLUXURY · ' + tr(c, 'pub.default_title'), description: tr(c, 'pub.meta_desc'), ogImage: og, body, headExtra: legacy }));

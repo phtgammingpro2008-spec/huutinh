@@ -16,7 +16,10 @@ type Product = {
   lines: LineSetting[]; isNew: boolean; published: boolean; hasBrandLogo: boolean; position: number; colors: Color[];
 };
 type Collection = { id?: string; title: Names; subtitle: Names; coverKey: string | null; color: string; published: boolean; position: number; productIds: string[] };
-type Poster = { id?: string; tag: Names; title: Names; body: Names; imageKey: string | null; ctaLabel: Names; ctaHref: string; published: boolean; position: number };
+type Poster = {
+  id?: string; tag: Names; title: Names; body: Names; imageKey: string | null; ctaLabel: Names; ctaHref: string; published: boolean; position: number;
+  layout: 'classic' | 'promo'; productId: string | null; accent: string; highlight: Names; badge: Names;
+};
 type Contact = { name: string; phone: string };
 type Shop = { address: string; messenger: string; ceo: Contact; sales: Contact };
 
@@ -238,16 +241,44 @@ function CollectionForm({ c, set, products }: { c: Collection; set: (x: Partial<
   );
 }
 
-function PosterForm({ p, set }: { p: Poster; set: (x: Partial<Poster>) => void }) {
+const ACCENTS = [['#E2B65B', 'Vàng đồng'], ['#E0453A', 'Đỏ'], ['#E8F3A3', 'Xanh chanh'], ['#F2EEE5', 'Kem']] as const;
+
+function PosterForm({ p, set, products }: { p: Poster; set: (x: Partial<Poster>) => void; products: Product[] }) {
+  const promo = p.layout === 'promo';
   return (
     <>
-      <div className="card stack"><p className="legend" style={{ margin: 0 }}>Ảnh poster</p><ImageInput label="Ảnh poster" value={p.imageKey} onChange={(imageKey) => set({ imageKey })} /></div>
-      <NamesInput label="Nhãn nhỏ (ví dụ MỚI · HÈ 2027)" value={p.tag} onChange={(tag) => set({ tag })} />
+      <div className="seg" role="group" aria-label="Kiểu poster">
+        <button type="button" aria-pressed={promo} onClick={() => set({ layout: 'promo' })}>Quảng cáo sản phẩm</button>
+        <button type="button" aria-pressed={!promo} onClick={() => set({ layout: 'classic' })}>Đơn giản</button>
+      </div>
+      {promo && (
+        <div className="card stack">
+          <p className="small muted" style={{ margin: 0 }}>Kiểu poster in: nền tối, chữ lớn, số màu, dải size và lưới ảnh các màu lấy từ sản phẩm. Ảnh sản phẩm đổi thì poster tự đổi theo.</p>
+          <div>
+            <label htmlFor="poster-product">Sản phẩm của poster</label>
+            <select id="poster-product" value={p.productId ?? ''} onChange={(e) => set({ productId: e.target.value || null })}>
+              <option value="">Chưa chọn</option>
+              {products.map((x) => <option key={x.id} value={x.id}>{x.name.vi}{x.published ? '' : ' (đang ẩn)'}</option>)}
+            </select>
+          </div>
+          <div className="row wrap" role="group" aria-label="Màu nhấn">
+            <span className="grow">Màu nhấn</span>
+            {ACCENTS.map(([hex, name]) => (
+              <button key={hex} type="button" className="accent-dot" aria-pressed={p.accent.toLowerCase() === hex.toLowerCase()} aria-label={name} title={name}
+                style={{ background: hex }} onClick={() => set({ accent: hex })} />
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="card stack"><p className="legend" style={{ margin: 0 }}>{promo ? 'Ảnh lớn (trống = ảnh màu đầu tiên của sản phẩm)' : 'Ảnh poster'}</p><ImageInput label="Ảnh poster" value={p.imageKey} onChange={(imageKey) => set({ imageKey })} /></div>
+      <NamesInput label="Nhãn nhỏ (ví dụ HÀNG MỚI VỀ)" value={p.tag} onChange={(tag) => set({ tag })} />
       <NamesInput label="Tiêu đề" value={p.title} onChange={(title) => set({ title })} />
+      {promo && <NamesInput label="Dòng nổi bật dưới tiêu đề (màu nhấn, ví dụ NAM)" value={p.highlight} onChange={(highlight) => set({ highlight })} />}
+      {promo && <NamesInput label="Nhãn trên ảnh (ví dụ Mẫu hot · Đỏ)" value={p.badge} onChange={(badge) => set({ badge })} />}
       <NamesInput label="Mô tả" value={p.body} onChange={(body) => set({ body })} multiline />
       <NamesInput label="Chữ trên nút" value={p.ctaLabel} onChange={(ctaLabel) => set({ ctaLabel })} />
       <div className="card stack">
-        <label htmlFor="poster-href">Nút dẫn tới (ví dụ /san-pham hoặc /bo-suu-tap/…)</label>
+        <label htmlFor="poster-href">Nút dẫn tới (ví dụ /san-pham hoặc /bo-suu-tap/…){promo ? ' — trống = trang sản phẩm' : ''}</label>
         <input id="poster-href" value={p.ctaHref} placeholder="/san-pham" onChange={(e) => set({ ctaHref: e.target.value })} />
         <Check label="Hiện trên trang web" checked={p.published} onChange={(published) => set({ published })} />
         <div className="row"><span className="grow">Thứ tự</span><Num label="Thứ tự" value={p.position} onChange={(position) => set({ position })} /></div>
@@ -302,7 +333,7 @@ type Tab = (typeof TABS)[number][0];
 export function Content() {
   const [tab, setTab] = useState<Tab>('products');
   const [products, setProducts] = useState<Product[]>([]);
-  useEffect(() => { if (tab === 'collections') api<Product[]>('GET', '/api/products').then(setProducts).catch(() => {}); }, [tab]);
+  useEffect(() => { if (tab === 'collections' || tab === 'posters') api<Product[]>('GET', '/api/products').then(setProducts).catch(() => {}); }, [tab]);
   return (
     <main className="page">
       <div className="topbar"><h1>Trang web</h1><a className="btn btn-sm" href="/" target="_blank" rel="noreferrer">Xem trang web</a></div>
@@ -324,8 +355,9 @@ export function Content() {
       )}
       {tab === 'posters' && (
         <Crud<Poster> key="o" path="/api/posters" noun="poster" title={(x) => x.title.vi} thumb={(x) => x.imageKey}
-          blank={() => ({ tag: N0(), title: N0(), body: N0(), imageKey: null, ctaLabel: N0(), ctaHref: '/san-pham', published: false, position: 0 })}
-          form={(x, set) => <PosterForm p={x} set={set} />} />
+          blank={() => ({ tag: N0(), title: N0(), body: N0(), imageKey: null, ctaLabel: N0(), ctaHref: '', published: false, position: 0,
+            layout: 'promo', productId: null, accent: '#E2B65B', highlight: N0(), badge: N0() })}
+          form={(x, set) => <PosterForm p={x} set={set} products={products} />} />
       )}
       {tab === 'shop' && <ShopForm />}
     </main>

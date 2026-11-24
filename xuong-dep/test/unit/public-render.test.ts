@@ -131,3 +131,38 @@ test('legacy phase-1 admin bookmarks (/#/orders/…) still reach /quan-ly', asyn
   const html = (await call(env, 'GET', '/')).body as string;
   expect(html).toContain("location.replace('/quan-ly'+location.hash)");
 });
+
+test('promo poster: highlight line, badge, accent, stats and colour grid come from its product', async () => {
+  const p = await product('Dép kẹp nam quai bản to');
+  const r = await call(env, 'POST', '/api/posters', {
+    layout: 'promo', productId: p.id, accent: '#E2B65B', published: true,
+    tag: { vi: 'HÀNG MỚI VỀ' }, title: { vi: 'DÉP KẸP' }, highlight: { vi: 'NAM' }, body: { vi: 'Quai bản to, lót êm chân.' },
+    badge: { vi: 'Mẫu hot · Đen' }, ctaLabel: { vi: 'Nhận báo giá' },
+  }, admin);
+  expect(r.status).toBe(200);
+  expect(r.body).toMatchObject({ layout: 'promo', productId: p.id, accent: '#E2B65B', highlight: { vi: 'NAM', en: '', km: '' } });
+  const html = (await call(env, 'GET', '/')).body as string;
+  expect(html).toContain('class="poster promo"');
+  expect(html).toContain('--accent:#E2B65B');
+  expect(html).toContain('DÉP KẸP');
+  expect(html).toContain('<span class="hl">NAM</span>');
+  expect(html).toContain('Mẫu hot · Đen');
+  // stats and swatches from the product: 2 colours, size 39–44, each colour picture + name
+  expect(html).toMatch(/class="promo-stat"><strong>2<\/strong>/);
+  expect(html).toContain('39–44');
+  expect((html.match(/class="promo-swatch"/g) ?? []).length).toBe(2);
+  // no button link given: the button opens the product
+  expect(html).toContain(`href="/san-pham/${p.slug}"`);
+  expect(html).toContain('class="promo-bar"');
+});
+
+test('promo poster rejects a colour that is not #rrggbb and falls back when its product is hidden', async () => {
+  const p = await product('Mẫu sẽ ẩn');
+  expect((await call(env, 'POST', '/api/posters', { layout: 'promo', title: { vi: 'X' }, accent: 'red;background:url(x)' }, admin)).body.accent).toBe('#E2B65B');
+  await call(env, 'POST', '/api/posters', { layout: 'promo', productId: p.id, title: { vi: 'Poster còn lại' }, published: true }, admin);
+  await call(env, 'PUT', `/api/products/${p.id}`, { ...p, published: false }, admin);
+  const html = (await call(env, 'GET', '/')).body as string;
+  expect(html).toContain('Poster còn lại');
+  expect(html).not.toContain('class="promo-swatch"');
+  expect(html).not.toContain(`/san-pham/${p.slug}`);
+});

@@ -14,6 +14,8 @@ export type Product = {
 export type Collection = { id: string; title: Names; subtitle: Names; coverKey: string | null; color: string; published: boolean; position: number; productIds: string[] };
 export type Poster = {
   id: string; tag: Names; title: Names; body: Names; imageKey: string | null; ctaLabel: Names; ctaHref: string; published: boolean; position: number;
+  /** 'promo' = the printed-poster look: stats and colour grid from `productId`, `highlight` line in `accent`, `badge` on the photo. */
+  layout: 'classic' | 'promo'; productId: string | null; accent: string; highlight: Names; badge: Names;
 };
 export type Contact = { name: string; phone: string };
 /** Contact block of the site: one address (empty = Phnom Penh), the CEO and the sales manager (phone = Zalo). */
@@ -174,6 +176,8 @@ export async function deleteCollection(env: Env, id: string) {
 const mapPoster = (r: any): Poster => ({
   id: r.id, tag: row3(r, 'tag'), title: row3(r, 'title'), body: row3(r, 'body'), imageKey: r.image_key, ctaLabel: row3(r, 'cta_label'),
   ctaHref: r.cta_href, published: !!r.published, position: r.position,
+  layout: r.layout === 'promo' ? 'promo' : 'classic', productId: r.product_id ?? null, accent: r.accent || '#E2B65B',
+  highlight: row3(r, 'highlight'), badge: row3(r, 'badge'),
 });
 export async function listPosters(env: Env, publicOnly = false): Promise<Poster[]> {
   return (await env.DB.prepare(`SELECT * FROM posters ${publicOnly ? 'WHERE published = 1' : ''} ORDER BY position`).all<any>()).results.map(mapPoster);
@@ -181,17 +185,25 @@ export async function listPosters(env: Env, publicOnly = false): Promise<Poster[
 export async function savePoster(env: Env, b: any, id: string | null): Promise<Poster> {
   const pid = id ?? newId();
   const tag = names(b.tag, 60), title = names(b.title, 160, true, 'tiêu đề'), body = names(b.body, 600), cta = names(b.ctaLabel, 60);
+  const hl = names(b.highlight, 80), badge = names(b.badge, 80);
+  const layout = b.layout === 'promo' ? 'promo' : 'classic';
+  const accent = /^#[0-9a-f]{6}$/i.test(String(b.accent ?? '')) ? String(b.accent) : '#E2B65B';
+  const productId = str(b.productId, 100) || null;
   const img = str(b.imageKey, 200) || null;
   if (img && !img.startsWith('pub/')) bad('Ảnh poster phải tải lên ở mục Trang web');
   const href = str(b.ctaHref, 300);
   if (href && !/^(\/|https:\/\/)/.test(href)) bad('Link nút phải bắt đầu bằng / hoặc https://');
   await env.DB.prepare(`INSERT INTO posters (id, tag_vi, tag_en, tag_km, title_vi, title_en, title_km, body_vi, body_en, body_km, image_key,
-      cta_label_vi, cta_label_en, cta_label_km, cta_href, published, position) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      cta_label_vi, cta_label_en, cta_label_km, cta_href, published, position,
+      layout, product_id, accent, highlight_vi, highlight_en, highlight_km, badge_vi, badge_en, badge_km) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
       ON CONFLICT(id) DO UPDATE SET tag_vi=excluded.tag_vi, tag_en=excluded.tag_en, tag_km=excluded.tag_km, title_vi=excluded.title_vi,
       title_en=excluded.title_en, title_km=excluded.title_km, body_vi=excluded.body_vi, body_en=excluded.body_en, body_km=excluded.body_km,
       image_key=excluded.image_key, cta_label_vi=excluded.cta_label_vi, cta_label_en=excluded.cta_label_en, cta_label_km=excluded.cta_label_km,
-      cta_href=excluded.cta_href, published=excluded.published, position=excluded.position`)
-    .bind(pid, tag.vi, tag.en, tag.km, title.vi, title.en, title.km, body.vi, body.en, body.km, img, cta.vi, cta.en, cta.km, href, flag(b.published), pos(b.position)).run();
+      cta_href=excluded.cta_href, published=excluded.published, position=excluded.position, layout=excluded.layout,
+      product_id=excluded.product_id, accent=excluded.accent, highlight_vi=excluded.highlight_vi, highlight_en=excluded.highlight_en,
+      highlight_km=excluded.highlight_km, badge_vi=excluded.badge_vi, badge_en=excluded.badge_en, badge_km=excluded.badge_km`)
+    .bind(pid, tag.vi, tag.en, tag.km, title.vi, title.en, title.km, body.vi, body.en, body.km, img, cta.vi, cta.en, cta.km, href, flag(b.published), pos(b.position),
+      layout, productId, accent, hl.vi, hl.en, hl.km, badge.vi, badge.en, badge.km).run();
   return mapPoster(await env.DB.prepare('SELECT * FROM posters WHERE id = ?').bind(pid).first<any>());
 }
 export async function deletePoster(env: Env, id: string) {
