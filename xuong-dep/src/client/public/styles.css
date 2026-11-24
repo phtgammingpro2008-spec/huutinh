@@ -789,3 +789,12 @@ body.site.has-cta .site-footer-in, body.site .site-footer-in { padding-bottom: c
   #main, .site-header-in, .site-footer-in { max-width: 1280px; }
   .page { max-width: 960px; }
 }
+
+/* ---- HLUXURY logo set: dark ink on light screens, gold on dark ones ---- */
+.brand-logo { flex: none; display: block; width: 148px; height: 42px; background: url(/brand/hluxury-logo-gon-den.svg) left center / contain no-repeat;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .brand-logo { background-image: url(/brand/hluxury-logo-gon-vang.svg); } }
+:root[data-theme="dark"] .brand-logo, .brand-light .brand-logo { background-image: url(/brand/hluxury-logo-gon-vang.svg); }
+.brand-sub { padding-left: 10px; margin-left: 2px; border-left: 1px solid var(--line); line-height: 1.2; }
+.site-footer-brand img { display: block; width: 156px; height: auto; margin-left: -10px; }
+@media (max-width: 380px) { .brand-logo { width: 124px; height: 35px; } }

@@ -112,7 +112,7 @@ export function QuotePage({ token }: { token: string }) {
 
   const switcher = (
     <header className="quote-head">
-      <span className="brand"><span className="brand-mark" aria-hidden="true">H</span><span className="brand-name">HLUXURY</span></span>
+      <span className="brand"><span className="brand-logo" aria-hidden="true" /><span className="visually-hidden">HLUXURY</span></span>
       <LangGlobe value={lang} onChange={choose} label={t(lang, 'language')} />
       <ThemeToggle labels={{ toDark: uiT(lang, 'ui.to_dark'), toLight: uiT(lang, 'ui.to_light') }} />
     </header>

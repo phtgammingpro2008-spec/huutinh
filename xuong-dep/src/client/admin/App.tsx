@@ -96,8 +96,9 @@ export function App() {
     <div className="app">
       <header className="app-header">
         <a className="brand" href="#/" aria-label="HLUXURY – quản lý">
-          <span className="brand-mark" aria-hidden="true">H</span>
-          <span><span className="brand-name">HLUXURY</span><span className="small muted" style={{ display: 'block' }}>Quản lý xưởng</span></span>
+          <span className="brand-logo" aria-hidden="true" />
+          <span className="visually-hidden">HLUXURY</span>
+          <span className="small muted brand-sub">Quản lý xưởng</span>
         </a>
         <ThemeToggle />
       </header>
