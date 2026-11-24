@@ -20,6 +20,7 @@ type Poster = {
   id?: string; tag: Names; title: Names; body: Names; imageKey: string | null; ctaLabel: Names; ctaHref: string; published: boolean; position: number;
   layout: 'classic' | 'promo'; productId: string | null; accent: string; highlight: Names; badge: Names;
 };
+type GalleryItem = { id?: string; imageKey: string; caption: Names; href: string; published: boolean; position: number };
 type Contact = { name: string; phone: string };
 type Shop = { address: string; messenger: string; ceo: Contact; sales: Contact };
 
@@ -326,7 +327,23 @@ function ShopForm() {
   );
 }
 
-const TABS = [['products', 'Sản phẩm'], ['collections', 'Bộ sưu tập'], ['posters', 'Poster'], ['shop', 'Liên hệ']] as const;
+function GalleryForm({ g, set }: { g: GalleryItem; set: (x: Partial<GalleryItem>) => void }) {
+  return (
+    <>
+      <p className="small muted" style={{ margin: 0 }}>Ảnh chạy vòng từ trái qua phải trên trang chủ. Ảnh dọc (4:5) đẹp nhất.</p>
+      <div className="card stack"><p className="legend" style={{ margin: 0 }}>Ảnh</p><ImageInput label="Ảnh chạy" value={g.imageKey || null} onChange={(k) => set({ imageKey: k ?? '' })} /></div>
+      <NamesInput label="Chú thích trên ảnh (không bắt buộc)" value={g.caption} onChange={(caption) => set({ caption })} />
+      <div className="card stack">
+        <label htmlFor="gallery-href">Bấm vào ảnh thì mở (không bắt buộc, ví dụ /san-pham/…)</label>
+        <input id="gallery-href" value={g.href} placeholder="/san-pham" onChange={(e) => set({ href: e.target.value })} />
+        <Check label="Hiện trên trang web" checked={g.published} onChange={(published) => set({ published })} />
+        <div className="row"><span className="grow">Thứ tự</span><Num label="Thứ tự" value={g.position} onChange={(position) => set({ position })} /></div>
+      </div>
+    </>
+  );
+}
+
+const TABS = [['products', 'Sản phẩm'], ['gallery', 'Ảnh chạy'], ['collections', 'Bộ sưu tập'], ['posters', 'Poster'], ['shop', 'Liên hệ']] as const;
 type Tab = (typeof TABS)[number][0];
 
 /** Everything the public site shows: products, collections, posters, workshop info. */
@@ -358,6 +375,11 @@ export function Content() {
           blank={() => ({ tag: N0(), title: N0(), body: N0(), imageKey: null, ctaLabel: N0(), ctaHref: '', published: false, position: 0,
             layout: 'promo', productId: null, accent: '#E2B65B', highlight: N0(), badge: N0() })}
           form={(x, set) => <PosterForm p={x} set={set} products={products} />} />
+      )}
+      {tab === 'gallery' && (
+        <Crud<GalleryItem> key="g" path="/api/gallery" noun="ảnh" title={(x) => x.caption.vi || 'Ảnh không chú thích'} thumb={(x) => x.imageKey}
+          blank={() => ({ imageKey: '', caption: N0(), href: '', published: true, position: 0 })}
+          form={(x, set) => <GalleryForm g={x} set={set} />} />
       )}
       {tab === 'shop' && <ShopForm />}
     </main>

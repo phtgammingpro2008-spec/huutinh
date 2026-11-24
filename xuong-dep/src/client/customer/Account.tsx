@@ -1,4 +1,4 @@
-import { BookImage, ClipboardList, Plus, UserRound } from 'lucide-react';
+import { BookImage, ClipboardList, House, Plus, UserRound } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Lang } from '../../shared/types';
 import { useRoute, type Route } from '../admin/router';
@@ -16,6 +16,7 @@ export function Account({ me, t, lang, setLang, onMe }: { me: Me; t: T; lang: La
   const route = useRoute();
   const [a, b] = route.parts;
   const tabs = [
+    { href: '/', label: t('pub.home'), ico: <House size={22} />, on: false },
     { href: '#/', label: t('c.nav_orders'), ico: <ClipboardList size={22} />, on: !a || a === 'don' },
     { href: '#/dat-hang', label: t('c.nav_new'), ico: <Plus size={24} />, on: a === 'dat-hang', plus: true },
     { href: '#/thu-vien', label: t('c.nav_library'), ico: <BookImage size={22} />, on: a === 'thu-vien' },
