@@ -354,6 +354,7 @@ export function Content() {
   return (
     <main className="page">
       <div className="topbar"><h1>Trang web</h1><a className="btn btn-sm" href="/" target="_blank" rel="noreferrer">Xem trang web</a></div>
+      <a className="btn-gold publish-entry" href="#/dang-mau">Đăng mẫu mới lên web (ảnh + sản phẩm + poster một lần)</a>
       <div className="seg" role="tablist" aria-label="Nội dung trang web" style={{ marginBottom: 14 }}>
         {TABS.map(([k, label]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} aria-pressed={tab === k} onClick={() => setTab(k)}>{label}</button>

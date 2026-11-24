@@ -28,7 +28,10 @@ export function Home() {
           <div><dt>Chờ báo giá</dt><dd>{d ? d.waitingQuote.length : '–'}</dd></div>
           <div><dt>Còn nợ tiền</dt><dd>{d ? d.unpaid.length : '–'}</dd></div>
         </dl>
-        <a className="btn-gold" href="#/orders/new">+ Đơn mới</a>
+        <div className="row wrap" style={{ gap: 10 }}>
+          <a className="btn-gold" href="#/orders/new">+ Đơn mới</a>
+          <a className="btn-line" href="#/dang-mau">Đăng mẫu lên web</a>
+        </div>
       </section>
       {error && <p className="error">{error}</p>}
       {d && d.newFromCustomers.length > 0 && (
