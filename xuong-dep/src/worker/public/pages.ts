@@ -71,7 +71,7 @@ function promoPoster(c: PageCtx, p: Poster, i: number, total: number, byId: Map<
 <div class="promo-top">
 <div class="promo-copy">
 ${pick(p.tag, c.lang) ? html`<span class="promo-tag">${pick(p.tag, c.lang)}</span>` : ''}
-${i === 0 ? html`<h1 class="promo-title">${heading}</h1>` : html`<p class="promo-title">${heading}</p>`}
+<h2 class="promo-title">${heading}</h2>
 ${body ? html`<p class="promo-body">${body}</p>` : ''}
 ${prod ? html`<div class="promo-stats"><div class="promo-stat"><strong>${prod.colors.length}</strong><span>${tr(c, 'pub.stat_colors')}</span></div>${range ? html`<div class="promo-sep" aria-hidden="true"></div><div class="promo-stat"><strong>${range}</strong><span>${tr(c, 'pub.stat_size')}</span></div>` : ''}</div>` : ''}
 <a class="promo-cta" href="${href}">${cta} ${icon('arrow', 18)}</a>
@@ -119,20 +119,19 @@ ${orderLink(c, html`${icon('camera', 18)}<span>${tr(c, 'pub.cta')}</span>`, 'btn
 
 function posterBlock(c: PageCtx, posters: Poster[], products: Product[] = []): Html {
   const byId = new Map(products.map((x) => [x.id, x]));
-  if (!posters.length) {
-    return html`<section class="hero-night">
+  const hero = html`<section class="hero-night">
 <div class="hero-night-copy"><p class="hero-brand">HLUXURY</p><h1>${tr(c, 'pub.default_title')}</h1><p class="hero-lead">${tr(c, 'pub.default_body')}</p>
 <div class="hero-actions"><a class="btn-gold" href="/san-pham">${tr(c, 'pub.see_products')}</a>${orderLink(c, tr(c, 'pub.cta'), 'btn-line')}</div></div>
 <div class="hero-night-art" aria-hidden="true">${lineSandals()}</div></section>`;
-  }
-  return html`<section class="posters-wrap" aria-roledescription="carousel" aria-label="HLUXURY">
+  if (!posters.length) return hero;
+  return html`${hero}<section class="posters-wrap" aria-roledescription="carousel" aria-label="HLUXURY">
 <div class="posters" tabindex="0">${posters.map((p, i) => {
     if (p.layout === 'promo') return promoPoster(c, p, i, posters.length, byId);
     const title = pick(p.title, c.lang), cta = pick(p.ctaLabel, c.lang);
     return html`<article class="poster" aria-roledescription="slide" aria-label="${i + 1} / ${posters.length}">
 <div class="poster-img">${p.imageKey ? html`<img src="${mediaUrl(p.imageKey)}" alt="" ${i === 0 ? raw('fetchpriority="high"') : raw('loading="lazy"')} decoding="async">` : html`<div class="hero-art" aria-hidden="true">${sandal('#c96a3a', '#1b3b2c', 150)}${sandal('#f2d7a6', '#1b3b2c', 150)}</div>`}
 ${pick(p.tag, c.lang) ? html`<span class="chip-lime poster-tag">${pick(p.tag, c.lang)}</span>` : ''}</div>
-<div class="hero-copy">${i === 0 ? html`<h1>${title}</h1>` : html`<p class="h1-like">${title}</p>`}
+<div class="hero-copy"><h2 class="h1-like">${title}</h2>
 ${pick(p.body, c.lang) ? html`<p>${pick(p.body, c.lang)}</p>` : ''}
 ${cta && p.ctaHref ? html`<div class="hero-actions"><a class="btn-cta" href="${p.ctaHref}">${cta} ${icon('arrow', 18)}</a></div>` : ''}</div>
 </article>`;
