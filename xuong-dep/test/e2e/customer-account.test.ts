@@ -93,6 +93,7 @@ test('the customer bar has a Trang chủ button back to the shop home page', asy
   await register(page, 4);
   await page.goto(app.url + '/tai-khoan#/');
   const bar = page.getByRole('navigation');
+  await bar.getByRole('link', { name: 'Đơn của tôi' }).waitFor(); // the bar is drawn after /api/me answers
   const names = await bar.getByRole('link').allTextContents();
   expect(names.slice(0, 2)).toEqual(['Trang chủ', 'Đơn của tôi']);
   await bar.getByRole('link', { name: 'Trang chủ' }).click();
