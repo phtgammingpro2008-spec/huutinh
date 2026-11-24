@@ -678,3 +678,39 @@ body.site .head-account.btn-primary { background: var(--night); border-color: va
 body.site .chips a[aria-current="page"] { background: var(--night); border-color: var(--night); color: var(--gold); }
 body.site .swatch:has(input:checked) { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
 [data-theme="dark"] body.site .pcard-cta { background: var(--gold); color: var(--night); }
+
+/* ---- one look everywhere (2a.3): night + gold, Be Vietnam Pro, for the customer area and the admin too ---- */
+:root {
+  --font: "Be Vietnam Pro", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Khmer", sans-serif;
+  --night: #0C110E; --gold: #E2B65B; --cream: #F2EEE5;
+  --lime: #E2B65B; --accent: #0C110E; --accent-ink: #E2B65B; --link: #1b3b2c;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --accent: #E2B65B; --accent-ink: #0C110E; --link: #E2B65B; --lime: #E2B65B; } }
+:root[data-theme="dark"] { --accent: #E2B65B; --accent-ink: #0C110E; --link: #E2B65B; --lime: #E2B65B; }
+h1, h2 { font-family: var(--font); font-weight: 900; letter-spacing: -.02em; }
+h1 { font-size: 2rem; }
+.brand-mark { font-family: var(--font); background: var(--night); color: var(--gold); }
+.home-hero { background: var(--night); color: var(--cream); border-radius: 22px; padding: 22px 20px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.home-hero h1 { color: var(--cream); margin: 0; font-size: clamp(1.8rem, 7vw, 2.6rem); line-height: 1.05; }
+.home-hero-brand { margin: 0; color: var(--gold); font-weight: 800; letter-spacing: .28em; font-size: .72rem; }
+.home-hero-lead { margin: 0; color: #C9C4B8; max-width: 46ch; }
+.home-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 4px 0; width: 100%; }
+.home-stats div { background: #ffffff0d; border: 1px solid #ffffff1a; border-radius: 14px; padding: 10px 12px; }
+.home-stats dt { font-size: .75rem; color: #b9b3a6; }
+.home-stats dd { margin: 2px 0 0; font-size: 1.9rem; font-weight: 900; color: var(--gold); line-height: 1; }
+.app .btn-gold, .page .btn-gold { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 18px; border-radius: 12px; background: var(--gold); color: var(--night); font-weight: 800; text-decoration: none; }
+.page .btn-line { display: inline-flex; align-items: center; min-height: 48px; padding: 0 16px; border-radius: 12px; border: 1.5px solid #3a443d; color: var(--cream); font-weight: 700; text-decoration: none; }
+.tabbar a.active { color: var(--ink); }
+.tabbar a.active .ico { color: var(--accent); }
+.tabbar a.plus .ico { background: var(--gold); color: var(--night); }
+.totals-bar { background: var(--night) !important; }
+.totals-bar .btn-lime, .totals-bar .btn-primary { background: var(--gold); border-color: var(--gold); color: var(--night); }
+.empty-card .btn-cta { background: var(--gold); color: var(--night); }
+/* wide screens: the bottom bar floats as a compact pill instead of stretching across the screen (screen only: never in print) */
+@media screen and (min-width: 760px) {
+  .tabbar { left: 50%; right: auto; transform: translateX(-50%); bottom: 14px; width: min(560px, calc(100% - 32px)); border: 1px solid var(--line);
+    border-radius: 20px; box-shadow: 0 12px 32px #0c110e26; padding-bottom: 0; }
+  .app { padding-bottom: calc(var(--nav-h) + 40px); }
+  .totals-bar { bottom: calc(var(--nav-h) + 24px); left: 50%; right: auto; transform: translateX(-50%); width: min(760px, calc(100% - 32px)); border-radius: 16px; }
+  .home-hero { padding: 32px 36px; }
+}
