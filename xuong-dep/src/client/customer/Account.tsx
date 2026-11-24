@@ -26,8 +26,8 @@ export function Account({ me, t, lang, setLang, onMe }: { me: Me; t: T; lang: La
     <div className="app">
       <header className="app-header">
         <a className="brand" href="/" aria-label="HLUXURY">
-          <span className="brand-mark" aria-hidden="true">H</span>
-          <span className="brand-name">HLUXURY</span>
+          <span className="brand-logo" aria-hidden="true" />
+          <span className="visually-hidden">HLUXURY</span>
         </a>
         <Controls t={t} lang={lang} setLang={setLang} />
       </header>

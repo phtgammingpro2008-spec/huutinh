@@ -19,8 +19,8 @@ function AuthShell({ t, lang, setLang, title, sub, tabs, children, foot }: {
       <section className="auth-hero">
         <div className="auth-hero-top">
           <a className="brand brand-light" href="/" aria-label="HLUXURY">
-            <span className="brand-mark" aria-hidden="true">H</span>
-            <span className="brand-name">HLUXURY</span>
+            <span className="brand-logo" aria-hidden="true" />
+            <span className="visually-hidden">HLUXURY</span>
           </a>
           <Controls t={t} lang={lang} setLang={setLang} />
         </div>

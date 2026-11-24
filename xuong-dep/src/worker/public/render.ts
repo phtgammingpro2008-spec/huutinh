@@ -81,7 +81,7 @@ function header(c: PageCtx): Html {
     ? html`<a class="btn btn-sm head-account" href="${c.user.role === 'admin' ? '/quan-ly' : '/tai-khoan'}" aria-label="${tr(c, 'pub.account')}">${icon('user', 18)}<span class="hide-xs">${tr(c, 'pub.account')}</span></a>`
     : html`<a class="btn btn-sm btn-primary head-account" href="${'/dang-nhap?next=' + next}">${tr(c, 'pub.login')}</a>`;
   return html`<header class="site-header"><div class="site-header-in">
-<a class="brand" href="/" aria-label="HLUXURY – ${tr(c, 'pub.home')}"><span class="brand-mark" aria-hidden="true">H</span><span class="brand-name">HLUXURY</span></a>
+<a class="brand" href="/" aria-label="HLUXURY – ${tr(c, 'pub.home')}"><span class="brand-logo" aria-hidden="true"></span><span class="visually-hidden">HLUXURY</span></a>
 <div id="hl-controls" class="head-controls"></div>
 ${account}
 </div></header>`;
@@ -99,7 +99,7 @@ function footer(c: PageCtx): Html {
 ${p.phone ? html`<br><a href="${telHref(p.phone)}">${p.phone}</a>${zaloHref(p.phone) ? html` · <a href="${zaloHref(p.phone)}" rel="noopener" target="_blank">Zalo</a>` : ''}` : ''}
 </span></li>` : '');
   return html`<footer class="site-footer"><div class="site-footer-in">
-<p class="site-footer-brand">HLUXURY</p>
+<p class="site-footer-brand"><img src="/brand/hluxury-logo-doc-vang.svg" alt="HLUXURY" width="156" height="120" loading="lazy"></p>
 <p class="muted-on-dark">${tr(c, 'ui.tagline')}</p>
 <ul class="footer-list">
 ${person('pub.ceo', s.ceo)}
@@ -149,7 +149,7 @@ export function renderPage(c: PageCtx, o: {
 }): string {
   const url = c.origin + c.path;
   const canonical = c.origin + c.path.split('?')[0];
-  const og = o.ogImage ? c.origin + mediaUrl(o.ogImage) : '';
+  const og = c.origin + (o.ogImage ? mediaUrl(o.ogImage) : '/brand/hluxury-og.png');
   const alt = (l: Lang) => canonical + (canonical.includes('?') ? '&' : '?') + 'lang=' + l;
   return '<!doctype html>' + html`<html lang="${LANG_TAGS[c.lang]}">
 <head>
