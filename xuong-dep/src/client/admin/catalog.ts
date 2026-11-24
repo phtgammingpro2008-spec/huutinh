@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Currency, Lang, LineSetting } from '../../shared/types';
 import { api } from './api';
 
-export type Settings = { lines: LineSetting[]; quoteMessage: Record<Lang, string> };
+export type Settings = { lines: LineSetting[]; quoteMessage: Record<Lang, string>; minOrderPairs: number };
 export type MaterialKind = 'sole' | 'strap' | 'style';
 export type Material = { id: string; kind: MaterialKind; nameVi: string; nameEn: string; nameKm: string; hidden: boolean };
 export type Customer = {

@@ -7,7 +7,7 @@ import { api } from './api';
 
 export type Names = Record<Lang, string>;
 export type CMaterial = { id: string; kind: 'sole' | 'strap' | 'style'; name: Names };
-export type Catalog = { lines: LineSetting[]; materials: CMaterial[] };
+export type Catalog = { lines: LineSetting[]; materials: CMaterial[]; minOrderPairs?: number };
 
 /** Stored pictures the customer may see are served under /media. */
 export const media = (key: string) => '/media/' + key;

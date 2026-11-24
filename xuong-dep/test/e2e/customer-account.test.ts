@@ -101,3 +101,19 @@ test('the customer bar has a Trang chủ button back to the shop home page', asy
   await page.getByRole('link', { name: 'Tài khoản' }).waitFor();
   await ctx.close();
 });
+
+test('an order under the wholesale minimum is not sent and says how many pairs are missing', async () => {
+  const { ctx, page } = await phone();
+  await register(page, 5);
+  await page.goto(app.url + '/tai-khoan#/dat-hang');
+  await page.getByText('Đơn sỉ tối thiểu 10 đôi').waitFor();
+  await page.getByLabel('Chọn ảnh của bạn').setInputFiles(join(import.meta.dir, '../fixtures/grid-3000x2000.jpg'));
+  await page.getByRole('button', { name: 'Cả ảnh là 1 mẫu' }).click();
+  const item = page.getByRole('region', { name: 'Mẫu 1', exact: true });
+  await item.getByRole('button', { name: 'Tổng số đôi' }).click();
+  await item.getByLabel('Tổng số đôi – Nam').fill('6');
+  await page.getByRole('button', { name: 'Gửi đơn' }).click();
+  await page.getByText('Cần thêm 4 đôi để đủ đơn tối thiểu 10 đôi.').waitFor();
+  expect(page.url()).toContain('#/dat-hang');
+  await ctx.close();
+});

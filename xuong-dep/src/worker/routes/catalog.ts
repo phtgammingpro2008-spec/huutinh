@@ -102,6 +102,11 @@ export function catalogRoutes(r: Router) {
       }
       stmts.push(setSettingStmt(env, 'quote_message', qm));
     }
+    if (b.minOrderPairs !== undefined) {
+      const n = b.minOrderPairs;
+      if (!Number.isInteger(n) || n < 0 || n > 1_000_000) return err(400, 'Số đôi tối thiểu phải là số nguyên từ 0 trở lên');
+      stmts.push(setSettingStmt(env, 'min_order_pairs', n));
+    }
     if (stmts.length) await env.DB.batch(stmts);
     return json(await getSettings(env));
   }));

@@ -122,6 +122,14 @@ export function Settings() {
           ))}
           <button type="button" className="btn-sm" onClick={() => setS({ ...s, lines: [...s.lines, { key: `dong_${Date.now().toString(36)}`, label: { vi: 'Dòng mới', en: '', km: '' }, sizeFrom: 35, sizeTo: 40 }] })}>+ Thêm dòng size</button>
 
+          <h2>Đơn sỉ tối thiểu</h2>
+          <div className="card stack">
+            <label htmlFor="min-pairs">Số đôi tối thiểu mỗi đơn khách tự đặt</label>
+            <input id="min-pairs" inputMode="numeric" className="num" style={{ maxWidth: 160 }} value={String(s.minOrderPairs ?? 10)}
+              onChange={(e) => { setMsg(''); setS({ ...s, minOrderPairs: parseInt(e.target.value.replace(/\D/g, '') || '0', 10) }); }} />
+            <p className="small muted" style={{ margin: 0 }}>Khách đặt ít hơn số này thì không gửi đơn được (web báo cần thêm bao nhiêu đôi). Đơn anh tự nhập không bị giới hạn. Để 0 nếu muốn nhận mọi đơn.</p>
+          </div>
+
           <h2>Tin nhắn gửi báo giá</h2>
           <p className="small muted" style={{ marginTop: -4 }}>Đoạn tin nhắn có sẵn khi anh bấm "Gửi báo giá", để chép gửi khách qua Zalo. Máy tự điền:</p>
           <div className="row wrap token-help">

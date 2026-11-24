@@ -1,7 +1,9 @@
 import type { Lang, LineSetting } from '../../shared/types';
 import type { Env } from '../env';
 
-export type Settings = { lines: LineSetting[]; quoteMessage: Record<Lang, string> };
+/** minOrderPairs: the wholesale minimum for orders customers place themselves (the workshop's own orders are free). */
+export type Settings = { lines: LineSetting[]; quoteMessage: Record<Lang, string>; minOrderPairs: number };
+export const DEFAULT_MIN_ORDER_PAIRS = 10;
 
 export async function getSetting<T>(env: Env, key: string, fallback: T): Promise<T> {
   const r = await env.DB.prepare('SELECT value FROM settings WHERE key = ?').bind(key).first<{ value: string }>();
@@ -18,5 +20,6 @@ export async function getSettings(env: Env): Promise<Settings> {
   return {
     lines: await getSetting<LineSetting[]>(env, 'lines', []),
     quoteMessage: await getSetting<Record<Lang, string>>(env, 'quote_message', { vi: '{url}', en: '{url}', km: '{url}' }),
+    minOrderPairs: await getSetting<number>(env, 'min_order_pairs', DEFAULT_MIN_ORDER_PAIRS),
   };
 }
