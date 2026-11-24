@@ -13,6 +13,7 @@ import { Orders } from './pages/Orders';
 import { Settings } from './pages/Settings';
 import { Content } from './pages/Content';
 import { Users } from './pages/Users';
+import { Publish } from './pages/Publish';
 import { useRoute, type Route } from './router';
 
 type Auth = { state: 'loading' } | { state: 'out'; needsSetup: boolean } | { state: 'in'; me: Me };
@@ -58,6 +59,7 @@ function Screen({ route }: { route: Route }): ReactNode {
   if (a === 'settings') return <Settings />;
   if (a === 'users') return <Users />;
   if (a === 'content') return <Content />;
+  if (a === 'dang-mau') return <Publish />;
   return <Placeholder title="Không tìm thấy trang" />;
 }
 

@@ -71,3 +71,33 @@ export async function cropToBlob(src: Blob | Drawable, box: Box, maxEdge = 1200)
   g.drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
   return canvasBlob(c, 'image/jpeg', 0.85);
 }
+
+/**
+ * A centred 4:5 (portrait) frame, zoomed in a little (`zoom` of the largest frame that fits) so the pair of
+ * sandals fills more of the picture. Fractions of the photo, for cropToBlob.
+ */
+export function portraitBox(w: number, h: number, zoom = 0.92, ratio = 4 / 5): Box {
+  let bw = w, bh = w / ratio;
+  if (bh > h) { bh = h; bw = h * ratio; }
+  bw *= zoom; bh *= zoom;
+  return { x: (w - bw) / 2 / w, y: (h - bh) / 2 / h, w: bw / w, h: bh / h };
+}
+
+/** Photo ready for the site: optional 4:5 frame, a touch more contrast and colour where the browser can, long edge ≤ 1500. */
+export async function sitePhoto(file: File, opts: { portrait: boolean }): Promise<{ blob: Blob; width: number; height: number }> {
+  const img = await decodeImage(file, file.name);
+  const { w, h } = sizeOf(img);
+  const box = opts.portrait ? portraitBox(w, h) : { x: 0, y: 0, w: 1, h: 1 };
+  const sw = box.w * w, sh = box.h * h;
+  const scale = Math.min(1, 1500 / Math.max(sw, sh));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(sw * scale));
+  c.height = Math.max(1, Math.round(sh * scale));
+  const g = c.getContext('2d')!;
+  g.fillStyle = '#fff';
+  g.fillRect(0, 0, c.width, c.height);
+  if ('filter' in g) g.filter = 'contrast(1.06) saturate(1.12) brightness(1.02)'; // older Safari: plain copy
+  g.drawImage(img, box.x * w, box.y * h, sw, sh, 0, 0, c.width, c.height);
+  if ('close' in img) img.close();
+  return { blob: await canvasBlob(c, 'image/jpeg', 0.85), width: c.width, height: c.height };
+}
