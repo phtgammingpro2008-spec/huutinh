@@ -16,6 +16,7 @@ migrations_dir = "migrations"
 binding = "IMAGES"
 bucket_name = "xuong-dep-anh"
 
-# Địa chỉ web dùng trong link báo giá. Bỏ trống thì lấy theo địa chỉ đang mở.
-# [vars]
-# APP_URL = "https://xuong-dep.ten-cua-anh.workers.dev"
+# Địa chỉ chính của web: link báo giá, link trong email, và nơi www.… / …workers.dev tự chuyển về.
+# Tên miền hluxurystore.com và www.hluxurystore.com gắn vào Worker trong Cloudflare (Settings → Domains & Routes).
+[vars]
+APP_URL = "https://hluxurystore.com"
