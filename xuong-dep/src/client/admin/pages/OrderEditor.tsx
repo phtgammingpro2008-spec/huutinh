@@ -214,7 +214,7 @@ export function OrderEditor({ orderId, designId, libraryOnly }: { orderId?: stri
   return (
     <main className="page with-bar">
       <div className="topbar">
-        <h1>{s.isNew ? 'Đơn mới' : 'Sửa đơn'}</h1>
+        <h1>{s.libraryOnly ? 'Đăng mẫu lên thư viện' : s.isNew ? 'Đơn mới' : 'Sửa đơn'}</h1>
         {s.status && <span className={`badge s-${s.status}`}>{STATUS_LABEL_VI[s.status]}</span>}
       </div>
 

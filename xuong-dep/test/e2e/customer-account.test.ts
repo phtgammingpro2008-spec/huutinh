@@ -87,3 +87,16 @@ test('an order waiting for a quote can be edited; the change is saved on the sam
   expect(list[0].totalQty).toBe(36);
   await ctx.close();
 });
+
+test('the customer bar has a Trang chủ button back to the shop home page', async () => {
+  const { ctx, page } = await phone();
+  await register(page, 4);
+  await page.goto(app.url + '/tai-khoan#/');
+  const bar = page.getByRole('navigation');
+  const names = await bar.getByRole('link').allTextContents();
+  expect(names.slice(0, 2)).toEqual(['Trang chủ', 'Đơn của tôi']);
+  await bar.getByRole('link', { name: 'Trang chủ' }).click();
+  await page.waitForURL(new RegExp(app.url.replace(/[.]/g, '\\.') + '/$'));
+  await page.getByRole('link', { name: 'Tài khoản' }).waitFor();
+  await ctx.close();
+});

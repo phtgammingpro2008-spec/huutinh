@@ -210,6 +210,31 @@ export async function deletePoster(env: Env, id: string) {
   await env.DB.prepare('DELETE FROM posters WHERE id = ?').bind(id).run();
 }
 
+// ---- home page picture strip ----
+export type GalleryItem = { id: string; imageKey: string; caption: Names; href: string; published: boolean; position: number };
+const mapGallery = (r: any): GalleryItem => ({
+  id: r.id, imageKey: r.image_key, caption: row3(r, 'caption'), href: r.href, published: !!r.published, position: r.position,
+});
+export async function listGallery(env: Env, publicOnly = false): Promise<GalleryItem[]> {
+  return (await env.DB.prepare(`SELECT * FROM gallery ${publicOnly ? 'WHERE published = 1' : ''} ORDER BY position, id`).all<any>()).results.map(mapGallery);
+}
+export async function saveGallery(env: Env, b: any, id: string | null): Promise<GalleryItem> {
+  const gid = id ?? newId();
+  const img = str(b.imageKey, 200);
+  if (!img.startsWith('pub/')) bad('Ảnh phải tải lên ở mục Trang web');
+  const href = str(b.href, 300);
+  if (href && !/^(\/|https:\/\/)/.test(href)) bad('Link phải bắt đầu bằng / hoặc https://');
+  const cap = names(b.caption, 120);
+  await env.DB.prepare(`INSERT INTO gallery (id, image_key, caption_vi, caption_en, caption_km, href, published, position) VALUES (?,?,?,?,?,?,?,?)
+      ON CONFLICT(id) DO UPDATE SET image_key=excluded.image_key, caption_vi=excluded.caption_vi, caption_en=excluded.caption_en,
+      caption_km=excluded.caption_km, href=excluded.href, published=excluded.published, position=excluded.position`)
+    .bind(gid, img, cap.vi, cap.en, cap.km, href, b.published === false ? 0 : 1, pos(b.position)).run();
+  return mapGallery(await env.DB.prepare('SELECT * FROM gallery WHERE id = ?').bind(gid).first<any>());
+}
+export async function deleteGallery(env: Env, id: string) {
+  await env.DB.prepare('DELETE FROM gallery WHERE id = ?').bind(id).run();
+}
+
 // ---- shop info ----
 export async function getShop(env: Env): Promise<Shop> {
   const r = await env.DB.prepare("SELECT value FROM settings WHERE key = 'shop'").first<{ value: string }>();
@@ -237,7 +262,7 @@ export async function getPublicHome(env: Env) {
   const collections = (await listCollections(env, true)).map((c) => ({ ...c, productIds: c.productIds.filter((id) => ids.has(id)) }));
   const styles = (await env.DB.prepare("SELECT id, name_vi, name_en, name_km FROM materials WHERE kind = 'style' AND hidden = 0 ORDER BY name_vi").all<any>()).results
     .map((m) => ({ id: m.id as string, name: row3(m, 'name') }));
-  return { posters: await listPosters(env, true), collections, products, styles, shop: await getShop(env) };
+  return { posters: await listPosters(env, true), collections, products, styles, shop: await getShop(env), gallery: await listGallery(env, true) };
 }
 
 /** Guests see the first colour and no size lines; logged-in users see everything. Brand-logo products never. */

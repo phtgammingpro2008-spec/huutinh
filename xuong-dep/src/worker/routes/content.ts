@@ -3,7 +3,7 @@ import { listLibrary } from '../repo/library';
 import { listMaterials } from '../repo/materials';
 import { getSettings } from '../repo/settings';
 import {
-  deleteCollection, deletePoster, deleteProduct, getProduct, getShop, listCollections, listPosters, listProducts,
+  deleteCollection, deleteGallery, deletePoster, listGallery, saveGallery, deleteProduct, getProduct, getShop, listCollections, listPosters, listProducts,
   saveCollection, savePoster, saveProduct, saveShop,
 } from '../repo/products';
 import { requireAdmin, requireCustomer } from '../roles';
@@ -28,6 +28,11 @@ export function contentRoutes(r: Router) {
   r.on('POST', '/api/posters', requireAdmin(async (req, env) => json(await savePoster(env, await readJson(req), null))));
   r.on('PUT', '/api/posters/:id', requireAdmin(async (req, env, p) => json(await savePoster(env, await readJson(req), p.id))));
   r.on('DELETE', '/api/posters/:id', requireAdmin(async (_req, env, p) => { await deletePoster(env, p.id); return json({ ok: true }); }));
+
+  r.on('GET', '/api/gallery', requireAdmin(async (_req, env) => json(await listGallery(env))));
+  r.on('POST', '/api/gallery', requireAdmin(async (req, env) => json(await saveGallery(env, await readJson(req), null))));
+  r.on('PUT', '/api/gallery/:id', requireAdmin(async (req, env, p) => json(await saveGallery(env, await readJson(req), p.id))));
+  r.on('DELETE', '/api/gallery/:id', requireAdmin(async (_req, env, p) => { await deleteGallery(env, p.id); return json({ ok: true }); }));
 
   r.on('GET', '/api/shop', requireAdmin(async (_req, env) => json(await getShop(env))));
   r.on('PUT', '/api/shop', requireAdmin(async (req, env) => json(await saveShop(env, await readJson(req)))));

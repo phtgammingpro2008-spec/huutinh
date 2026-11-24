@@ -74,3 +74,11 @@ test("'Tạo đơn từ mẫu này' opens editor with that item and no photo upl
   expect(o.items.map((i: any) => i.designId)).toEqual([designId]);
   expect(o.totals.qty).toBe(120);
 });
+
+test('Đăng ảnh lên thư viện opens the editor in library-only mode', async () => {
+  await openLibrary();
+  await page.getByRole('link', { name: 'Đăng ảnh lên thư viện' }).click();
+  await page.getByRole('heading', { name: 'Đăng mẫu lên thư viện' }).waitFor();
+  expect(await page.getByLabel('Chỉ lưu vào thư viện (không tạo đơn)').isChecked()).toBe(true);
+  await page.getByRole('button', { name: 'Lưu vào thư viện' }).waitFor();
+});

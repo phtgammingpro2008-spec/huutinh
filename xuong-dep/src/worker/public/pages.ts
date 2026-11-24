@@ -92,6 +92,20 @@ const lineSandals = () => raw(`<svg viewBox="0 0 320 300" fill="none" stroke-lin
 <g transform="rotate(12 225 160)"><path class="draw d3" pathLength="1" d="M225 34c40 0 62 34 62 84 0 44-14 70-20 108-6 34-20 52-42 52s-36-18-42-52c-6-38-20-64-20-108 0-50 22-84 62-84z" stroke="#c96a3a" stroke-width="5"/>
 <path class="draw d4" pathLength="1" d="M190 120h70" stroke="#F2EEE5" stroke-width="12"/></g></svg>`);
 
+/** Owner's pictures drifting left to right in a loop; drawn twice so the loop has no gap. Pauses on hover/focus. */
+function gallery(c: PageCtx, items: { imageKey: string; caption: Record<Lang, string>; href: string }[]): Html {
+  if (!items.length) return html``;
+  const one = (hidden: boolean) => html`<div class="gallery-track"${hidden ? raw(' aria-hidden="true"') : ''}>${items.map((g) => {
+    const cap = pick(g.caption, c.lang);
+    const inner = html`<img src="${mediaUrl(g.imageKey)}" alt="${cap}" loading="lazy" decoding="async">${cap ? html`<span>${cap}</span>` : ''}`;
+    return g.href && !hidden ? html`<a class="gallery-item" href="${g.href}">${inner}</a>` : html`<div class="gallery-item">${inner}</div>`;
+  })}</div>`;
+  // few pictures: repeat them so the strip is always wider than the screen
+  const reps = Math.max(1, Math.ceil(8 / items.length));
+  const row = (hidden: boolean) => html`${Array.from({ length: reps }, (_, k) => one(hidden || k > 0))}`;
+  return html`<section class="gallery" aria-label="HLUXURY" style="--dur:${Math.max(30, items.length * reps * 6)}s"><div class="gallery-belt">${row(false)}${row(true)}</div></section>`;
+}
+
 function why(c: PageCtx): Html {
   const items = [['factory', 'pub.why1_t', 'pub.why1_d'], ['image', 'pub.why2_t', 'pub.why2_d'], ['truck', 'pub.why3_t', 'pub.why3_d']] as const;
   return html`<section class="why" aria-label="HLUXURY"><ul>${items.map(([ic, t, d]) =>
@@ -155,6 +169,7 @@ async function home(req: Request, env: Env): Promise<Response> {
   const cols = h.collections.filter((x) => x.productIds.length);
   const body = html`
 ${posterBlock(c, h.posters, h.products)}
+${gallery(c, h.gallery)}
 ${why(c)}
 ${h.products.length ? styleChips(c, h.styles, null) : ''}
 ${cols.length ? html`<section class="section" id="chu-de"><div class="section-head"><h2>${tr(c, 'pub.collections')}</h2></div>

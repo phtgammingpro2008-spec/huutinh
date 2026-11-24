@@ -1,3 +1,4 @@
+import { ImagePlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api, ApiError, imgUrl } from '../api';
 import { KIND_LABEL, useMaterials, type Design, type MaterialKind } from '../catalog';
@@ -28,7 +29,9 @@ export function Library() {
 
   return (
     <main className="page">
-      <div className="topbar"><h1>Thư viện mẫu</h1><a className="btn btn-sm" href="#/orders/new?library=1">+ Nhập ảnh cũ</a></div>
+      <div className="topbar"><h1>Thư viện mẫu</h1></div>
+      <a className="btn-gold library-upload" href="#/orders/new?library=1"><ImagePlus size={20} aria-hidden="true" /> Đăng ảnh lên thư viện</a>
+      <p className="small muted" style={{ margin: '6px 0 12px' }}>Chọn ảnh, chạm vào từng đôi dép để cắt thành mẫu. Mẫu hiện cho khách đã đăng nhập tham khảo và đặt lại; mẫu có logo hãng khác thì mở mẫu và tick "Có logo thương hiệu".</p>
       <div className="chips">
         <button type="button" className="chip" aria-pressed={label === ''} onClick={() => setLabel('')}>Tất cả</button>
         <button type="button" className="chip" aria-pressed={label === 'co_dinh'} onClick={() => setLabel('co_dinh')}>Mẫu cố định</button>

@@ -166,3 +166,31 @@ test('promo poster rejects a colour that is not #rrggbb and falls back when its 
   expect(html).not.toContain('class="promo-swatch"');
   expect(html).not.toContain(`/san-pham/${p.slug}`);
 });
+
+test('gallery strip: admin-uploaded pictures loop across the home page, captions escaped, hidden ones left out', async () => {
+  const a = await upPub(), b2 = await upPub();
+  const g1 = await call(env, 'POST', '/api/gallery', { imageKey: a, caption: { vi: 'Dép <b>đỏ</b>' }, href: '/san-pham', published: true, position: 1 }, admin);
+  expect(g1.status).toBe(200);
+  expect(g1.body).toMatchObject({ imageKey: a, caption: { vi: 'Dép <b>đỏ</b>', en: '', km: '' }, href: '/san-pham', published: true });
+  await call(env, 'POST', '/api/gallery', { imageKey: b2, published: true, position: 2 }, admin);
+  await call(env, 'POST', '/api/gallery', { imageKey: await upPub(), published: false }, admin);
+  const html = (await call(env, 'GET', '/')).body as string;
+  expect(html).toContain('class="gallery"');
+  // the track is drawn twice so the loop never shows a gap; the copy is hidden from screen readers
+  // one readable track with the 2 published pictures; the repeats that fill the loop are hidden from screen readers
+  expect((html.match(/<div class="gallery-track">/g) ?? []).length).toBe(1);
+  const readable = html.split('<div class="gallery-track">')[1].split('</div><div class="gallery-track"')[0];
+  expect((readable.match(/class="gallery-item"/g) ?? []).length).toBe(2);
+  expect(html).toContain('class="gallery-track" aria-hidden="true"');
+  expect(readable).toContain('href="/san-pham"');
+  expect(html).toContain('Dép &lt;b&gt;đỏ&lt;/b&gt;');
+  expect(html).not.toContain('<b>đỏ</b>');
+  expect((await call(env, 'GET', '/api/gallery', undefined, admin)).body).toHaveLength(3);
+});
+
+test('gallery: only site pictures and safe links; no pictures = no strip', async () => {
+  expect((await call(env, 'GET', '/')).body).not.toContain('class="gallery"');
+  expect((await call(env, 'POST', '/api/gallery', { imageKey: 'img/2026/01/x.jpg', published: true }, admin)).status).toBe(400);
+  expect((await call(env, 'POST', '/api/gallery', { imageKey: await upPub(), href: 'javascript:alert(1)' }, admin)).status).toBe(400);
+  expect((await call(env, 'POST', '/api/gallery', { imageKey: await upPub() })).status).toBe(401);
+});
