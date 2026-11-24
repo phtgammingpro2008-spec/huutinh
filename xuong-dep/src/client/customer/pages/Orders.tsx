@@ -15,12 +15,16 @@ export function Orders({ t, name }: { t: T; name: string }) {
   useEffect(() => { api<Row[]>('GET', '/api/c/orders').then(setList, (e) => setError(errorText(t, e))); }, []);
   return (
     <main className="page">
-      <p className="eyebrow eyebrow-dark" style={{ marginBottom: 2 }}>HLUXURY</p>
-      <h1>{t('acc.hello', { name })}</h1>
-      <div className="topbar" style={{ marginTop: 8 }}>
-        <h2 style={{ margin: 0, flex: 1 }}>{t('c.nav_orders')}</h2>
-        <a className="btn btn-lime btn-sm" href="#/dat-hang"><Plus size={18} aria-hidden="true" /> {t('c.nav_new')}</a>
-      </div>
+      <section className="home-hero">
+        <p className="home-hero-brand">HLUXURY</p>
+        <h1>{t('acc.hello', { name })}</h1>
+        <p className="home-hero-lead">{t('c.home_lead')}</p>
+        <div className="row wrap" style={{ gap: 10 }}>
+          <a className="btn-gold" href="#/dat-hang"><Plus size={18} aria-hidden="true" /> {t('c.nav_new')}</a>
+          <a className="btn-line" href="#/thu-vien">{t('c.browse_library')}</a>
+        </div>
+      </section>
+      <h2>{t('c.nav_orders')}</h2>
       {error && <p className="error">{error}</p>}
       {!list && !error && <div className="stack">{[0, 1, 2].map((i) => <div key={i} className="skeleton" style={{ height: 76 }} />)}</div>}
       {list && list.length === 0 && (

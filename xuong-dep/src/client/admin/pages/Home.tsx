@@ -20,10 +20,16 @@ export function Home() {
   useEffect(() => { api<Dashboard>('GET', '/api/dashboard').then(setD).catch((e) => setError(e.message)); }, []);
   return (
     <main className="page">
-      <div className="topbar">
+      <section className="home-hero">
+        <p className="home-hero-brand">HLUXURY</p>
         <h1>Trang chủ</h1>
-        <a className="btn btn-sm btn-primary" href="#/orders/new">+ Đơn mới</a>
-      </div>
+        <dl className="home-stats">
+          <div><dt>Đơn khách mới</dt><dd>{d ? d.newFromCustomers.length : '–'}</dd></div>
+          <div><dt>Chờ báo giá</dt><dd>{d ? d.waitingQuote.length : '–'}</dd></div>
+          <div><dt>Còn nợ tiền</dt><dd>{d ? d.unpaid.length : '–'}</dd></div>
+        </dl>
+        <a className="btn-gold" href="#/orders/new">+ Đơn mới</a>
+      </section>
       {error && <p className="error">{error}</p>}
       {d && d.newFromCustomers.length > 0 && (
         <div className="highlight-bucket">

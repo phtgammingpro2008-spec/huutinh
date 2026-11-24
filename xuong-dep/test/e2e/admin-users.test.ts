@@ -69,7 +69,7 @@ test("admin locks a customer → that customer's open page gets sent to login", 
   await row.getByRole('button', { name: 'Khóa' }).click();
   await row.getByText('Đã khóa').waitFor();
 
-  await page.getByRole('link', { name: 'Thư viện' }).click();
+  await page.getByRole('link', { name: 'Thư viện', exact: true }).click();
   await page.waitForURL(/\/dang-nhap/);
   await page.getByLabel('Số điện thoại hoặc email').fill('tu2@example.com');
   await page.getByLabel('Mật khẩu', { exact: true }).fill('mat-khau-123');
