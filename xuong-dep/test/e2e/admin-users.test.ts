@@ -70,7 +70,9 @@ test("admin locks a customer → that customer's open page gets sent to login", 
   await row.getByText('Đã khóa').waitFor();
 
   await page.getByRole('link', { name: 'Thư viện', exact: true }).click();
-  await page.waitForURL(/\/dang-nhap/);
+  // the hash change and the redirect to the login page race; wait for the login form itself
+  await page.getByLabel('Số điện thoại hoặc email').waitFor();
+  expect(new URL(page.url()).pathname).toBe('/dang-nhap');
   await page.getByLabel('Số điện thoại hoặc email').fill('tu2@example.com');
   await page.getByLabel('Mật khẩu', { exact: true }).fill('mat-khau-123');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();

@@ -730,3 +730,10 @@ a.gallery-item:focus-visible { outline: 3px solid var(--gold, #E2B65B); outline-
 @media (prefers-reduced-motion: reduce) { .gallery { overflow-x: auto; } .gallery-belt { animation: none; } }
 @media (min-width: 760px) { .gallery-item { width: 260px; } }
 .library-upload { width: 100%; justify-content: center; min-height: 52px; }
+/* posters sit under the drawn hero and are titled with h2: keep their poster-size titles */
+body.site h2.promo-title { font-size: 2.7rem; line-height: .95; margin: 2px 0 0; color: #F2EEE5; }
+body.site .hero-copy h2.h1-like { font-size: 2.5rem; line-height: 1.03; margin: 10px 0 0; color: #fffdf6; }
+@media (min-width: 760px) {
+  body.site h2.promo-title { font-size: 4.4rem; }
+  body.site .hero-copy h2.h1-like { font-size: 3.4rem; }
+}
