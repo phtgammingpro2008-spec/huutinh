@@ -57,7 +57,7 @@ export const icon = (name: keyof typeof ICON | string, size = 20) =>
 export const sandal = (fill = '#e8f3a3', strap = '#1b3b2c', size = 64) =>
   raw(`<svg aria-hidden="true" width="${size / 2}" height="${size}" viewBox="0 0 60 120"><path d="M30 4c14 0 22 12 22 30 0 16-5 25-7 39-2 12-7 19-15 19s-13-7-15-19C13 59 8 50 8 34 8 16 16 4 30 4z" fill="${fill}"/><path d="M30 22C27 36 17 46 10 52M30 22c3 14 13 24 20 30" stroke="${strap}" stroke-width="5" fill="none" stroke-linecap="round"/></svg>`);
 
-export type PageCtx = { lang: Lang; user: SessionUser | null; origin: string; path: string; shop: Shop };
+export type PageCtx = { lang: Lang; user: SessionUser | null; origin: string; path: string; shop: Shop; minOrderPairs: number };
 export const tr = (c: PageCtx, k: UiKey, vars?: Record<string, string | number>) => uiT(c.lang, k, vars);
 
 /** Where an order starts: the customer area, or the login modal (with that page as `next`) for guests. */

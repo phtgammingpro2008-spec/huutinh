@@ -201,3 +201,30 @@ test('orders show which product and colour each design came from', async () => {
   expect((await call(env, 'GET', `/api/c/orders/${o.id}`, undefined, a.c)).body.productTitles).toEqual({ [it.id]: want });
   expect((await call(env, 'GET', `/api/orders/${o.id}`, undefined, admin)).body.productTitles).toEqual({ [it.id]: want });
 });
+
+test('wholesale minimum: a customer order below the minimum is refused with the numbers; the admin can change the minimum', async () => {
+  expect((await call(env, 'GET', '/api/settings', undefined, admin)).body.minOrderPairs).toBe(10);
+  const a = await customer(1);
+  const small = { ...(await photoOrder(a.c)) };
+  small.items = [item(1, { imageId: small.images[0].id, cropKey: small.items[0].cropKey, lines: [line({ mode: 'total', qtyEach: 6 })] })];
+  const r = await call(env, 'PUT', `/api/c/orders/${small.id}`, small, a.c);
+  expect(r.status).toBe(400);
+  expect(r.body).toMatchObject({ code: 'below_min', min: 10, qty: 6 });
+  expect(r.body.error).toContain('10');
+  // the catalog tells the order screen the number
+  expect((await call(env, 'GET', '/api/c/catalog', undefined, a.c)).body.minOrderPairs).toBe(10);
+  // the owner lowers it in Cài đặt: the same order now goes through
+  expect((await call(env, 'PUT', '/api/settings', { minOrderPairs: 5 }, admin)).body.minOrderPairs).toBe(5);
+  expect((await call(env, 'PUT', `/api/c/orders/${small.id}`, small, a.c)).status).toBe(200);
+  expect((await call(env, 'PUT', '/api/settings', { minOrderPairs: -3 }, admin)).status).toBe(400);
+});
+
+test('the workshop itself is never held to the minimum', async () => {
+  const a = await customer(2);
+  const o = await photoOrder(a.c);
+  const view = (await call(env, 'PUT', `/api/c/orders/${o.id}`, o, a.c)).body;
+  expect(view.id).toBe(o.id);
+  const adminOrder = (await call(env, 'GET', `/api/orders/${o.id}`, undefined, admin)).body;
+  const one = { ...adminOrder, items: [{ ...adminOrder.items[0], lines: [{ ...adminOrder.items[0].lines[0], mode: 'total', qtyEach: 1 }] }] };
+  expect((await call(env, 'PUT', `/api/orders/${o.id}`, one, admin)).status).toBe(200);
+});

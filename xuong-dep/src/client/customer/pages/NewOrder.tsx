@@ -260,6 +260,8 @@ export function NewOrder({ route, t, lang }: { route: Route; t: T; lang: Lang })
     if (!d) return;
     setError('');
     if (!d.items.length) return setError(t('c.empty_order'));
+    const min = catalog?.minOrderPairs ?? 0;
+    if (orderQty(d.items) < min) return setError(t('c.need_more', { n: formatQty(min - orderQty(d.items)), min: formatQty(min) }));
     const empty = d.items.find((i) => itemQty(i) === 0);
     if (empty) { setSelected(empty.tagNo); return setError(t('c.no_pairs', { n: empty.tagNo })); }
     setSaving(true);
@@ -377,7 +379,9 @@ export function NewOrder({ route, t, lang }: { route: Route; t: T; lang: Lang })
         onAdd={(p, ids) => { setSheet(false); update((s) => productItems(s, p, ids, lang)); }} />}
 
       <div className="totals-bar">
-        <span className="sum num">{t('c.total', { n: formatQty(total) })}</span>
+        <span className="sum num">{t('c.total', { n: formatQty(total) })}
+          {!!catalog?.minOrderPairs && <small className={`min-note${total < catalog.minOrderPairs ? ' short' : ''}`}>{t('c.min_note', { min: formatQty(catalog.minOrderPairs) })}</small>}
+        </span>
         <button type="button" className="btn-lime" disabled={saving} onClick={send}>
           {saving ? t('c.sending') : d.editCode ? t('c.save') : t('c.send')}
         </button>

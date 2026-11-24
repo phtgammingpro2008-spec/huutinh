@@ -3,6 +3,7 @@ import { LANGS, type Lang } from '../../shared/types';
 import type { Env } from '../env';
 import { getCookie } from '../http';
 import { getPublicHome, getPublicProduct, getShop, listCollections, listProducts, type Collection, type Poster, type Product } from '../repo/products';
+import { getSettings } from '../repo/settings';
 import { currentUser } from '../roles';
 import type { Router } from '../router';
 import { html, icon, mediaUrl, orderLink, pick, raw, renderPage, sandal, tr, type Html, type PageCtx } from './render';
@@ -27,7 +28,10 @@ const originOf = (env: Env, req: Request) => (env.APP_URL || new URL(req.url).or
 async function ctxOf(req: Request, env: Env): Promise<PageCtx> {
   const u = new URL(req.url);
   u.searchParams.delete('lang');
-  return { lang: pageLang(req), user: await currentUser(req, env), origin: originOf(env, req), path: u.pathname + u.search, shop: await getShop(env) };
+  return {
+    lang: pageLang(req), user: await currentUser(req, env), origin: originOf(env, req), path: u.pathname + u.search, shop: await getShop(env),
+    minOrderPairs: (await getSettings(env)).minOrderPairs,
+  };
 }
 
 /** Marks a page indexable; index.ts drops the default noindex header for it. */
@@ -121,6 +125,7 @@ function posterBlock(c: PageCtx, posters: Poster[], products: Product[] = []): H
   const byId = new Map(products.map((x) => [x.id, x]));
   const hero = html`<section class="hero-night">
 <div class="hero-night-copy"><p class="hero-brand">HLUXURY</p><h1>${tr(c, 'pub.default_title')}</h1><p class="hero-lead">${tr(c, 'pub.default_body')}</p>
+${c.minOrderPairs > 0 ? html`<p class="hero-chip">${tr(c, 'pub.wholesale', { min: c.minOrderPairs })}</p>` : ''}
 <div class="hero-actions"><a class="btn-gold" href="/san-pham">${tr(c, 'pub.see_products')}</a>${orderLink(c, tr(c, 'pub.cta'), 'btn-line')}</div></div>
 <div class="hero-night-art" aria-hidden="true">${lineSandals()}</div></section>`;
   if (!posters.length) return hero;
@@ -230,6 +235,7 @@ ${desc ? html`<p class="lead">${desc}</p>` : ''}
 ${spec.length ? html`<dl class="spec">${spec}</dl>` : ''}
 ${colors}
 ${lines}
+${c.minOrderPairs > 0 ? html`<p class="wholesale-note">${icon('factory', 16)} ${tr(c, 'pub.wholesale', { min: c.minOrderPairs })}</p>` : ''}
 ${c.user ? '' : html`<p class="locked">${icon('lock', 16)} ${tr(c, 'pub.login_to_see')}</p>`}
 </div></article>`;
   const product = { '@context': 'https://schema.org', '@type': 'Product', name, description: desc || undefined, brand: { '@type': 'Brand', name: 'HLUXURY' },

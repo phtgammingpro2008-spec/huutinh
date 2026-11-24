@@ -14,7 +14,11 @@ async function customer(n: number) {
 const upAdmin = async () => (await call(env, 'POST', '/api/images?w=1&h=1', jpeg, admin, { 'content-type': 'image/jpeg' })).body.key as string;
 const upPub = async () => (await call(env, 'POST', '/api/content/images?w=1&h=1', jpeg, admin, { 'content-type': 'image/jpeg' })).body.key as string;
 
-beforeEach(async () => { env = await createTestEnv(); admin = await loginCookie(env); });
+beforeEach(async () => {
+  env = await createTestEnv(); admin = await loginCookie(env);
+  // these tests are about who sees which design, not about order size: no wholesale minimum here
+  await call(env, 'PUT', '/api/settings', { minOrderPairs: 0 }, admin);
+});
 
 async function customerPhotoOrder(c: string, isPrivate: boolean) {
   const up = async () => (await call(env, 'POST', '/api/c/images?w=1&h=1', jpeg, c, { 'content-type': 'image/jpeg' })).body;

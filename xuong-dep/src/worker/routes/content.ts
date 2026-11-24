@@ -51,6 +51,7 @@ export function contentRoutes(r: Router) {
     const [settings, mats] = await Promise.all([getSettings(env), listMaterials(env)]);
     return json({
       lines: settings.lines,
+      minOrderPairs: settings.minOrderPairs,
       materials: mats.map((m) => ({ id: m.id, kind: m.kind, name: { vi: m.nameVi, en: m.nameEn, km: m.nameKm } })),
     });
   }));

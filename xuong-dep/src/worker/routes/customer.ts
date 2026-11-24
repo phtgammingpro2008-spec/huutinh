@@ -2,7 +2,10 @@ import type { QuoteSnapshot } from '../../shared/snapshot';
 import type { Item, Lang, OrderInput } from '../../shared/types';
 import type { Env } from '../env';
 import { HttpError, err, json, nowIso, readJson, str } from '../http';
+import { uiT } from '../../shared/i18n-ui';
+import { orderQty } from '../../shared/totals';
 import { parseOrderInput } from '../order-input';
+import { getSettings } from '../repo/settings';
 import { getCustomer } from '../repo/customers';
 import { LIBRARY_VISIBLE } from '../repo/library';
 import { getOrderRow, itemsByOrder, listOrders, loadOrder, type OrderRow, type OrderView } from '../repo/orders';
@@ -103,6 +106,12 @@ export function customerRoutes(r: Router) {
     if (existing && existing.customer_id !== user.customerId) return notFound();
     if (existing && !canEdit(existing)) return fail(409, 'locked_after_quote', 'Đơn đã có báo giá, vui lòng nhắn xưởng để thay đổi');
     if (b.isPrivate === true) for (const it of input.items) it.isPrivate = true;
+    // wholesale only: an order the customer places must reach the minimum the workshop set
+    const { minOrderPairs: min } = await getSettings(env);
+    const qty = orderQty(input.items);
+    if (qty < min) {
+      return json({ error: uiT(cust.lang as Lang, 'err.below_min', { min, qty }), code: 'below_min', min, qty }, 400);
+    }
     await checkSources(env, user, input, p.id);
     // Customers never set prices: keep whatever the workshop already typed for an existing line.
     const old = existing ? (await itemsByOrder(env, [existing.id])).get(existing.id) ?? [] : [];

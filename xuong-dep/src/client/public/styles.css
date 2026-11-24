@@ -760,3 +760,32 @@ body.site.has-cta .site-footer-in, body.site .site-footer-in { padding-bottom: c
 @media screen and (min-width: 760px) {
   body.site .sticky-cta { bottom: calc(var(--nav-h) + 26px); }
 }
+
+/* wholesale minimum */
+.hero-chip { display: inline-block; margin: 14px 0 0; padding: 7px 12px; border-radius: 999px; border: 1.5px solid var(--gold); color: var(--gold); font-weight: 700; font-size: .85rem; }
+.wholesale-note { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-weight: 700; color: var(--ink); }
+.wholesale-note svg { color: var(--gold); }
+.totals-bar .sum { display: flex; flex-direction: column; line-height: 1.2; }
+.min-note { font-size: .75rem; font-weight: 600; color: #b9b3a6; }
+.min-note.short { color: var(--gold); }
+
+/* ---- tighter side gutters (owner: "phần hở 2 bên hơi to") ---- */
+@media (max-width: 759px) {
+  .page { padding-left: 12px; padding-right: 12px; }
+  .section, .why, .chips { padding-left: 12px; padding-right: 12px; }
+  .hero-night, .hero, .poster, .col-hero, .steps-band, .band { margin-left: 10px; margin-right: 10px; }
+  .posters .poster { flex-basis: calc(100% - 20px); }
+  .hero-night-copy { padding: 24px 18px 22px; }
+  .promo-copy { padding: 18px 16px 16px; }
+  .promo-palette { padding-left: 16px; padding-right: 16px; }
+  .promo-bar { padding-left: 16px; padding-right: 16px; }
+  .steps-band, .band { padding-left: 16px; padding-right: 16px; }
+  .home-hero { padding: 20px 16px; }
+  .card { padding: 12px; }
+  .product { padding-left: 12px; padding-right: 12px; }
+  .site-footer-in { padding-left: 14px; padding-right: 14px; }
+}
+@media screen and (min-width: 1100px) {
+  #main, .site-header-in, .site-footer-in { max-width: 1280px; }
+  .page { max-width: 960px; }
+}
