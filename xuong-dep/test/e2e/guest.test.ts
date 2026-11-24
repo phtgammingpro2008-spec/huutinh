@@ -78,7 +78,7 @@ test('the modal closes with Escape and the page stays put', async () => {
 test('sticky CTA visible on phone', async () => {
   const { ctx, page } = await phone();
   await page.goto(app.url + '/');
-  const cta = page.getByRole('link', { name: 'Gửi ảnh nhận báo giá' });
+  const cta = page.locator('.sticky-cta').getByRole('link', { name: 'Gửi ảnh nhận báo giá' });
   await cta.waitFor();
   const box = (await cta.boundingBox())!;
   const vh = page.viewportSize()!.height;
