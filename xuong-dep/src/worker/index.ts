@@ -85,8 +85,21 @@ function secure(res: Response): Response {
   return out;
 }
 
+/**
+ * One address for the site: www.… and the old …workers.dev address send pages to APP_URL (same path and query),
+ * so old quote links keep working and Google sees one site. API calls and form posts are left alone.
+ */
+function toMainDomain(req: Request, env: Env): Response | null {
+  if (!env.APP_URL || (req.method !== 'GET' && req.method !== 'HEAD')) return null;
+  const main = new URL(env.APP_URL);
+  const url = new URL(req.url);
+  if (url.host === main.host || url.pathname.startsWith('/api/')) return null;
+  if (url.host !== 'www.' + main.host && !url.host.endsWith('.workers.dev')) return null;
+  return new Response(null, { status: 301, headers: { location: main.origin + url.pathname + url.search } });
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
-    return secure(await route(req, env));
+    return secure(toMainDomain(req, env) ?? await route(req, env));
   },
 };

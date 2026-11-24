@@ -86,6 +86,12 @@ Lần sau sửa code: chạy `npx wrangler d1 migrations apply xuong-dep --remot
 - Vào **Cài đặt → Trang web** để thêm sản phẩm (màu, dòng size, ảnh), bộ sưu tập, poster và thông tin xưởng (Zalo, Messenger, địa chỉ). Trang chủ chỉ hiện những gì đã tick "Đang bán" hoặc "Hiện trên trang web".
 - Vào **Cài đặt → Người dùng** để xem khách tự đăng ký, khóa/mở khóa, tạo link đặt lại mật khẩu gửi qua Zalo.
 
+## Tên miền đang dùng
+
+- **https://hluxurystore.com** (mua ở Cloudflare ngày 24/11/2026, tự gia hạn). Gắn vào Worker `xuong-dep` ở Settings → Domains & Routes, cùng `www.hluxurystore.com`.
+- `APP_URL` nằm trong `wrangler.toml` (`[vars]`). Trang mở ở `www.…` hoặc địa chỉ cũ `…workers.dev` tự chuyển về `hluxurystore.com` (giữ nguyên đường dẫn), nên link báo giá cũ vẫn mở được. API và form không bị chuyển.
+- Khu quản lý chỉ dùng tiếng Việt (anh chốt 24/11/2026); trang khách vẫn 3 thứ tiếng.
+
 ## Gắn tên miền riêng (khi anh đã mua tên miền)
 
 1. Trên Cloudflare: **Websites → Add a site** → nhập tên miền (ví dụ `hluxury.com`) → chọn gói Free → đổi 2 nameserver ở nơi mua tên miền theo hướng dẫn của Cloudflare. Chờ đến khi trang báo **Active**.
