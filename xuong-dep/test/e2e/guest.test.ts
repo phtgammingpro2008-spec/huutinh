@@ -82,8 +82,11 @@ test('sticky CTA visible on phone', async () => {
   await cta.waitFor();
   const box = (await cta.boundingBox())!;
   const vh = page.viewportSize()!.height;
-  expect(box.y + box.height).toBeLessThanOrEqual(vh);
-  expect(box.y).toBeGreaterThan(vh - 120);
+  // the send-a-photo bar sits just above the five-button bar
+  const nav = (await page.getByRole('navigation', { name: 'HLUXURY' }).boundingBox())!;
+  expect(box.y + box.height).toBeLessThanOrEqual(nav.y);
+  expect(box.y).toBeGreaterThan(vh - 220);
+  expect(nav.y + nav.height).toBeLessThanOrEqual(vh + 1);
   await page.mouse.wheel(0, 1500);
   await page.waitForTimeout(200);
   const after = (await cta.boundingBox())!;
@@ -114,5 +117,17 @@ test('globe switches the public site to English and remembers it', async () => {
   // the account pages follow the same choice
   await page.goto(app.url + '/dang-nhap');
   await page.getByRole('button', { name: 'Log in', exact: true }).waitFor();
+  await ctx.close();
+});
+
+test('public pages carry the customer bar; a guest tapping Đơn của tôi is asked to log in first', async () => {
+  const { ctx, page } = await phone();
+  await page.goto(app.url + '/');
+  const bar = page.getByRole('navigation', { name: 'HLUXURY' });
+  expect(await bar.getByRole('link').allTextContents()).toEqual(['Trang chủ', 'Đơn của tôi', 'Đặt hàng', 'Thư viện', 'Hồ sơ']);
+  expect(await bar.getByRole('link', { name: 'Trang chủ' }).getAttribute('aria-current')).toBe('page');
+  await bar.getByRole('link', { name: 'Đơn của tôi' }).click();
+  await page.getByLabel('Số điện thoại hoặc email').waitFor();
+  expect(new URL(page.url()).pathname).toBe('/dang-nhap');
   await ctx.close();
 });

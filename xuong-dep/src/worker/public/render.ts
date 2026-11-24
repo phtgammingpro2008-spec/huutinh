@@ -43,6 +43,9 @@ const ICON: Record<string, string> = {
   camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
   pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
   lock: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  house: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .7-1.5l7-6a2 2 0 0 1 2.6 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  orders: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
   factory: '<path d="M2 20h20"/><path d="M4 20V9l5 3V9l5 3V9l5 3v8"/><path d="M8 16h1M12 16h1M16 16h1"/>',
   image: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
   truck: '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
@@ -121,6 +124,23 @@ ${z ? html`<a class="cta-zalo" href="${z}" rel="noopener" target="_blank" aria-l
 </div>`;
 }
 
+/**
+ * The same five-button bar as the customer area, on every public page. Account buttons lead a guest to the
+ * login page first (the account area sends them there and back).
+ */
+function siteTabbar(c: PageCtx): Html {
+  const here = c.path.split('?')[0];
+  const tabs = [
+    { href: '/', label: tr(c, 'pub.home'), ico: 'house', on: here === '/' },
+    { href: '/tai-khoan#/', label: tr(c, 'c.nav_orders'), ico: 'orders', on: false },
+    { href: '/tai-khoan#/dat-hang', label: tr(c, 'c.nav_new'), ico: 'plus', on: false, plus: true },
+    { href: '/tai-khoan#/thu-vien', label: tr(c, 'c.nav_library'), ico: 'image', on: false },
+    { href: '/tai-khoan#/ho-so', label: tr(c, 'c.nav_profile'), ico: 'user', on: false },
+  ];
+  return html`<nav class="tabbar site-tabbar" aria-label="HLUXURY">${tabs.map((t) =>
+    html`<a href="${t.href}" class="${(t.on ? 'active ' : '') + (t.plus ? 'plus' : '')}"${t.on ? raw(' aria-current="page"') : ''}><span class="ico" aria-hidden="true">${icon(t.ico, t.plus ? 24 : 22)}</span><span>${t.label}</span></a>`)}</nav>`;
+}
+
 const LANG_TAGS: Record<Lang, string> = { vi: 'vi', en: 'en', km: 'km' };
 
 /** Full HTML document for a public page. `indexable` pages get index,follow; the rest stay noindex. */
@@ -161,6 +181,7 @@ ${header(c)}
 <main id="main">${o.body}</main>
 ${footer(c)}
 ${o.cta === false ? '' : stickyCta(c, o.action)}
+${siteTabbar(c)}
 <script type="module" src="${PATHS.island}"></script>
 </body>
 </html>`.s;

@@ -750,3 +750,13 @@ body.site .hero-copy h2.h1-like { font-size: 2.5rem; line-height: 1.03; margin: 
 .publish .icon-btn { width: 40px; height: 40px; min-height: 40px; }
 .size-box { width: 64px !important; flex: none; text-align: center; }
 .publish .flags .row { flex-wrap: nowrap; }
+
+/* ---- public pages: the customer bar at the bottom, the send-a-photo bar just above it ---- */
+body.site .site-tabbar { background: var(--surface); }
+body.site .site-tabbar a.active .ico { color: var(--night); }
+body.site .sticky-cta { bottom: calc(var(--nav-h) + 10px + env(safe-area-inset-bottom)); }
+body.site.has-cta .site-footer-in, body.site .site-footer-in { padding-bottom: calc(var(--nav-h) + 110px + env(safe-area-inset-bottom)); }
+[data-theme="dark"] body.site .site-tabbar a.active .ico { color: var(--gold); }
+@media screen and (min-width: 760px) {
+  body.site .sticky-cta { bottom: calc(var(--nav-h) + 26px); }
+}
