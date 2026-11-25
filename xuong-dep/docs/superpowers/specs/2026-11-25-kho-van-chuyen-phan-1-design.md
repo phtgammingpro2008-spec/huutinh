@@ -32,7 +32,7 @@ Vòng khép kín chia 3 phần, làm lần lượt (anh đồng ý 25/11):
 
 **Mục tiêu:** như mục 1, phần "thành công".
 
-**Không làm trong phần 1:** nguyên liệu, sản xuất, hàng bán sẵn ở kho Cam (xem mục 11), mã khu hay kệ trong kho, giấy tờ hải quan, phí vận chuyển, chọn nhà xe hay chành.
+**Không làm trong phần 1:** nguyên liệu, sản xuất, hàng bán sẵn ở kho Cam (xem mục 11), giấy tờ hải quan, phí vận chuyển, chọn nhà xe hay chành, lưu lần quét khi mất mạng (wifi ở xưởng và kho Cam ổn, anh cho biết 25/11).
 
 **Không được xảy ra:**
 - Người ngoài nhặt được bao, quét tem mà đọc ra được tên, số điện thoại, địa chỉ hay giá của khách.
@@ -75,6 +75,24 @@ Bất kỳ lúc nào (Quản lý, Chủ): Thất lạc · Hư hỏng (kèm lý d
 - Toa bị hủy khi đã có bao: các bao vẫn giữ nguyên để Quản lý xử lý tay **(em quyết)**.
 
 **Đóng dư:** nếu một bao làm tổng số ri gửi vượt số đặt, web hỏi lại "Toa này chỉ đặt X ri, bao này làm dư Y ri, vẫn đóng?" và đánh dấu "gửi dư" **(em quyết)**.
+
+## 4b. Hàng gửi kèm
+
+Toa hay gửi kèm hàng mẫu hoặc vài đôi thêm (anh cho biết 25/11, "phần phụ thôi").
+- Lúc đóng bao có ô **"Gửi kèm"** (không bắt buộc): ghi chữ tự do, ví dụ "2 đôi mẫu quai mới", và số đôi nếu muốn.
+- Hàng gửi kèm **không tính vào số ri đặt hay còn thiếu** của toa, và không tự tính tiền. Muốn tính tiền thì anh sửa đơn như hiện nay **(em quyết)**.
+- Một bao có thể chỉ chứa hàng gửi kèm, tức 0 ri nhưng có ghi gửi kèm. Bao này vẫn có tem QR và đi qua các chặng như mọi bao khác.
+- Hào và khách thấy dòng "Gửi kèm: …" ở bao đó và ở toa.
+
+## 4c. Chia khu trong kho
+
+Anh thích chia khu cho bài bản nhưng ngại khó (25/11). Cách làm nhẹ **(em đề xuất)**:
+- Chủ hoặc Quản lý đặt tên các khu trong web, ví dụ Khu A, Khu B, Góc cửa, Kệ 1. Mỗi khu thuộc một kho: **kho bên mình** hoặc **kho Cam**.
+- Web in **một tờ A4 có QR cho mỗi khu** để dán lên tường hoặc cột.
+- Lúc nhập kho: quét bao rồi quét tờ khu. **Quét khu không bắt buộc.** Quên quét thì bao vẫn vào kho, ghi "chưa rõ khu".
+- Chuyển bao sang khu khác: quét bao rồi quét tờ khu mới, có ghi lịch sử.
+- Mở một toa là thấy "3 bao ở Khu B, 1 bao ở Khu C".
+- Bên mình: bao đóng xong chờ lên xe cũng quét khu được. Không bắt buộc.
 
 ## 5. Tem QR
 
@@ -165,4 +183,7 @@ Dùng Telegram đã kết nối (chỉ chủ nhận):
 
 ## 13. Câu hỏi còn mở
 
-- Xưởng và kho Cam có sóng 4G hoặc wifi ổn định không? Nếu hay mất sóng lúc xếp hay dỡ xe thì web phải nhớ các lần quét và gửi lên khi có mạng lại. Việc này làm được nhưng thêm công.
+Không còn. Ba điểm ở mục 11 em làm theo hướng đã nói với anh ngày 25/11, anh không phản đối:
+- hàng bán sẵn để phần sau;
+- một chuyến xe thẳng từ xưởng tới Cam, không có chặng chành;
+- chuyện gia công bên ngoài để tới phần sản xuất.
