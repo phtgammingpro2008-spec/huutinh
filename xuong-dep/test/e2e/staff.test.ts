@@ -34,5 +34,11 @@ test('owner creates a manager in Người dùng; the manager signs in and does n
   await p.goto(app.url + '/quan-ly#/content');
   await p.getByRole('tab', { name: 'Ảnh xưởng' }).waitFor();
   expect(await p.getByRole('tab', { name: 'Liên hệ & con số' }).count()).toBe(0);
+  await p.getByRole('tab', { name: 'Con số' }).click();
+  await p.getByLabel('Số 1', { exact: true }).fill('200+');
+  await p.getByRole('group', { name: /Ý nghĩa số 1/ }).getByRole('textbox').first().fill('khách sỉ');
+  expect(await p.getByLabel('Địa chỉ').count()).toBe(0);
+  await p.getByRole('button', { name: 'Lưu con số' }).click();
+  await p.getByText('Đã lưu', { exact: true }).waitFor();
   await ctx.close();
 });

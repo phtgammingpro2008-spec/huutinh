@@ -293,7 +293,8 @@ function PosterForm({ p, set, products }: { p: Poster; set: (x: Partial<Poster>)
   );
 }
 
-function ShopForm() {
+/** mode "stats": a manager edits only the number band; the owner edits contacts and figures together. */
+function ShopForm({ mode = 'all' }: { mode?: 'all' | 'stats' }) {
   const [s, setS] = useState<Shop | null>(null);
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
@@ -315,10 +316,11 @@ function ShopForm() {
   );
   async function save() {
     setError('');
-    try { setS(pad(await api<Shop>('PUT', '/api/shop', s))); setMsg('Đã lưu'); } catch (e) { setError(e instanceof ApiError ? e.message : 'Không lưu được'); }
+    try { setS(pad(await api<Shop>('PUT', mode === 'stats' ? '/api/shop/stats' : '/api/shop', mode === 'stats' ? { stats: s!.stats } : s))); setMsg('Đã lưu'); } catch (e) { setError(e instanceof ApiError ? e.message : 'Không lưu được'); }
   }
   return (
     <section className="stack">
+      {mode === 'all' && <>
       <p className="small muted" style={{ margin: 0 }}>Hiện ở chân trang web. Nút Zalo ở cuối màn hình gọi tới Quản lý bán hàng (chưa có thì Tổng giám đốc).</p>
       {person('ceo', 'Tổng giám đốc', 'Liên hệ cho đối tác, đơn lớn.')}
       {person('sales', 'Quản lý bán hàng', 'Khách hỏi giá, đặt hàng, nhắn Zalo.')}
@@ -328,6 +330,7 @@ function ShopForm() {
         <div><label htmlFor="shop-messenger">Link Messenger (nếu có)</label>
           <input id="shop-messenger" value={s.messenger} placeholder="m.me/hluxury" onChange={(e) => edit({ messenger: e.target.value })} /></div>
       </div>
+      </>}
       <fieldset className="card stack">
         <legend>Con số của xưởng</legend>
         <p className="small muted" style={{ margin: 0 }}>Hiện thành dải số vàng trên trang chủ, số tự chạy lên khi khách cuộn tới. Chỉ ghi số thật. Để trống thì dải số tự ẩn.</p>
@@ -341,7 +344,7 @@ function ShopForm() {
       </fieldset>
       {error && <p className="error">{error}</p>}
       {msg && <p className="success" role="status">{msg}</p>}
-      <button type="button" className="btn-primary" onClick={save}>Lưu liên hệ và con số</button>
+      <button type="button" className="btn-primary" onClick={save}>{mode === 'stats' ? 'Lưu con số' : 'Lưu liên hệ và con số'}</button>
     </section>
   );
 }
@@ -385,7 +388,7 @@ export function Content() {
       <div className="topbar"><h1>Trang web</h1><a className="btn btn-sm" href="/" target="_blank" rel="noreferrer">Xem trang web</a></div>
       <a className="btn-gold publish-entry" href="#/dang-mau">Đăng mẫu mới lên web (ảnh + sản phẩm + poster một lần)</a>
       <div className="seg seg-wrap" role="tablist" aria-label="Nội dung trang web" style={{ marginBottom: 14 }}>
-        {TABS.filter(([k]) => k !== 'shop' || isOwner()).map(([k, label]) => (
+        {TABS.map(([k, label]) => [k, k === 'shop' && !isOwner() ? 'Con số' : label] as const).map(([k, label]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} aria-pressed={tab === k} onClick={() => setTab(k)}>{label}</button>
         ))}
       </div>
@@ -415,7 +418,7 @@ export function Content() {
             form={(x, set) => <GalleryForm g={x} set={set} />} />
         );
       })()}
-      {tab === 'shop' && isOwner() && <ShopForm />}
+      {tab === 'shop' && <ShopForm mode={isOwner() ? 'all' : 'stats'} />}
     </main>
   );
 }
