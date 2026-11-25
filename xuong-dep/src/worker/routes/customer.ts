@@ -14,6 +14,7 @@ import { requireCustomer, type SessionUser } from '../roles';
 import type { Router } from '../router';
 import { acceptQuote } from './public';
 import { saveOrder } from './orders';
+import { adminOrderUrl, notifyOwner } from '../telegram';
 
 const notFound = () => err(404, 'Không tìm thấy đơn');
 const fail = (status: number, code: string, message: string) => json({ error: message, code }, status);
@@ -127,6 +128,7 @@ export function customerRoutes(r: Router) {
       ).bind(JSON.stringify(linked)).run();
     }
     const row = (await getOrderRow(env, p.id))!;
+    await notifyOwner(env, `${existing ? '✏️ Khách sửa đơn' : '🆕 Đơn mới'} ${row.code}\n👤 ${cust.name} · ${cust.zalo}\n👟 ${qty} đôi · ${input.items.length} mẫu${input.note ? `\n📝 ${input.note}` : ''}\n${adminOrderUrl(env, row.id)}`);
     return json(await customerView(env, (await loadOrder(env, p.id))!, row));
   }));
 
@@ -150,6 +152,10 @@ export function customerRoutes(r: Router) {
       "UPDATE orders SET status = 'da_huy', cancel_reason = ?, cancelled_by = 'customer', updated_at = ? WHERE id = ? AND status IN ('cho_bao_gia', 'da_bao_gia')",
     ).bind(reason, nowIso(env), row.id).run();
     const fresh = (await getOrderRow(env, row.id))!;
+    if (fresh.status === 'da_huy' && row.status !== 'da_huy') {
+      const cust = await getCustomer(env, row.customer_id);
+      await notifyOwner(env, `❌ Khách hủy đơn ${row.code}\n👤 ${cust?.name ?? ''}${reason ? `\n📝 ${reason}` : ''}\n${adminOrderUrl(env, row.id)}`);
+    }
     return json(await customerView(env, (await loadOrder(env, row.id))!, fresh));
   }));
 }

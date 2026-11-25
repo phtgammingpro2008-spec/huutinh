@@ -37,4 +37,6 @@ export type Env = {
   MAIL_FROM?: string;
   /** Test/dev hook: emails are collected here instead of being sent. */
   EMAIL_OUTBOX?: { to: string; subject: string; html: string }[];
+  /** Test/dev hook: answers Telegram Bot API calls instead of api.telegram.org. */
+  TELEGRAM_FAKE?: (token: string, method: string, body: Record<string, unknown>) => Promise<{ ok: boolean; result?: any; description?: string }>;
 };

@@ -35,6 +35,56 @@ function MaterialRow({ m, onSaved }: { m: Material; onSaved: () => void }) {
   );
 }
 
+/** Connect the owner's own Telegram bot: alerts for new orders, edits, accepted quotes, cancellations and sign-ups. */
+function TelegramCard() {
+  const [st, setSt] = useState<{ connected: boolean; bot: string } | null>(null);
+  const [token, setToken] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [error, setError] = useState('');
+  useEffect(() => { api<{ connected: boolean; bot: string }>('GET', '/api/telegram').then(setSt).catch(() => {}); }, []);
+  const run = async (f: () => Promise<void>) => {
+    setBusy(true); setMsg(''); setError('');
+    try { await f(); } catch (e) { setError(e instanceof ApiError ? e.message : 'Không kết nối được, thử lại sau'); } finally { setBusy(false); }
+  };
+  const connect = () => run(async () => { setSt(await api('POST', '/api/telegram/connect', { token })); setToken(''); setMsg('Đã kết nối. Anh xem Telegram có tin nhắn thử chưa nhé.'); });
+  const test = () => run(async () => { await api('POST', '/api/telegram/test'); setMsg('Đã gửi tin thử.'); });
+  const off = () => run(async () => { setSt(await api('DELETE', '/api/telegram')); setMsg('Đã ngắt kết nối.'); });
+  if (!st) return null;
+  return (
+    <>
+      <h2>Báo đơn qua Telegram</h2>
+      <div className="card stack tg-card">
+        {st.connected ? (
+          <>
+            <p style={{ margin: 0 }}><strong>Đang bật</strong> · bot <strong>@{st.bot}</strong></p>
+            <p className="small muted" style={{ margin: 0 }}>Có đơn mới, khách sửa đơn, đồng ý báo giá, hủy đơn hoặc khách mới đăng ký là Telegram báo anh ngay.</p>
+            <div className="row">
+              <button type="button" className="btn-sm" disabled={busy} onClick={test}>Gửi tin thử</button>
+              <button type="button" className="btn-sm btn-danger" disabled={busy} onClick={off}>Ngắt kết nối</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="small muted" style={{ margin: 0 }}>Nhận tin trên điện thoại mỗi khi có đơn mới. Làm một lần, khoảng 2 phút:</p>
+            <ol className="tg-steps">
+              <li>Mở Telegram, tìm <strong>@BotFather</strong>, bấm Start rồi gửi <code>/newbot</code>.</li>
+              <li>Đặt tên bot (ví dụ <em>HLUXURY báo đơn</em>) và tên đăng nhập kết thúc bằng <code>bot</code>. BotFather gửi lại một <strong>mã bot</strong> dạng <code>123456789:ABC…</code></li>
+              <li>Bấm vào link bot vừa tạo, bấm <strong>Start</strong>.</li>
+              <li>Chép mã bot dán vào ô dưới, bấm <strong>Kết nối</strong>.</li>
+            </ol>
+            <label htmlFor="tg-token">Mã bot</label>
+            <input id="tg-token" autoComplete="off" spellCheck={false} placeholder="123456789:ABC…" value={token} onChange={(e) => setToken(e.target.value)} />
+            <button type="button" className="btn-primary" disabled={busy || !token.trim()} onClick={connect}>{busy ? 'Đang kết nối…' : 'Kết nối'}</button>
+          </>
+        )}
+        {error && <p className="error" role="alert" style={{ margin: 0 }}>{error}</p>}
+        {msg && <p className="success" style={{ margin: 0 }}>{msg}</p>}
+      </div>
+    </>
+  );
+}
+
 export function Settings() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [kind, setKind] = useState<MaterialKind>('sole');
@@ -149,6 +199,8 @@ export function Settings() {
           {msg && <p className="success">{msg}</p>}
         </>
       )}
+
+      <TelegramCard />
 
       <h2>Dữ liệu</h2>
       <a className="btn btn-block" href="/api/export" download>Tải bản sao lưu</a>

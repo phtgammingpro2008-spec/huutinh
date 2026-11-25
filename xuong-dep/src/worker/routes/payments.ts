@@ -50,7 +50,7 @@ export function paymentRoutes(r: Router) {
   r.on('GET', '/api/export', requireAdmin(async (_req, env) => {
     const out: Record<string, unknown[]> = {};
     out.users = (await env.DB.prepare('SELECT id, name, role, created_at FROM users').all()).results;
-    for (const t of TABLES) out[t] = (await env.DB.prepare(`SELECT * FROM ${t}`).all()).results;
+    for (const t of TABLES) out[t] = (await env.DB.prepare(`SELECT * FROM ${t}${t === 'settings' ? " WHERE key <> 'telegram'" : ''}`).all()).results;
     const body = { exportedAt: nowIso(env), app: 'xuong-dep', ...out };
     return json(body, 200, { 'content-disposition': `attachment; filename="xuong-dep-backup-${localDate(now(env))}.json"` });
   }));
