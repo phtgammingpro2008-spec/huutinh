@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
+import { ArrowLeft, Check, Pencil, RotateCcw, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { t as qt } from '../../../shared/i18n';
 import { formatMoney, formatQty } from '../../../shared/money';
@@ -198,6 +198,7 @@ export function OrderView({ id, t, lang }: { id: string; t: T; lang: Lang }) {
           <button type="button" className="btn-primary btn-block btn-lg" disabled={busy} onClick={accept}>{busy ? qt(lang, 'accepting') : qt(lang, 'accept')}</button>
         )}
         {o.canEdit && <a className="btn btn-block" href={`#/dat-hang?don=${o.id}`}><Pencil size={16} aria-hidden="true" /> {t('c.edit')}</a>}
+        {o.items.length > 0 && <a className="btn btn-block btn-reorder" href={`#/dat-hang?dat-lai=${o.id}`}><RotateCcw size={16} aria-hidden="true" /> {t('c.reorder_order')}</a>}
         {o.canCancel && <button type="button" className="btn btn-block btn-danger" onClick={() => setCancelling(true)}>{t('c.cancel')}</button>}
         {!o.canCancel && o.status !== 'da_huy' && o.status !== 'hoan_tat' && <p className="small muted">{t('c.in_production_note')}</p>}
       </div>
