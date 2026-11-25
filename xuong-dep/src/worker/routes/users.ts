@@ -5,10 +5,10 @@ import { LANGS, type Lang } from '../../shared/types';
 import { hashPassword, verifyPassword } from '../auth';
 import { emailFor, sendEmail } from '../email';
 import type { Env } from '../env';
-import { err, json, newToken, now, nowIso, readJson, str } from '../http';
+import { err, json, newId, newToken, now, nowIso, readJson, str } from '../http';
 import { hitLimit } from '../ratelimit';
 import { deleteSessionsOf, getUser } from '../repo/users';
-import { requireAdmin, requireCustomer } from '../roles';
+import { requireCustomer, requireOwner } from '../roles';
 import type { Router } from '../router';
 
 const baseUrl = (env: Env, req: Request) => (env.APP_URL || new URL(req.url).origin).replace(/\/+$/, '');
@@ -108,7 +108,7 @@ export function userRoutes(r: Router) {
   }));
 
   // ---- admin: user management ----
-  r.on('GET', '/api/users', requireAdmin(async (req, env) => {
+  r.on('GET', '/api/users', requireOwner(async (req, env) => {
     const q = foldSearch(new URL(req.url).searchParams.get('q') ?? '');
     const rows = (await env.DB.prepare(
       `SELECT u.id, u.phone, u.email, u.email_verified_at, u.locked, u.created_at, u.customer_id, c.name,
@@ -123,7 +123,7 @@ export function userRoutes(r: Router) {
     })));
   }));
 
-  const setLocked = (locked: boolean) => requireAdmin(async (_req, env, p) => {
+  const setLocked = (locked: boolean) => requireOwner(async (_req, env, p) => {
     const u = await getUser(env, p.id);
     if (!u || u.role !== 'customer') return err(404, 'Không tìm thấy người dùng');
     await env.DB.prepare('UPDATE users SET locked = ? WHERE id = ?').bind(locked ? 1 : 0, u.id).run();
@@ -133,7 +133,49 @@ export function userRoutes(r: Router) {
   r.on('POST', '/api/users/:id/lock', setLocked(true));
   r.on('POST', '/api/users/:id/unlock', setLocked(false));
 
-  r.on('POST', '/api/users/:id/reset-link', requireAdmin(async (req, env, p) => {
+  // ---- owner: manager accounts (role staff), signed in with a login name like the owner's ----
+  const STAFF_NAME = /^(?=.*[a-z])[a-z0-9._-]{3,30}$/;
+  const staffRow = (r: any) => ({ id: r.id, name: r.name, locked: !!r.locked, createdAt: r.created_at });
+  const getStaff = async (env: Env, id: string) => {
+    const u = await getUser(env, id);
+    return u && u.role === 'staff' ? u : null;
+  };
+  r.on('GET', '/api/staff', requireOwner(async (_req, env) => {
+    const rows = (await env.DB.prepare("SELECT id, name, locked, created_at FROM users WHERE role = 'staff' ORDER BY created_at").all<any>()).results;
+    return json(rows.map(staffRow));
+  }));
+  r.on('POST', '/api/staff', requireOwner(async (req, env) => {
+    const b = await readJson(req);
+    const name = str(b.name, 40).toLowerCase();
+    const password = typeof b.password === 'string' ? b.password : '';
+    if (!STAFF_NAME.test(name)) return json({ error: 'Tên đăng nhập 3–30 ký tự, chữ thường không dấu, số, dấu . _ - (ví dụ hao hoặc hao.sales)', code: 'bad_name' }, 400);
+    if (password.length < 8) return json({ error: 'Mật khẩu ít nhất 8 ký tự', code: 'weak_password' }, 400);
+    if (await env.DB.prepare('SELECT 1 FROM users WHERE name = ?').bind(name).first()) return json({ error: 'Tên đăng nhập này đã có người dùng', code: 'name_taken' }, 409);
+    const id = newId(), at = nowIso(env);
+    await env.DB.prepare("INSERT INTO users (id, name, password_hash, role, created_at) VALUES (?, ?, ?, 'staff', ?)")
+      .bind(id, name, await hashPassword(password), at).run();
+    return json(staffRow({ id, name, locked: 0, created_at: at }));
+  }));
+  r.on('POST', '/api/staff/:id/password', requireOwner(async (req, env, p) => {
+    const u = await getStaff(env, p.id);
+    if (!u) return err(404, 'Không tìm thấy tài khoản quản lý');
+    const password = (await readJson(req)).password;
+    if (typeof password !== 'string' || password.length < 8) return json({ error: 'Mật khẩu ít nhất 8 ký tự', code: 'weak_password' }, 400);
+    await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(await hashPassword(password), u.id).run();
+    await deleteSessionsOf(env, u.id); // signed out everywhere; logs in again with the new password
+    return json({ ok: true });
+  }));
+  const setStaffLocked = (locked: boolean) => requireOwner(async (_req, env, p) => {
+    const u = await getStaff(env, p.id);
+    if (!u) return err(404, 'Không tìm thấy tài khoản quản lý');
+    await env.DB.prepare('UPDATE users SET locked = ? WHERE id = ?').bind(locked ? 1 : 0, u.id).run();
+    if (locked) await deleteSessionsOf(env, u.id);
+    return json({ ok: true, locked });
+  });
+  r.on('POST', '/api/staff/:id/lock', setStaffLocked(true));
+  r.on('POST', '/api/staff/:id/unlock', setStaffLocked(false));
+
+  r.on('POST', '/api/users/:id/reset-link', requireOwner(async (req, env, p) => {
     const u = await getUser(env, p.id);
     if (!u || u.role !== 'customer') return err(404, 'Không tìm thấy người dùng');
     const token = await createToken(env, u.id, 'reset', 24 * 3600_000);

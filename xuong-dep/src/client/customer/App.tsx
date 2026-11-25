@@ -6,7 +6,7 @@ import { Controls } from './Controls';
 import { api, safeNext, type Me } from './api';
 import { ForgotForm, LoginForm, RegisterForm, ResetForm } from './pages/Auth';
 
-const homeOf = (role: string) => (role === 'admin' ? '/quan-ly' : '/tai-khoan');
+const homeOf = (role: string) => (role !== 'customer' ? '/quan-ly' : '/tai-khoan');
 
 /** Premium two-part screen: dark brand band (left on wide screens) + the form card. */
 function AuthShell({ t, lang, setLang, title, sub, tabs, children, foot }: {
@@ -69,7 +69,7 @@ export function App() {
     const authPage = path === '/dang-nhap' || path === '/dang-ky';
     if (me && authPage) afterLogin(me.role);
     else if (path === '/tai-khoan' && !me) location.replace('/dang-nhap?next=' + encodeURIComponent('/tai-khoan' + location.hash));
-    else if (path === '/tai-khoan' && me?.role === 'admin') location.replace('/quan-ly');
+    else if (path === '/tai-khoan' && me && me.role !== 'customer') location.replace('/quan-ly');
   }, [me, path]);
 
   const shell = { t, lang, setLang };

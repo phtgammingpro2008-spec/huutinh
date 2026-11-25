@@ -1,6 +1,6 @@
 import type { Lang, LineSetting } from '../../shared/types';
 import { LANGS } from '../../shared/types';
-import { requireAdmin } from '../roles';
+import { requireAdmin, requireOwner } from '../roles';
 import { err, json, newId, nowIso, readJson, str } from '../http';
 import { getCustomer, insertCustomer, listCustomers, updateCustomer, type Customer } from '../repo/customers';
 import { MATERIAL_KINDS, getMaterial, listMaterials, saveMaterial, type Material, type MaterialKind } from '../repo/materials';
@@ -86,7 +86,7 @@ export function catalogRoutes(r: Router) {
   }));
 
   r.on('GET', '/api/settings', requireAdmin(async (_req, env) => json(await getSettings(env))));
-  r.on('PUT', '/api/settings', requireAdmin(async (req, env) => {
+  r.on('PUT', '/api/settings', requireOwner(async (req, env) => {
     const b = await readJson(req);
     const stmts = [];
     if (b.lines !== undefined) {

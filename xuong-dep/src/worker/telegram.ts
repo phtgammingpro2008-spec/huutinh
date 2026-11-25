@@ -2,7 +2,7 @@
 // reaches his phone at once. He connects his own bot in Cài đặt; the bot token is kept server side and never sent back.
 import type { Env } from './env';
 import { err, json, readJson, str } from './http';
-import { requireAdmin } from './roles';
+import { requireOwner } from './roles';
 import type { Router } from './router';
 import { getSetting, setSettingStmt } from './repo/settings';
 
@@ -35,13 +35,13 @@ export async function notifyOwner(env: Env, text: string): Promise<void> {
 export const adminOrderUrl = (env: Env, id: string) => `${(env.APP_URL ?? '').replace(/\/+$/, '')}/quan-ly#/orders/${id}`;
 
 export function telegramRoutes(r: Router) {
-  r.on('GET', '/api/telegram', requireAdmin(async (_req, env) => {
+  r.on('GET', '/api/telegram', requireOwner(async (_req, env) => {
     const cfg = await getConfig(env);
     return json({ connected: !!cfg, bot: cfg?.bot ?? '' });
   }));
 
   // The owner pastes the token from @BotFather after pressing Start in his bot; the chat comes from that message.
-  r.on('POST', '/api/telegram/connect', requireAdmin(async (req, env) => {
+  r.on('POST', '/api/telegram/connect', requireOwner(async (req, env) => {
     const token = str((await readJson(req)).token, 100).replace(/\s+/g, '');
     if (!TOKEN_RE.test(token)) return json({ error: 'Mã bot không đúng dạng. Chép nguyên dòng mã BotFather gửi, ví dụ 123456789:ABC…', code: 'bad_token' }, 400);
     const me = await call(env, token, 'getMe').catch(() => null);
@@ -57,7 +57,7 @@ export function telegramRoutes(r: Router) {
     return json({ connected: true, bot: cfg.bot });
   }));
 
-  r.on('POST', '/api/telegram/test', requireAdmin(async (_req, env) => {
+  r.on('POST', '/api/telegram/test', requireOwner(async (_req, env) => {
     const cfg = await getConfig(env);
     if (!cfg) return err(409, 'Chưa kết nối Telegram');
     const sent = await call(env, cfg.token, 'sendMessage', { chat_id: cfg.chatId, text: '🔔 Tin thử từ HLUXURY: báo đơn đang hoạt động.' }).catch(() => null);
@@ -65,7 +65,7 @@ export function telegramRoutes(r: Router) {
     return json({ ok: true });
   }));
 
-  r.on('DELETE', '/api/telegram', requireAdmin(async (_req, env) => {
+  r.on('DELETE', '/api/telegram', requireOwner(async (_req, env) => {
     await env.DB.prepare('DELETE FROM settings WHERE key = ?').bind(KEY).run();
     return json({ connected: false, bot: '' });
   }));

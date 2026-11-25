@@ -3,7 +3,9 @@ import type { Env } from './env';
 import { err, getCookie, now } from './http';
 import type { Handler } from './router';
 
-export type Role = 'admin' | 'customer';
+/** admin: the owner (first account). staff: a manager with the daily work but not the owner's settings. */
+export type Role = 'admin' | 'staff' | 'customer';
+export const isWorkshop = (role: string | undefined) => role === 'admin' || role === 'staff';
 export type SessionUser = { id: string; role: Role; customerId: string | null; name: string };
 
 /** The logged-in, unlocked user of this request, or null. */
@@ -21,16 +23,24 @@ export async function currentUser(req: Request, env: Env): Promise<SessionUser |
 export const ADMIN_ONLY = Symbol.for('xuong-dep.adminOnly');
 export type MarkedHandler = Handler & { [ADMIN_ONLY]?: true };
 
-/** Admin only. A customer gets the same 404 as an unknown route, so admin endpoints are not revealed. */
+/** Workshop accounts (owner and managers). A customer gets the same 404 as an unknown route, so these endpoints are not revealed. */
 export function requireAdmin(h: Handler): Handler {
   const wrapped: MarkedHandler = async (req, env, p, ctx) => {
     const user = await currentUser(req, env);
     if (!user) return err(401, 'Chưa đăng nhập');
-    if (user.role !== 'admin') return err(404, 'Không tìm thấy');
+    if (!isWorkshop(user.role)) return err(404, 'Không tìm thấy');
     return h(req, env, p, { ...ctx, userId: user.id, user });
   };
   wrapped[ADMIN_ONLY] = true;
   return wrapped;
+}
+
+/** The owner only: settings, accounts, Telegram, contact info, backups. A manager is told so; a customer still sees 404. */
+export function requireOwner(h: Handler): Handler {
+  return requireAdmin(async (req, env, p, ctx) => {
+    if (ctx.user!.role !== 'admin') return err(403, 'Chỉ tài khoản chủ xưởng làm được việc này');
+    return h(req, env, p, ctx);
+  });
 }
 
 /** Customer only (an account linked to a customer profile). */

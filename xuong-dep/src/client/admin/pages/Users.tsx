@@ -57,6 +57,70 @@ function Row({ u, onChange }: { u: UserRow; onChange: (u: UserRow) => void }) {
   );
 }
 
+type Staff = { id: string; name: string; locked: boolean; createdAt: string };
+
+/** Manager accounts (owner only): create, set a new password, lock. Managers do the daily work but not the owner's settings. */
+function StaffSection() {
+  const [list, setList] = useState<Staff[] | null>(null);
+  const [name, setName] = useState('');
+  const [pw, setPw] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [error, setError] = useState('');
+  const load = () => api<Staff[]>('GET', '/api/staff').then(setList).catch((e) => setError(e.message));
+  useEffect(() => { load(); }, []);
+  async function run(fn: () => Promise<void>) {
+    setBusy(true); setError(''); setMsg('');
+    try { await fn(); } catch (e) { setError(e instanceof ApiError ? e.message : 'Có lỗi, vui lòng thử lại'); } finally { setBusy(false); }
+  }
+  const create = () => run(async () => {
+    const s = await api<Staff>('POST', '/api/staff', { name, password: pw });
+    setName(''); setPw(''); setMsg(`Đã tạo tài khoản ${s.name}. Đăng nhập bằng tên "${s.name}" và mật khẩu anh vừa đặt.`); load();
+  });
+  const newPw = (s: Staff) => run(async () => {
+    const p = window.prompt(`Mật khẩu mới cho ${s.name} (ít nhất 8 ký tự):`);
+    if (!p) return;
+    await api('POST', `/api/staff/${s.id}/password`, { password: p });
+    setMsg(`Đã đổi mật khẩu cho ${s.name}. Tài khoản này bị đăng xuất khỏi mọi máy.`);
+  });
+  const lock = (s: Staff, locked: boolean) => run(async () => {
+    if (locked && !window.confirm(`Khóa tài khoản ${s.name}? Người này bị đăng xuất ngay và không đăng nhập được.`)) return;
+    await api('POST', `/api/staff/${s.id}/${locked ? 'lock' : 'unlock'}`); load();
+  });
+  return (
+    <section className="stack" aria-label="Tài khoản quản lý" style={{ marginBottom: 24 }}>
+      <h2 style={{ margin: 0 }}>Tài khoản quản lý</h2>
+      <p className="small muted" style={{ margin: 0 }}>Quản lý làm được đơn hàng, báo giá, khách hàng, thư viện, vật liệu và đăng mẫu lên web. Không sửa được cài đặt chung, Telegram, liên hệ, tài khoản và không tải sao lưu.</p>
+      {list && list.length > 0 && (
+        <ul className="list">
+          {list.map((s) => (
+            <li key={s.id} className="card user-row">
+              <div className="row wrap"><strong className="grow">{s.name}</strong>{s.locked && <span className="badge s-da_huy">Đã khóa</span>}<span className="badge">Quản lý</span></div>
+              <div className="small muted">Tạo {viDate(s.createdAt)}</div>
+              <div className="row wrap" style={{ marginTop: 8 }}>
+                <button type="button" className="btn-sm" disabled={busy} onClick={() => newPw(s)}>Đổi mật khẩu</button>
+                {s.locked
+                  ? <button type="button" className="btn-sm" disabled={busy} onClick={() => lock(s, false)}>Mở khóa</button>
+                  : <button type="button" className="btn-sm btn-danger" disabled={busy} onClick={() => lock(s, true)}>Khóa</button>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="card stack">
+        <strong>Thêm tài khoản quản lý</strong>
+        <div><label htmlFor="staff-name">Tên đăng nhập</label>
+          <input id="staff-name" autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="ví dụ hao" value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div><label htmlFor="staff-pw">Mật khẩu (ít nhất 8 ký tự)</label>
+          <input id="staff-pw" type="text" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} /></div>
+        <button type="button" className="btn-primary" disabled={busy || !name.trim() || pw.length < 8} onClick={create}>Tạo tài khoản quản lý</button>
+      </div>
+      {error && <p className="error" role="alert">{error}</p>}
+      {msg && <p className="success" role="status">{msg}</p>}
+    </section>
+  );
+}
+
 /** Customer accounts: search, lock/unlock, password reset links. */
 export function Users() {
   const [q, setQ] = useState('');
@@ -71,6 +135,8 @@ export function Users() {
   return (
     <main className="page">
       <div className="topbar"><h1>Người dùng</h1><a className="btn btn-sm" href="#/settings">Cài đặt</a></div>
+      <StaffSection />
+      <h2>Tài khoản khách</h2>
       <p className="muted small" style={{ marginTop: -6 }}>Tài khoản khách tự đăng ký trên trang web.</p>
       <input type="search" aria-label="Tìm người dùng" placeholder="Tìm theo tên, số điện thoại, email" value={q} onChange={(e) => setQ(e.target.value)} />
       {error && <p className="error">{error}</p>}
