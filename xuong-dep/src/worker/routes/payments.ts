@@ -1,7 +1,7 @@
 import { isDate, localDate } from '../../shared/dates';
 import { STATUSES, canTransition, rank } from '../../shared/status';
 import type { OrderStatus } from '../../shared/types';
-import { requireAdmin } from '../roles';
+import { requireAdmin, requireOwner } from '../roles';
 import { err, json, newId, now, nowIso, readJson, str } from '../http';
 import { getOrderRow, loadOrder } from '../repo/orders';
 import { addPayment, deletePayment } from '../repo/payments';
@@ -47,7 +47,7 @@ export function paymentRoutes(r: Router) {
     return json(await loadOrder(env, p.id));
   }));
 
-  r.on('GET', '/api/export', requireAdmin(async (_req, env) => {
+  r.on('GET', '/api/export', requireOwner(async (_req, env) => {
     const out: Record<string, unknown[]> = {};
     out.users = (await env.DB.prepare('SELECT id, name, role, created_at FROM users').all()).results;
     for (const t of TABLES) out[t] = (await env.DB.prepare(`SELECT * FROM ${t}${t === 'settings' ? " WHERE key <> 'telegram'" : ''}`).all()).results;

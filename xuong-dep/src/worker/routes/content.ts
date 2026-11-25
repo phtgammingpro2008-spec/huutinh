@@ -6,7 +6,7 @@ import {
   deleteCollection, deleteGallery, deletePoster, listGallery, saveGallery, deleteProduct, getProduct, getShop, listCollections, listPosters, listProducts,
   saveCollection, savePoster, saveProduct, saveShop,
 } from '../repo/products';
-import { requireAdmin, requireCustomer } from '../roles';
+import { requireAdmin, requireOwner, requireCustomer } from '../roles';
 import type { Router } from '../router';
 
 export function contentRoutes(r: Router) {
@@ -35,7 +35,7 @@ export function contentRoutes(r: Router) {
   r.on('DELETE', '/api/gallery/:id', requireAdmin(async (_req, env, p) => { await deleteGallery(env, p.id); return json({ ok: true }); }));
 
   r.on('GET', '/api/shop', requireAdmin(async (_req, env) => json(await getShop(env))));
-  r.on('PUT', '/api/shop', requireAdmin(async (req, env) => json(await saveShop(env, await readJson(req)))));
+  r.on('PUT', '/api/shop', requireOwner(async (req, env) => json(await saveShop(env, await readJson(req)))));
 
   // ---- customers: shared library and full product data ----
   r.on('GET', '/api/c/library', requireCustomer(async (req, env) => {

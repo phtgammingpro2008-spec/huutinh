@@ -5,6 +5,7 @@ import { api, ApiError, imgUrl } from '../api';
 import { useMaterials, useSettings, type Design } from '../catalog';
 import { DesignPicker } from '../components/DesignPicker';
 import { MaterialPicker } from '../components/MaterialPicker';
+import { isOwner } from '../me';
 
 type Names = Record<Lang, string>;
 const N0 = (): Names => ({ vi: '', en: '', km: '' });
@@ -384,7 +385,7 @@ export function Content() {
       <div className="topbar"><h1>Trang web</h1><a className="btn btn-sm" href="/" target="_blank" rel="noreferrer">Xem trang web</a></div>
       <a className="btn-gold publish-entry" href="#/dang-mau">Đăng mẫu mới lên web (ảnh + sản phẩm + poster một lần)</a>
       <div className="seg seg-wrap" role="tablist" aria-label="Nội dung trang web" style={{ marginBottom: 14 }}>
-        {TABS.map(([k, label]) => (
+        {TABS.filter(([k]) => k !== 'shop' || isOwner()).map(([k, label]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} aria-pressed={tab === k} onClick={() => setTab(k)}>{label}</button>
         ))}
       </div>
@@ -414,7 +415,7 @@ export function Content() {
             form={(x, set) => <GalleryForm g={x} set={set} />} />
         );
       })()}
-      {tab === 'shop' && <ShopForm />}
+      {tab === 'shop' && isOwner() && <ShopForm />}
     </main>
   );
 }

@@ -3,7 +3,7 @@ export class ApiError extends Error {
 }
 
 export type Me = {
-  id: string; role: 'admin' | 'customer'; name: string; customerId: string | null; lang: 'vi' | 'en' | 'km';
+  id: string; role: 'admin' | 'staff' | 'customer'; name: string; customerId: string | null; lang: 'vi' | 'en' | 'km';
   email: string | null; phone: string | null; emailVerified: boolean;
 };
 

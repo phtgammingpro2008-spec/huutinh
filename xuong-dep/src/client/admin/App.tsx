@@ -15,6 +15,7 @@ import { Content } from './pages/Content';
 import { Users } from './pages/Users';
 import { Publish } from './pages/Publish';
 import { useRoute, type Route } from './router';
+import { setRole } from './me';
 
 type Auth = { state: 'loading' } | { state: 'out'; needsSetup: boolean } | { state: 'in'; me: Me };
 
@@ -72,6 +73,7 @@ export function App() {
       const me = await api<Me>('GET', '/api/me');
       // customers have their own area; the admin pages would only answer them with 404s
       if (me.role === 'customer') { location.replace('/tai-khoan'); return; }
+      setRole(me.role);
       setAuth({ state: 'in', me });
     } catch {
       const s = await api<{ needsSetup: boolean }>('GET', '/api/setup-status').catch(() => ({ needsSetup: false }));
@@ -90,7 +92,7 @@ export function App() {
 
   if (auth.state === 'loading') return <main className="page muted">Đang tải…</main>;
   if (auth.state === 'out') {
-    return <Login needsSetup={auth.needsSetup} onDone={(me) => { setAuth({ state: 'in', me }); if (route.path === '/login') window.location.hash = '#/'; }} />;
+    return <Login needsSetup={auth.needsSetup} onDone={(me) => { setRole(me.role); setAuth({ state: 'in', me }); if (route.path === '/login') window.location.hash = '#/'; }} />;
   }
   return (
     <div className="app">

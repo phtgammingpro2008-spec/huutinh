@@ -17,7 +17,7 @@ export async function canViewKey(env: Env, user: SessionUser | null, key: string
   ).bind(key).first();
   if (shown) return true;
   if (!user) return false;
-  if (user.role === 'admin') return true;
+  if (user.role === 'admin' || user.role === 'staff') return true;
   if (!user.customerId) return false;
   const hit = await env.DB.prepare(
     `SELECT 1 FROM uploads WHERE key = ?1 AND user_id = ?2

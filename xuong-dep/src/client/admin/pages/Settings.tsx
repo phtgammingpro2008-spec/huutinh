@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { LANGS, type Lang, type LineSetting } from '../../../shared/types';
 import { api, ApiError } from '../api';
 import { invalidateMaterials, invalidateSettings, KIND_LABEL, type Material, type MaterialKind, type Settings as SettingsData } from '../catalog';
+import { isOwner } from '../me';
 
 const LANG_NAME: Record<Lang, string> = { vi: 'Tiếng Việt', en: 'English', km: 'ខ្មែរ' };
 
@@ -87,6 +88,7 @@ function TelegramCard() {
 
 export function Settings() {
   const [materials, setMaterials] = useState<Material[]>([]);
+  const owner = isOwner();
   const [kind, setKind] = useState<MaterialKind>('sole');
   const [newName, setNewName] = useState('');
   const [s, setS] = useState<SettingsData | null>(null);
@@ -125,9 +127,10 @@ export function Settings() {
   return (
     <main className="page">
       <h1>Cài đặt</h1>
+      {!owner && <p className="small muted" role="note">Tài khoản quản lý: dải size, đơn tối thiểu, tin nhắn báo giá, Telegram, liên hệ và sao lưu do chủ xưởng sửa.</p>}
       <ul className="list">
         <li><a className="list-item" href="#/customers"><strong className="grow">Khách hàng</strong><span aria-hidden="true">›</span></a></li>
-        <li><a className="list-item" href="#/users"><span className="grow"><strong>Người dùng</strong><span className="small muted" style={{ display: 'block' }}>Tài khoản khách tự đăng ký: khóa, mở khóa, link đặt lại mật khẩu</span></span><span aria-hidden="true">›</span></a></li>
+        {owner && <li><a className="list-item" href="#/users"><span className="grow"><strong>Người dùng</strong><span className="small muted" style={{ display: 'block' }}>Tài khoản quản lý và tài khoản khách: tạo, khóa, đổi mật khẩu</span></span><span aria-hidden="true">›</span></a></li>}
         <li><a className="list-item" href="#/content"><span className="grow"><strong>Trang web</strong><span className="small muted" style={{ display: 'block' }}>Sản phẩm, bộ sưu tập, poster, liên hệ</span></span><span aria-hidden="true">›</span></a></li>
       </ul>
 
@@ -147,7 +150,7 @@ export function Settings() {
         </div>
       ))}
 
-      {s && (
+      {s && owner && (
         <>
           <h2>Dải size mặc định</h2>
           <p className="small muted" style={{ marginTop: -4 }}>Các dòng size để chọn khi nhập đơn và khi khách đặt hàng. Tên tiếng Anh và Khmer hiện cho khách nước ngoài.</p>
@@ -200,11 +203,13 @@ export function Settings() {
         </>
       )}
 
-      <TelegramCard />
+      {owner && <>
+        <TelegramCard />
 
-      <h2>Dữ liệu</h2>
-      <a className="btn btn-block" href="/api/export" download>Tải bản sao lưu</a>
-      <p className="small muted">File JSON chứa toàn bộ khách, đơn, báo giá, thư viện. Nên tải mỗi tuần và cất vào Google Drive.</p>
+        <h2>Dữ liệu</h2>
+        <a className="btn btn-block" href="/api/export" download>Tải bản sao lưu</a>
+        <p className="small muted">File JSON chứa toàn bộ khách, đơn, báo giá, thư viện. Nên tải mỗi tuần và cất vào Google Drive.</p>
+      </>}
       <button type="button" className="btn-block btn-danger" style={{ marginTop: 16 }} onClick={logout}>Đăng xuất</button>
     </main>
   );

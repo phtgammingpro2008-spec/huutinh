@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api';
 
-export type Me = { id: string; name: string; role?: 'admin' | 'customer' };
+export type Me = { id: string; name: string; role?: 'admin' | 'staff' | 'customer' };
 
 export function Login({ needsSetup, onDone }: { needsSetup: boolean; onDone: (me: Me) => void }) {
   const [name, setName] = useState('');
