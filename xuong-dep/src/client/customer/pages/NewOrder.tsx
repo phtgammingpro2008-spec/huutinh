@@ -39,6 +39,23 @@ function productItems(d: CDraft, p: Product, colorIds: string[], lang: Lang): CD
   return next;
 }
 
+/** "Đặt lại đơn này": the designs and pair counts of a past order, copied as fresh items (new ids, no prices).
+ * The library designs and product colours are reused as they are; the server checks they are still the customer's or still on sale. */
+export function reorderItems(d: CDraft, o: { items: Item[]; productTitles?: Record<string, { product: Names; color: Names }> }, lang: Lang): CDraft {
+  const next = { ...d, items: [...d.items], titles: { ...d.titles } };
+  for (const it of o.items) {
+    if (next.items.some((x) => x.designId === it.designId)) continue; // already in this order
+    const copy: Item = {
+      ...it, id: crypto.randomUUID(), tagNo: nextTag(next.items), imageId: null, crop: null, tapX: null, tapY: null,
+      lines: it.lines.map((l) => ({ ...l, id: crypto.randomUUID(), unitPrice: null, perSize: { ...l.perSize } })),
+    };
+    next.items.push(copy);
+    const pt = o.productTitles?.[it.id];
+    if (pt) next.titles[copy.id] = `${nameIn(pt.product, lang)} · ${nameIn(pt.color, lang)}`;
+  }
+  return next;
+}
+
 function MaterialSelect({ kind, label, value, materials, lang, any, onChange }: {
   kind: CMaterial['kind']; label: string; value: string | null; materials: CMaterial[]; lang: Lang; any: string; onChange: (v: string | null) => void;
 }) {
@@ -170,6 +187,7 @@ export function NewOrder({ route, t, lang }: { route: Route; t: T; lang: Lang })
   const [selected, setSelected] = useState<number | null>(null);
   const [sheet, setSheet] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState('');
   const uploads = useRef(new Map<string, Promise<string>>());
   const saved = useRef(false);
   const helpId = useId();
@@ -201,6 +219,17 @@ export function NewOrder({ route, t, lang }: { route: Route; t: T; lang: Lang })
           saveDraft(base);
         } catch { /* product gone: keep the draft as it is */ }
         history.replaceState(null, '', '#/dat-hang'); // a reload must not add the colours twice
+      }
+      const again = route.query.get('dat-lai');
+      if (again) {
+        try {
+          const o = await api<any>('GET', `/api/c/orders/${encodeURIComponent(again)}`);
+          const before = base.items.length;
+          base = reorderItems(base, o, lang);
+          saveDraft(base);
+          if (live) setNotice(t('c.reordered', { n: base.items.length - before, code: o.code }));
+        } catch (e) { if (live) setError(errorText(t, e)); }
+        history.replaceState(null, '', '#/dat-hang'); // a reload must not copy the order twice
       }
       if (live) setD(base);
     })();
@@ -318,6 +347,7 @@ export function NewOrder({ route, t, lang }: { route: Route; t: T; lang: Lang })
         )}
       </div>
       <p className="small muted" style={{ marginTop: 0 }}>{t('c.no_price_note')}</p>
+      {notice && <p className="success" role="status">{notice}</p>}
 
       <section className="card stack" aria-label={t('c.add_designs')}>
         <h2 style={{ margin: 0 }}>{t('c.add_designs')}</h2>
