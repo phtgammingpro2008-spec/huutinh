@@ -32,7 +32,7 @@ Vòng khép kín chia 3 phần, làm lần lượt (anh đồng ý 25/11):
 
 **Mục tiêu:** như mục 1, phần "thành công".
 
-**Không làm trong phần 1:** nguyên liệu, sản xuất, hàng bán sẵn ở kho Cam (xem mục 11), giấy tờ hải quan, phí vận chuyển, chọn nhà xe hay chành, lưu lần quét khi mất mạng (wifi ở xưởng và kho Cam ổn, anh cho biết 25/11).
+**Không làm trong phần 1:** nguyên liệu, sản xuất, hàng bán sẵn ở kho Cam (xem mục 11), chia khu trong kho (mục 4c), giấy tờ hải quan, phí vận chuyển, chọn nhà xe hay chành, lưu lần quét khi mất mạng (wifi ở xưởng và kho Cam ổn, anh cho biết 25/11).
 
 **Không được xảy ra:**
 - Người ngoài nhặt được bao, quét tem mà đọc ra được tên, số điện thoại, địa chỉ hay giá của khách.
@@ -84,9 +84,9 @@ Toa hay gửi kèm hàng mẫu hoặc vài đôi thêm (anh cho biết 25/11, "p
 - Một bao có thể chỉ chứa hàng gửi kèm, tức 0 ri nhưng có ghi gửi kèm. Bao này vẫn có tem QR và đi qua các chặng như mọi bao khác.
 - Hào và khách thấy dòng "Gửi kèm: …" ở bao đó và ở toa.
 
-## 4c. Chia khu trong kho
+## 4c. Chia khu trong kho (để sau, chưa làm trong phần 1)
 
-Anh thích chia khu cho bài bản nhưng ngại khó (25/11). Cách làm nhẹ **(em đề xuất)**:
+**Anh muốn để từ từ, bàn lại với mẹ trước (25/11).** Phần 1 không làm chia khu, chỉ ghi bao "trong kho bên mình" hoặc "trong kho Cam". Cách làm nhẹ em đã đề xuất, giữ lại để bàn tiếp:
 - Chủ hoặc Quản lý đặt tên các khu trong web, ví dụ Khu A, Khu B, Góc cửa, Kệ 1. Mỗi khu thuộc một kho: **kho bên mình** hoặc **kho Cam**.
 - Web in **một tờ A4 có QR cho mỗi khu** để dán lên tường hoặc cột.
 - Lúc nhập kho: quét bao rồi quét tờ khu. **Quét khu không bắt buộc.** Quên quét thì bao vẫn vào kho, ghi "chưa rõ khu".
