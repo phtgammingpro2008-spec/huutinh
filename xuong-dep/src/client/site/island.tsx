@@ -119,6 +119,19 @@ function colourPicker() {
   sync();
 }
 
+/** Sections below the first screen rise in as they scroll into view. Whatever is on screen at start stays put, and
+ * nothing moves for people who ask for reduced motion or whose browser lacks IntersectionObserver. */
+function reveal() {
+  if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const els = [...document.querySelectorAll<HTMLElement>('.reveal')].filter((el) => el.getBoundingClientRect().top > innerHeight);
+  if (!els.length) return;
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }, { rootMargin: '0px 0px -8% 0px' });
+  for (const el of els) { el.classList.add('pending'); io.observe(el); }
+}
+
 mountControls();
 posterDots();
 colourPicker();
+reveal();

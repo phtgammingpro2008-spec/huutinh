@@ -59,7 +59,8 @@ function productCard(c: PageCtx, p: Product): Html {
 </div></article>`;
 }
 
-const grid = (c: PageCtx, ps: Product[]) => html`<div class="pgrid">${ps.map((p) => productCard(c, p))}</div>`;
+/** One or two products get wide cards (photo beside the text) so the row does not look half empty. */
+const grid = (c: PageCtx, ps: Product[]) => html`<div class="pgrid${ps.length < 3 ? ' pgrid-wide' : ''}">${ps.map((p) => productCard(c, p))}</div>`;
 
 /** A poster in the printed-poster look: copy + photo, stats and the colour grid of its product, brand bar. */
 function promoPoster(c: PageCtx, p: Poster, i: number, total: number, byId: Map<string, Product>): Html {
@@ -110,26 +111,35 @@ function gallery(c: PageCtx, items: { imageKey: string; caption: Record<Lang, st
   return html`<section class="gallery" aria-label="HLUXURY" style="--dur:${Math.max(30, items.length * reps * 6)}s"><div class="gallery-belt">${row(false)}${row(true)}</div></section>`;
 }
 
+/** Numbered reasons in cards: a big gold number, the line icon in the corner. */
 function why(c: PageCtx): Html {
   const items = [['factory', 'pub.why1_t', 'pub.why1_d'], ['image', 'pub.why2_t', 'pub.why2_d'], ['truck', 'pub.why3_t', 'pub.why3_d']] as const;
-  return html`<section class="why" aria-label="HLUXURY"><ul>${items.map(([ic, t, d]) =>
-    html`<li><span class="why-ico">${icon(ic, 26)}</span><div><strong>${tr(c, t)}</strong><p>${tr(c, d)}</p></div></li>`)}</ul></section>`;
+  return html`<section class="why reveal"><p class="eyebrow-gold">HLUXURY</p><h2>${tr(c, 'pub.why_title')}</h2><ol>${items.map(([ic, t, d], i) =>
+    html`<li><span class="why-n" aria-hidden="true">0${i + 1}</span><span class="why-ico" aria-hidden="true">${icon(ic, 22)}</span><strong>${tr(c, t)}</strong><p>${tr(c, d)}</p></li>`)}</ol></section>`;
+}
+
+/** Gold ribbon of selling points sliding across the page; the same words are in the sections below, so it is decorative. */
+function ribbon(c: PageCtx): Html {
+  const words = [tr(c, 'pub.rb_print'), c.minOrderPairs > 0 ? tr(c, 'pub.wholesale', { min: c.minOrderPairs }) : '', tr(c, 'pub.why2_t'), tr(c, 'pub.why3_t'), tr(c, 'pub.why1_t')].filter(Boolean);
+  const run = html`<span>${words.map((w) => html`${w}<i>✦</i>`)}</span>`;
+  return html`<div class="ribbon-wrap" aria-hidden="true"><div class="ribbon"><div class="ribbon-belt">${run}${run}${run}${run}</div></div></div>`;
 }
 
 function band(c: PageCtx): Html {
-  return html`<section class="band"><div><h2>${tr(c, 'pub.band_title')}</h2><p>${tr(c, 'pub.band_body')}</p></div>
+  return html`<section class="band reveal"><div><h2>${tr(c, 'pub.band_title')}</h2><p>${tr(c, 'pub.band_body')}</p></div>
 ${orderLink(c, html`${icon('camera', 18)}<span>${tr(c, 'pub.cta')}</span>`, 'btn-gold')}</section>`;
 }
 
-function posterBlock(c: PageCtx, posters: Poster[], products: Product[] = []): Html {
+/** The drawn hero, then `between` (ribbon + picture strip), then the poster carousel. */
+function posterBlock(c: PageCtx, posters: Poster[], products: Product[] = [], between: Html = html``): Html {
   const byId = new Map(products.map((x) => [x.id, x]));
   const hero = html`<section class="hero-night">
 <div class="hero-night-copy"><p class="hero-brand">HLUXURY</p><h1>${tr(c, 'pub.default_title')}</h1><p class="hero-lead">${tr(c, 'pub.default_body')}</p>
 ${c.minOrderPairs > 0 ? html`<p class="hero-chip">${tr(c, 'pub.wholesale', { min: c.minOrderPairs })}</p>` : ''}
 <div class="hero-actions"><a class="btn-gold" href="/san-pham">${tr(c, 'pub.see_products')}</a>${orderLink(c, tr(c, 'pub.cta'), 'btn-line')}</div></div>
 <div class="hero-night-art" aria-hidden="true">${lineSandals()}</div></section>`;
-  if (!posters.length) return hero;
-  return html`${hero}<section class="posters-wrap" aria-roledescription="carousel" aria-label="HLUXURY">
+  if (!posters.length) return html`${hero}${between}`;
+  return html`${hero}${between}<section class="posters-wrap reveal" aria-roledescription="carousel" aria-label="HLUXURY">
 <div class="posters" tabindex="0">${posters.map((p, i) => {
     if (p.layout === 'promo') return promoPoster(c, p, i, posters.length, byId);
     const title = pick(p.title, c.lang), cta = pick(p.ctaLabel, c.lang);
@@ -162,7 +172,7 @@ ${col.coverKey ? html`<img src="${mediaUrl(col.coverKey)}" alt="" loading="lazy"
 
 function steps(c: PageCtx): Html {
   const s = [['pub.step1', 'pub.step1_sub'], ['pub.step2', 'pub.step2_sub'], ['pub.step3', 'pub.step3_sub']] as const;
-  return html`<section class="steps-band"><h2>${tr(c, 'pub.steps_title')}</h2><ol class="steps">${s.map(([a, b], i) =>
+  return html`<section class="steps-band reveal"><h2>${tr(c, 'pub.steps_title')}</h2><ol class="steps">${s.map(([a, b], i) =>
     html`<li><span class="step-n">${i + 1}</span><strong>${tr(c, a)}</strong><span>${tr(c, b)}</span></li>`)}</ol></section>`;
 }
 
@@ -172,13 +182,12 @@ async function home(req: Request, env: Env): Promise<Response> {
   const h = await getPublicHome(env);
   const cols = h.collections.filter((x) => x.productIds.length);
   const body = html`
-${posterBlock(c, h.posters, h.products)}
-${gallery(c, h.gallery)}
+${posterBlock(c, h.posters, h.products, html`${ribbon(c)}${gallery(c, h.gallery)}`)}
 ${why(c)}
 ${h.products.length ? styleChips(c, h.styles, null) : ''}
-${cols.length ? html`<section class="section" id="chu-de"><div class="section-head"><h2>${tr(c, 'pub.collections')}</h2></div>
+${cols.length ? html`<section class="section reveal" id="chu-de"><div class="section-head"><h2>${tr(c, 'pub.collections')}</h2></div>
 <div class="hscroll">${cols.map((col) => collectionCard(c, col))}</div></section>` : ''}
-${h.products.length ? html`<section class="section" id="noi-bat"><div class="section-head"><h2>${tr(c, 'pub.featured')}</h2><a href="/san-pham">${tr(c, 'pub.see_all')} →</a></div>
+${h.products.length ? html`<section class="section reveal" id="noi-bat"><div class="section-head"><h2>${tr(c, 'pub.featured')}</h2><a href="/san-pham">${tr(c, 'pub.see_all')} →</a></div>
 ${grid(c, h.products.slice(0, 12))}</section>` : ''}
 ${steps(c)}
 ${band(c)}`;

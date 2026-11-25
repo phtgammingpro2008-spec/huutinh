@@ -59,6 +59,21 @@ test('empty site shows the default HLUXURY hero and hides empty sections', async
   expect(html).not.toContain('id="chu-de"');
 });
 
+test('home: gold ribbon of selling points, numbered reasons, a lone product gets a wide card', async () => {
+  await product('Kẹp đơn');
+  const html = (await call(env, 'GET', '/')).body as string;
+  const ribbon = html.slice(html.indexOf('class="ribbon-wrap"'), html.indexOf('class="why'));
+  expect(ribbon).toContain('aria-hidden="true"');
+  expect(ribbon).toContain('Chuyên hàng sỉ · đơn từ 10 đôi');
+  expect(ribbon).toContain('Dép kẹp in họa tiết');
+  expect(html).toContain('Vì sao khách sỉ chọn HLUXURY');
+  expect(html).toContain('class="pgrid pgrid-wide"');
+  // the ribbon sits between the drawn hero and the rest
+  expect(html.indexOf('hero-night')).toBeLessThan(html.indexOf('ribbon-wrap'));
+  await product('Kẹp hai'); await product('Kẹp ba');
+  expect((await call(env, 'GET', '/')).body).toContain('class="pgrid"');
+});
+
 test('brand-logo product absent', async () => {
   await product('Mẫu thường');
   await product('Mẫu có logo', { hasBrandLogo: true });
