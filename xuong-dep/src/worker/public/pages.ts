@@ -157,7 +157,8 @@ function ribbon(c: PageCtx): Html {
 
 function band(c: PageCtx): Html {
   return html`<section class="band reveal"><div><h2>${tr(c, 'pub.band_title')}</h2><p>${tr(c, 'pub.band_body')}</p></div>
-${orderLink(c, html`${icon('camera', 18)}<span>${tr(c, 'pub.cta')}</span>`, 'btn-gold')}</section>`;
+<div class="band-actions">${orderLink(c, html`${icon('camera', 18)}<span>${tr(c, 'pub.cta')}</span>`, 'btn-gold')}
+${orderLink(c, html`${icon('image', 18)}<span>${tr(c, 'pub.design_own')}</span>`, 'btn-line-night', '/tai-khoan#/tu-phoi')}</div></section>`;
 }
 
 /** The drawn hero, then `between` (ribbon + picture strip), then the poster carousel. */

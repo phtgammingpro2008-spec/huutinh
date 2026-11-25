@@ -870,3 +870,29 @@ body.site.has-cta .site-footer-in, body.site .site-footer-in { padding-bottom: c
 .stat-row + .stat-row { border-top: 1px solid var(--line); padding-top: 10px; }
 @media (max-width: 759px) { .factory-grid figure:not(.big):last-child:nth-child(even) { grid-column: 1 / -1; aspect-ratio: 16 / 10; } }
 .seg-wrap { flex-wrap: wrap; } .seg-wrap button { flex: 1 1 auto; padding: 0 10px; }
+
+/* ---- design-your-own ---- */
+.designer .d-layout { display: grid; gap: 14px; }
+/* on a phone the pair stays in view while the colours scroll under it, kept small so there is room to choose */
+.d-preview { position: sticky; top: 4px; z-index: 5; border-radius: 20px; overflow: hidden; background: #F2EEE5; border: 1px solid var(--line); box-shadow: var(--shadow); }
+.d-preview svg { display: block; width: 100%; height: min(34vh, 230px); }
+.d-field { border: 0; padding: 0; margin: 0; min-width: 0; }
+.d-field legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
+.d-swatches { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+.d-swatch { aspect-ratio: 1; min-height: 0; width: 100%; padding: 0; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; }
+.d-swatch[aria-checked="true"] { outline: 3px solid var(--gold); outline-offset: 2px; }
+.d-shuffle { align-self: flex-start; }
+.d-note { margin: 14px 0 0; }
+.d-bar { position: sticky; bottom: calc(80px + env(safe-area-inset-bottom)); z-index: 6; margin-top: 10px; }
+.d-bar .btn-primary { background: var(--gold); color: var(--night); border-color: var(--gold); box-shadow: 0 10px 24px rgba(12,17,14,.25); }
+.btn-gold-soft { background: color-mix(in srgb, var(--gold) 22%, var(--surface)); border-color: var(--gold); justify-content: center; }
+@media (min-width: 760px) {
+  .designer .d-layout { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
+  .d-preview { top: 16px; }
+  .d-preview svg { height: auto; }
+  .d-bar { bottom: 16px; max-width: 420px; margin-left: auto; }
+}
+.band-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.btn-line-night { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 14px; border: 2px solid var(--night);
+  color: var(--night); font-weight: 800; text-decoration: none; }
+.btn-line-night:hover { background: rgba(12,17,14,.08); }

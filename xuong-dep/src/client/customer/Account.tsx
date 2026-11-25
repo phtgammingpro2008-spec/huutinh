@@ -7,6 +7,7 @@ import type { Me } from './api';
 import { Controls } from './Controls';
 import { Library } from './pages/Library';
 import { NewOrder } from './pages/NewOrder';
+import { Designer } from './pages/Designer';
 import { OrderView } from './pages/OrderView';
 import { Orders } from './pages/Orders';
 import { Profile } from './pages/Profile';
@@ -49,6 +50,7 @@ function Screen({ route, a, b, me, t, lang, setLang, onMe }: {
   if (a === 'don' && b) return <OrderView key={b} id={b} t={t} lang={lang} />;
   if (a === 'dat-hang') return <NewOrder key={route.path + (route.query.get('don') ?? '')} route={route} t={t} lang={lang} />;
   if (a === 'thu-vien') return <Library t={t} lang={lang} />;
+  if (a === 'tu-phoi') return <Designer t={t} lang={lang} />;
   if (a === 'ho-so') return <Profile me={me} t={t} lang={lang} setLang={setLang} verified={route.query.get('verified')} onMe={onMe} />;
   return <Orders t={t} name={me.name} />;
 }
