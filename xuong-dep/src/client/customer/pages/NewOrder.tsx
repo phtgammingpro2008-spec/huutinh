@@ -1,4 +1,4 @@
-import { BookImage, Package, X } from 'lucide-react';
+import { BookImage, Package, Palette, X } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { formatQty } from '../../../shared/money';
 import { itemQty, orderQty } from '../../../shared/totals';
@@ -357,6 +357,7 @@ export function NewOrder({ route, t, lang }: { route: Route; t: T; lang: Lang })
           <button type="button" className="btn grow" onClick={() => setSheet(true)}><Package size={18} aria-hidden="true" /> {t('c.add_product')}</button>
           <a className="btn grow" href="#/thu-vien"><BookImage size={18} aria-hidden="true" /> {t('c.add_library')}</a>
         </div>
+        <a className="btn btn-gold-soft" href="#/tu-phoi"><Palette size={18} aria-hidden="true" /> {t('d.entry')}</a>
       </section>
 
       {d.images.map((img) => (
