@@ -1,6 +1,6 @@
 # Thiết kế: Kho và vận chuyển, phần 1 (bao hàng, chuyến xe, kho Cam)
 
-Ngày: 25/11/2026 · Trạng thái: **chờ anh duyệt**
+Ngày: 25/11/2026 · Trạng thái: **anh đã duyệt 25/11/2026**
 
 Quy ước: "anh" là chủ xưởng (tài khoản admin001). Mục ghi **(em quyết)** là em tự chọn, anh chưa duyệt. Bản này nối tiếp `2026-11-23-web-dat-hang-khach-design.md`. Mục 10 của bản đó ghi các quyết định anh chốt cho phần kho từ 23/11. Bản này dùng lại những quyết định đó, chỗ nào khác thì ghi rõ ở mục 11.
 
@@ -140,7 +140,7 @@ Thêm loại tài khoản mới **Xưởng** cho công nhân. Chủ tạo và kh
   3. **Chuyến xe:** mở chuyến mới, quét các bao lên xe (thấy đếm số bao và số toa), bấm "Cho xe chạy".
   4. **Nhận chuyến (bên Cam):** chọn chuyến đang chạy, quét từng bao, thấy "đã nhận 38 / 40", bấm "Chốt nhận chuyến". Bao còn thiếu hiện ra bằng mã.
   5. **Kho Cam:** danh sách bao đang trong kho, gom theo toa, mỗi toa có nút "Giao".
-  6. **Giao khách:** quét các bao giao cho khách, bấm "Xác nhận đã giao". Có thể ghi tiền mặt đã thu (mục 9).
+  6. **Giao khách:** quét các bao giao cho khách, bấm "Xác nhận đã giao".
 
 **Khu quản lý `/quan-ly`:**
 - Trang chi tiết đơn có thêm phần **"Vận chuyển"**: danh sách bao (mã, ri, trạng thái, chuyến, ngày), tổng đặt, đã đóng, đã giao, còn thiếu theo từng loại ri, lịch sử quét.
@@ -150,12 +150,9 @@ Thêm loại tài khoản mới **Xưởng** cho công nhân. Chủ tạo và kh
 - Đã gửi bao nhiêu bao, bao nhiêu ri; còn thiếu bao nhiêu ri; số bao đang trên xe, đã tới Cam, đã giao.
 - Không hiện mã bao, không hiện ghi chú nội bộ, không hiện bao "Thất lạc" hay "Hư hỏng" cho tới khi Quản lý xử lý xong. Bao đang có vấn đề hiện chung là "đang kiểm tra" **(em quyết)**.
 
-## 9. Tiền thu hộ tại kho Cam
+## 9. Tiền (không làm trong phần 1)
 
-Anh chốt 23/11: quản lý kho không sửa giá, chỉ xuất hàng; tiền mặt thu tại kho ghi là **"thu hộ, chờ anh xác nhận"**.
-- Lúc giao, Hào có thể nhập "Đã thu tiền mặt: số tiền, ghi chú".
-- Khoản này **chưa trừ vào công nợ** của đơn cho tới khi anh bấm "Xác nhận đã nhận tiền" trong trang đơn. Lúc đó web mới ghi thành một khoản thanh toán như hiện nay.
-- Trang chủ quản lý có ô "Tiền thu hộ chờ xác nhận".
+Ngày 23/11 có ý ghi tiền mặt thu tại kho Cam là "thu hộ, chờ anh xác nhận". Ngày 25/11 anh cho biết **tiền đa số là chuyển khoản**, nên phần 1 không làm thu hộ. Tiền khách trả anh vẫn ghi ở mục "Tiền nhận" trong đơn như hiện nay. Màn hình kho không có gì liên quan tới tiền.
 
 ## 10. Báo qua Telegram
 
@@ -163,7 +160,6 @@ Dùng Telegram đã kết nối (chỉ chủ nhận):
 - Xe chạy: "Chuyến C251125-1 chạy: 40 bao, 6 toa".
 - Chốt nhận có thiếu: "Chuyến C251125-1 tới Cam: nhận 38/40, thiếu HLX-7K2Q-94XM, HLX-3PZ8-1QRA".
 - Toa đủ hàng: "Toa DH261125-001 đã giao đủ".
-- Có tiền thu hộ chờ xác nhận.
 
 ## 11. Chỗ khác với ghi chú ngày 23/11 (cần anh xác nhận)
 
