@@ -131,7 +131,34 @@ function reveal() {
   for (const el of els) { el.classList.add('pending'); io.observe(el); }
 }
 
+/** "50.000+" counts up from 0 once it scrolls into view, keeping the owner's own separators and suffix. */
+function countUp() {
+  const els = [...document.querySelectorAll<HTMLElement>('[data-count]')];
+  if (!els.length || !('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      io.unobserve(e.target);
+      const el = e.target as HTMLElement, text = el.dataset.count ?? '';
+      const m = /^(\D*)(\d{1,3}(?:([.,\s])\d{3})+|\d+)(.*)$/.exec(text);
+      if (!m) continue;
+      const [, pre, num, sep = '', post] = m;
+      const target = parseInt(num.replace(/\D/g, ''), 10);
+      const fmt = (n: number) => pre + (sep ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, sep) : String(n)) + post;
+      const t0 = performance.now();
+      const step = (t: number) => {
+        const k = Math.min(1, (t - t0) / 1400);
+        el.textContent = fmt(Math.round(target * (1 - Math.pow(1 - k, 3))));
+        if (k < 1) requestAnimationFrame(step); else el.textContent = text;
+      };
+      requestAnimationFrame(step);
+    }
+  }, { threshold: 0.6 });
+  for (const el of els) io.observe(el);
+}
+
 mountControls();
+countUp();
 posterDots();
 colourPicker();
 reveal();

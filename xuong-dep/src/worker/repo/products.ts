@@ -19,7 +19,9 @@ export type Poster = {
 };
 export type Contact = { name: string; phone: string };
 /** Contact block of the site: one address (empty = Phnom Penh), the CEO and the sales manager (phone = Zalo). */
-export type Shop = { address: string; messenger: string; ceo: Contact; sales: Contact };
+/** stats: the workshop's own figures for the number band ("50.000+" · "đôi mỗi tháng"); the band hides while empty. */
+export type Stat = { value: string; label: Names };
+export type Shop = { address: string; messenger: string; ceo: Contact; sales: Contact; stats: Stat[] };
 
 const bad = (msg: string, code?: string): never => { throw Object.assign(new HttpError(400, msg), { code }); };
 const names = (v: any, max = 200, required = false, what = 'tên'): Names => {
@@ -210,10 +212,13 @@ export async function deletePoster(env: Env, id: string) {
   await env.DB.prepare('DELETE FROM posters WHERE id = ?').bind(id).run();
 }
 
-// ---- home page picture strip ----
-export type GalleryItem = { id: string; imageKey: string; caption: Names; href: string; published: boolean; position: number };
+// ---- home page pictures: the scrolling strip, the workshop, orders just delivered ----
+export const GALLERY_SECTIONS = ['strip', 'xuong', 'giao'] as const;
+export type GallerySection = (typeof GALLERY_SECTIONS)[number];
+export type GalleryItem = { id: string; imageKey: string; caption: Names; href: string; published: boolean; position: number; section: GallerySection };
 const mapGallery = (r: any): GalleryItem => ({
   id: r.id, imageKey: r.image_key, caption: row3(r, 'caption'), href: r.href, published: !!r.published, position: r.position,
+  section: GALLERY_SECTIONS.includes(r.section) ? r.section : 'strip',
 });
 export async function listGallery(env: Env, publicOnly = false): Promise<GalleryItem[]> {
   return (await env.DB.prepare(`SELECT * FROM gallery ${publicOnly ? 'WHERE published = 1' : ''} ORDER BY position, id`).all<any>()).results.map(mapGallery);
@@ -225,10 +230,11 @@ export async function saveGallery(env: Env, b: any, id: string | null): Promise<
   const href = str(b.href, 300);
   if (href && !/^(\/|https:\/\/)/.test(href)) bad('Link phải bắt đầu bằng / hoặc https://');
   const cap = names(b.caption, 120);
-  await env.DB.prepare(`INSERT INTO gallery (id, image_key, caption_vi, caption_en, caption_km, href, published, position) VALUES (?,?,?,?,?,?,?,?)
+  const section: GallerySection = b.section === undefined ? 'strip' : GALLERY_SECTIONS.includes(b.section) ? b.section : bad('Mục ảnh không hợp lệ');
+  await env.DB.prepare(`INSERT INTO gallery (id, image_key, caption_vi, caption_en, caption_km, href, published, position, section) VALUES (?,?,?,?,?,?,?,?,?)
       ON CONFLICT(id) DO UPDATE SET image_key=excluded.image_key, caption_vi=excluded.caption_vi, caption_en=excluded.caption_en,
-      caption_km=excluded.caption_km, href=excluded.href, published=excluded.published, position=excluded.position`)
-    .bind(gid, img, cap.vi, cap.en, cap.km, href, b.published === false ? 0 : 1, pos(b.position)).run();
+      caption_km=excluded.caption_km, href=excluded.href, published=excluded.published, position=excluded.position, section=excluded.section`)
+    .bind(gid, img, cap.vi, cap.en, cap.km, href, b.published === false ? 0 : 1, pos(b.position), section).run();
   return mapGallery(await env.DB.prepare('SELECT * FROM gallery WHERE id = ?').bind(gid).first<any>());
 }
 export async function deleteGallery(env: Env, id: string) {
@@ -246,11 +252,14 @@ export async function getShop(env: Env): Promise<Shop> {
     messenger: str(v.messenger, 200),
     ceo: contact(v.ceo),
     sales: v.sales ? contact(v.sales) : { name: '', phone: str(v.zalo, 40) },
+    stats: parseStats(v.stats),
   };
 }
+const parseStats = (v: unknown): Stat[] => (Array.isArray(v) ? v : []).slice(0, 4)
+  .map((s: any) => ({ value: str(s?.value, 16), label: names(s?.label, 40) })).filter((s) => s.value && s.label.vi);
 export async function saveShop(env: Env, b: any): Promise<Shop> {
   const contact = (c: any): Contact => ({ name: str(c?.name, 100), phone: str(c?.phone, 40) });
-  const shop: Shop = { address: str(b.address, 300), messenger: str(b.messenger, 200), ceo: contact(b.ceo), sales: contact(b.sales) };
+  const shop: Shop = { address: str(b.address, 300), messenger: str(b.messenger, 200), ceo: contact(b.ceo), sales: contact(b.sales), stats: parseStats(b.stats) };
   await env.DB.prepare("INSERT INTO settings (key, value) VALUES ('shop', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").bind(JSON.stringify(shop)).run();
   return shop;
 }

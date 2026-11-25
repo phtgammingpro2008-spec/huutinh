@@ -20,9 +20,11 @@ type Poster = {
   id?: string; tag: Names; title: Names; body: Names; imageKey: string | null; ctaLabel: Names; ctaHref: string; published: boolean; position: number;
   layout: 'classic' | 'promo'; productId: string | null; accent: string; highlight: Names; badge: Names;
 };
-type GalleryItem = { id?: string; imageKey: string; caption: Names; href: string; published: boolean; position: number };
+type Section = 'strip' | 'xuong' | 'giao';
+type GalleryItem = { id?: string; imageKey: string; caption: Names; href: string; published: boolean; position: number; section: Section };
 type Contact = { name: string; phone: string };
-type Shop = { address: string; messenger: string; ceo: Contact; sales: Contact };
+type Stat = { value: string; label: Names };
+type Shop = { address: string; messenger: string; ceo: Contact; sales: Contact; stats: Stat[] };
 
 /** One text in Vietnamese, English and Khmer. Empty languages fall back to Vietnamese on the site. */
 function NamesInput({ label, value, onChange, multiline }: { label: string; value: Names; onChange: (v: Names) => void; multiline?: boolean }) {
@@ -82,16 +84,18 @@ function Num({ label, value, onChange, width = 90 }: { label: string; value: num
 }
 
 /** List + editor for one kind of site content. */
-function Crud<T extends { id?: string; published: boolean }>({ path, noun, blank, title, form, after, thumb }: {
+function Crud<T extends { id?: string; published: boolean }>({ path, noun, blank, title, form, after, thumb, filter }: {
   path: string; noun: string; blank: () => T; title: (x: T) => string; form: (x: T, set: (p: Partial<T>) => void) => ReactNode; after?: (x: T) => ReactNode;
   thumb?: (x: T) => string | null | undefined;
+  /** Shows only part of what `path` lists (the three picture sections share one list). */
+  filter?: (x: T) => boolean;
 }) {
   const [list, setList] = useState<T[] | null>(null);
   const [edit, setEdit] = useState<T | null>(null);
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const load = () => api<T[]>('GET', path).then(setList).catch((e) => setError(e.message));
+  const load = () => api<T[]>('GET', path).then((xs) => setList(filter ? xs.filter(filter) : xs)).catch((e) => setError(e.message));
   useEffect(() => { load(); }, [path]);
 
   async function save() {
@@ -292,8 +296,11 @@ function ShopForm() {
   const [s, setS] = useState<Shop | null>(null);
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
-  useEffect(() => { api<Shop>('GET', '/api/shop').then(setS).catch((e) => setError(e.message)); }, []);
+  // four slots for the number band; empty ones are dropped when saved
+  const pad = (x: Shop): Shop => ({ ...x, stats: [...(x.stats ?? []), ...Array.from({ length: 4 }, () => ({ value: '', label: N0() }))].slice(0, 4) });
+  useEffect(() => { api<Shop>('GET', '/api/shop').then((x) => setS(pad(x))).catch((e) => setError(e.message)); }, []);
   if (!s) return error ? <p className="error">{error}</p> : <div className="skeleton" style={{ height: 120 }} />;
+  const setStat = (i: number, patch: Partial<Stat>) => edit({ stats: s.stats.map((x, k) => (k === i ? { ...x, ...patch } : x)) });
   const edit = (patch: Partial<Shop>) => { setMsg(''); setS({ ...s, ...patch }); };
   const person = (key: 'ceo' | 'sales', title: string, hint: string) => (
     <fieldset className="card stack">
@@ -307,7 +314,7 @@ function ShopForm() {
   );
   async function save() {
     setError('');
-    try { setS(await api<Shop>('PUT', '/api/shop', s)); setMsg('Đã lưu thông tin liên hệ'); } catch (e) { setError(e instanceof ApiError ? e.message : 'Không lưu được'); }
+    try { setS(pad(await api<Shop>('PUT', '/api/shop', s))); setMsg('Đã lưu'); } catch (e) { setError(e instanceof ApiError ? e.message : 'Không lưu được'); }
   }
   return (
     <section className="stack">
@@ -320,22 +327,42 @@ function ShopForm() {
         <div><label htmlFor="shop-messenger">Link Messenger (nếu có)</label>
           <input id="shop-messenger" value={s.messenger} placeholder="m.me/hluxury" onChange={(e) => edit({ messenger: e.target.value })} /></div>
       </div>
+      <fieldset className="card stack">
+        <legend>Con số của xưởng</legend>
+        <p className="small muted" style={{ margin: 0 }}>Hiện thành dải số vàng trên trang chủ, số tự chạy lên khi khách cuộn tới. Chỉ ghi số thật. Để trống thì dải số tự ẩn.</p>
+        {s.stats.map((st, i) => (
+          <div key={i} className="stat-row stack">
+            <div><label htmlFor={`stat-${i}`}>Số {i + 1}</label>
+              <input id={`stat-${i}`} value={st.value} placeholder={['50.000+', '200+', '120', '8 năm'][i]} onChange={(e) => setStat(i, { value: e.target.value })} /></div>
+            <NamesInput label={`Ý nghĩa số ${i + 1}, ví dụ "${['đôi mỗi tháng', 'khách sỉ', 'mẫu đang bán', 'kinh nghiệm'][i]}"`} value={st.label} onChange={(label) => setStat(i, { label })} />
+          </div>
+        ))}
+      </fieldset>
       {error && <p className="error">{error}</p>}
       {msg && <p className="success" role="status">{msg}</p>}
-      <button type="button" className="btn-primary" onClick={save}>Lưu thông tin liên hệ</button>
+      <button type="button" className="btn-primary" onClick={save}>Lưu liên hệ và con số</button>
     </section>
   );
 }
 
+const SECTION_HELP: Record<Section, { hint: string; image: string; caption: string }> = {
+  strip: { hint: 'Ảnh chạy vòng từ trái qua phải trên trang chủ. Ảnh dọc (4:5) đẹp nhất.', image: 'Ảnh chạy', caption: 'Chú thích trên ảnh (không bắt buộc)' },
+  xuong: { hint: 'Ảnh thật trong xưởng: máy in đế, thợ làm quai, kho dép, đóng gói. Ảnh đầu tiên (thứ tự nhỏ nhất) hiện to nhất. Ảnh ngang đẹp nhất.', image: 'Ảnh xưởng', caption: 'Chú thích, ví dụ "Máy in đế" (không bắt buộc)' },
+  giao: { hint: 'Ảnh bao hàng, thùng dép đã đóng gói hoặc xe hàng đi giao. Ghi số đôi và nơi giao để khách sỉ thấy xưởng làm số lượng lớn.', image: 'Ảnh đơn đã giao', caption: 'Chú thích, ví dụ "500 đôi · Siem Reap"' },
+};
+
 function GalleryForm({ g, set }: { g: GalleryItem; set: (x: Partial<GalleryItem>) => void }) {
+  const help = SECTION_HELP[g.section];
   return (
     <>
-      <p className="small muted" style={{ margin: 0 }}>Ảnh chạy vòng từ trái qua phải trên trang chủ. Ảnh dọc (4:5) đẹp nhất.</p>
-      <div className="card stack"><p className="legend" style={{ margin: 0 }}>Ảnh</p><ImageInput label="Ảnh chạy" value={g.imageKey || null} onChange={(k) => set({ imageKey: k ?? '' })} /></div>
-      <NamesInput label="Chú thích trên ảnh (không bắt buộc)" value={g.caption} onChange={(caption) => set({ caption })} />
+      <p className="small muted" style={{ margin: 0 }}>{help.hint}</p>
+      <div className="card stack"><p className="legend" style={{ margin: 0 }}>Ảnh</p><ImageInput label={help.image} value={g.imageKey || null} onChange={(k) => set({ imageKey: k ?? '' })} /></div>
+      <NamesInput label={help.caption} value={g.caption} onChange={(caption) => set({ caption })} />
       <div className="card stack">
-        <label htmlFor="gallery-href">Bấm vào ảnh thì mở (không bắt buộc, ví dụ /san-pham/…)</label>
-        <input id="gallery-href" value={g.href} placeholder="/san-pham" onChange={(e) => set({ href: e.target.value })} />
+        {g.section === 'strip' && <>
+          <label htmlFor="gallery-href">Bấm vào ảnh thì mở (không bắt buộc, ví dụ /san-pham/…)</label>
+          <input id="gallery-href" value={g.href} placeholder="/san-pham" onChange={(e) => set({ href: e.target.value })} />
+        </>}
         <Check label="Hiện trên trang web" checked={g.published} onChange={(published) => set({ published })} />
         <div className="row"><span className="grow">Thứ tự</span><Num label="Thứ tự" value={g.position} onChange={(position) => set({ position })} /></div>
       </div>
@@ -343,7 +370,8 @@ function GalleryForm({ g, set }: { g: GalleryItem; set: (x: Partial<GalleryItem>
   );
 }
 
-const TABS = [['products', 'Sản phẩm'], ['gallery', 'Ảnh chạy'], ['collections', 'Bộ sưu tập'], ['posters', 'Poster'], ['shop', 'Liên hệ']] as const;
+const TABS = [['products', 'Sản phẩm'], ['gallery', 'Ảnh chạy'], ['xuong', 'Ảnh xưởng'], ['giao', 'Đơn đã giao'], ['collections', 'Bộ sưu tập'], ['posters', 'Poster'], ['shop', 'Liên hệ & con số']] as const;
+const SECTION_OF = { gallery: 'strip', xuong: 'xuong', giao: 'giao' } as const;
 type Tab = (typeof TABS)[number][0];
 
 /** Everything the public site shows: products, collections, posters, workshop info. */
@@ -355,7 +383,7 @@ export function Content() {
     <main className="page">
       <div className="topbar"><h1>Trang web</h1><a className="btn btn-sm" href="/" target="_blank" rel="noreferrer">Xem trang web</a></div>
       <a className="btn-gold publish-entry" href="#/dang-mau">Đăng mẫu mới lên web (ảnh + sản phẩm + poster một lần)</a>
-      <div className="seg" role="tablist" aria-label="Nội dung trang web" style={{ marginBottom: 14 }}>
+      <div className="seg seg-wrap" role="tablist" aria-label="Nội dung trang web" style={{ marginBottom: 14 }}>
         {TABS.map(([k, label]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} aria-pressed={tab === k} onClick={() => setTab(k)}>{label}</button>
         ))}
@@ -377,11 +405,15 @@ export function Content() {
             layout: 'promo', productId: null, accent: '#E2B65B', highlight: N0(), badge: N0() })}
           form={(x, set) => <PosterForm p={x} set={set} products={products} />} />
       )}
-      {tab === 'gallery' && (
-        <Crud<GalleryItem> key="g" path="/api/gallery" noun="ảnh" title={(x) => x.caption.vi || 'Ảnh không chú thích'} thumb={(x) => x.imageKey}
-          blank={() => ({ imageKey: '', caption: N0(), href: '', published: true, position: 0 })}
-          form={(x, set) => <GalleryForm g={x} set={set} />} />
-      )}
+      {(tab === 'gallery' || tab === 'xuong' || tab === 'giao') && (() => {
+        const section = SECTION_OF[tab];
+        return (
+          <Crud<GalleryItem> key={tab} path="/api/gallery" noun="ảnh" title={(x) => x.caption.vi || 'Ảnh không chú thích'} thumb={(x) => x.imageKey}
+            filter={(x) => (x.section ?? 'strip') === section}
+            blank={() => ({ imageKey: '', caption: N0(), href: '', published: true, position: 0, section })}
+            form={(x, set) => <GalleryForm g={x} set={set} />} />
+        );
+      })()}
       {tab === 'shop' && <ShopForm />}
     </main>
   );
