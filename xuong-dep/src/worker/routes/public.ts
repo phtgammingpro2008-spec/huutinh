@@ -8,6 +8,7 @@ import type { OrderRow } from '../repo/orders';
 import { latestQuote, type QuoteRow } from '../repo/quotes';
 import type { Router } from '../router';
 import { serveImage } from './images';
+import { adminOrderUrl, notifyOwner } from '../telegram';
 
 async function byToken(env: Env, token: string) {
   if (!/^[A-Za-z0-9_-]{32,}$/.test(token)) return null;
@@ -31,6 +32,8 @@ export async function acceptQuote(env: Env, o: OrderRow, q: QuoteRow, version: u
       .bind(at, at, o.id, q.version),
     env.DB.prepare('UPDATE quotes SET accepted_at = ? WHERE id = ? AND accepted_at IS NULL').bind(at, q.id),
   ]);
+  const cust = await getCustomer(env, o.customer_id);
+  await notifyOwner(env, `✅ Khách đồng ý báo giá ${o.code} (bản ${q.version})\n👤 ${cust?.name ?? ''}${cust?.zalo ? ' · ' + cust.zalo : ''}\nĐơn chuyển sang "Khách đồng ý", anh cho vào làm nhé.\n${adminOrderUrl(env, o.id)}`);
   return json({ ok: true, version: q.version, acceptedAt: at });
 }
 

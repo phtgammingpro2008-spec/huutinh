@@ -10,6 +10,7 @@ import { findByIdentifier } from '../repo/users';
 import { currentUser } from '../roles';
 import type { Router } from '../router';
 import { sendVerifyEmail } from './users';
+import { notifyOwner } from '../telegram';
 
 const langOf = (v: unknown): Lang => (LANGS.includes(v as Lang) ? (v as Lang) : 'vi');
 
@@ -88,6 +89,7 @@ export function authRoutes(r: Router) {
     }
     await bump(env, ipKey, REGISTER_WINDOW);
     await sendVerifyEmail(env, req, userId, email, lang);
+    await notifyOwner(env, `👋 Khách mới đăng ký: ${name}\n📞 ${phone} · ${country}`);
     const token = await createSession(env, userId);
     return json({ id: userId, name, role: 'customer' }, 200, { 'set-cookie': sessionCookie(req, token) });
   });

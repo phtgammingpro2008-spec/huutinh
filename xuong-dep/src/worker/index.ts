@@ -15,6 +15,7 @@ import { paymentRoutes } from './routes/payments';
 import { publicRoutes } from './routes/public';
 import { quoteRoutes } from './routes/quotes';
 import { publicSiteRoutes } from './public/pages';
+import { telegramRoutes } from './telegram';
 
 export const router = new Router();
 quoteRoutes(router);
@@ -29,6 +30,7 @@ contentRoutes(router);
 userRoutes(router);
 orderRoutes(router);
 designRoutes(router);
+telegramRoutes(router);
 publicSiteRoutes(router);
 
 function decodeB64(s: string): Uint8Array {
