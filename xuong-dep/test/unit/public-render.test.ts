@@ -74,6 +74,32 @@ test('home: gold ribbon of selling points, numbered reasons, a lone product gets
   expect((await call(env, 'GET', '/')).body).toContain('class="pgrid"');
 });
 
+test('home: workshop photos, delivered orders and the number band show only when the owner filled them', async () => {
+  let html = (await call(env, 'GET', '/')).body as string;
+  expect(html).not.toContain('id="xuong"');
+  expect(html).not.toContain('id="don-vua-giao"');
+  expect(html).not.toContain('stats-band');
+  const add = async (section: string | undefined, vi: string) =>
+    call(env, 'POST', '/api/gallery', { imageKey: await upPub(), caption: { vi }, href: '', published: true, position: 0, ...(section ? { section } : {}) }, admin);
+  await add(undefined, 'Ảnh chạy 1');
+  await add('xuong', 'Máy in đế');
+  await add('giao', '500 đôi · Siem Reap');
+  expect((await add('khac', 'x')).status).toBe(400);
+  await call(env, 'PUT', '/api/shop', { address: '', messenger: '', ceo: { name: '', phone: '' }, sales: { name: '', phone: '' },
+    stats: [{ value: '50.000+', label: { vi: 'đôi mỗi tháng', en: 'pairs a month' } }, { value: '', label: { vi: 'trống' } }, { value: '200+', label: { vi: '' } }] }, admin);
+  html = (await call(env, 'GET', '/')).body as string;
+  const strip = html.slice(html.indexOf('class="gallery"'), html.indexOf('</section>', html.indexOf('class="gallery"')));
+  expect(strip).toContain('Ảnh chạy 1');
+  expect(strip).not.toContain('Máy in đế');
+  expect(html.slice(html.indexOf('id="xuong"'))).toContain('Máy in đế');
+  expect(html.slice(html.indexOf('id="don-vua-giao"'))).toContain('500 đôi · Siem Reap');
+  expect(html).toContain('data-count="50.000+"');
+  expect(html).toContain('đôi mỗi tháng');
+  // half-filled rows are dropped
+  expect(html).not.toContain('data-count="200+"');
+  expect((await call(env, 'GET', '/api/shop', undefined, admin)).body.stats).toHaveLength(1);
+});
+
 test('brand-logo product absent', async () => {
   await product('Mẫu thường');
   await product('Mẫu có logo', { hasBrandLogo: true });

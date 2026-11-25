@@ -118,6 +118,36 @@ function why(c: PageCtx): Html {
     html`<li><span class="why-n" aria-hidden="true">0${i + 1}</span><span class="why-ico" aria-hidden="true">${icon(ic, 22)}</span><strong>${tr(c, t)}</strong><p>${tr(c, d)}</p></li>`)}</ol></section>`;
 }
 
+/** The workshop's own figures (typed in Trang web → Liên hệ); numbers count up as they come into view. */
+function statsBand(c: PageCtx): Html {
+  const st = c.shop.stats;
+  if (!st.length) return html``;
+  return html`<section class="stats-band reveal" aria-label="${tr(c, 'pub.stats_label')}"><ul>${st.map((s) =>
+    html`<li><strong data-count="${s.value}">${s.value}</strong><span>${pick(s.label, c.lang)}</span></li>`)}</ul></section>`;
+}
+
+type Pic = { imageKey: string; caption: Record<Lang, string> };
+/** Real photos of the workshop: the first one large, the rest in a grid. */
+function factory(c: PageCtx, items: Pic[]): Html {
+  if (!items.length) return html``;
+  return html`<section class="factory reveal" id="xuong"><p class="eyebrow-gold">HLUXURY</p><h2>${tr(c, 'pub.factory_title')}</h2><p class="factory-lead">${tr(c, 'pub.factory_lead')}</p>
+<div class="factory-grid">${items.slice(0, 7).map((g, i) => {
+    const cap = pick(g.caption, c.lang);
+    return html`<figure class="${i === 0 ? 'big' : ''}"><img src="${mediaUrl(g.imageKey)}" alt="${cap}" loading="lazy" decoding="async">${cap ? html`<figcaption>${cap}</figcaption>` : ''}</figure>`;
+  })}</div></section>`;
+}
+
+/** Orders just delivered: bags and boxes on their way, with what and where ("500 đôi · Siem Reap"). */
+function shipped(c: PageCtx, items: Pic[]): Html {
+  if (!items.length) return html``;
+  return html`<section class="section shipped reveal" id="don-vua-giao"><div class="section-head"><h2>${tr(c, 'pub.shipped_title')}</h2></div>
+<p class="muted shipped-lead">${tr(c, 'pub.shipped_lead')}</p>
+<div class="hscroll shipped-row">${items.slice(0, 12).map((g) => {
+    const cap = pick(g.caption, c.lang);
+    return html`<figure class="ship-card"><img src="${mediaUrl(g.imageKey)}" alt="${cap}" loading="lazy" decoding="async">${cap ? html`<figcaption>${icon('truck', 16)}<span>${cap}</span></figcaption>` : ''}</figure>`;
+  })}</div></section>`;
+}
+
 /** Gold ribbon of selling points sliding across the page; the same words are in the sections below, so it is decorative. */
 function ribbon(c: PageCtx): Html {
   const words = [tr(c, 'pub.rb_print'), c.minOrderPairs > 0 ? tr(c, 'pub.wholesale', { min: c.minOrderPairs }) : '', tr(c, 'pub.why2_t'), tr(c, 'pub.why3_t'), tr(c, 'pub.why1_t')].filter(Boolean);
@@ -181,14 +211,18 @@ async function home(req: Request, env: Env): Promise<Response> {
   const c = await ctxOf(req, env);
   const h = await getPublicHome(env);
   const cols = h.collections.filter((x) => x.productIds.length);
+  const strip = h.gallery.filter((g) => g.section === 'strip');
   const body = html`
-${posterBlock(c, h.posters, h.products, html`${ribbon(c)}${gallery(c, h.gallery)}`)}
+${posterBlock(c, h.posters, h.products, html`${ribbon(c)}${gallery(c, strip)}`)}
+${statsBand(c)}
 ${why(c)}
+${factory(c, h.gallery.filter((g) => g.section === 'xuong'))}
 ${h.products.length ? styleChips(c, h.styles, null) : ''}
 ${cols.length ? html`<section class="section reveal" id="chu-de"><div class="section-head"><h2>${tr(c, 'pub.collections')}</h2></div>
 <div class="hscroll">${cols.map((col) => collectionCard(c, col))}</div></section>` : ''}
 ${h.products.length ? html`<section class="section reveal" id="noi-bat"><div class="section-head"><h2>${tr(c, 'pub.featured')}</h2><a href="/san-pham">${tr(c, 'pub.see_all')} →</a></div>
 ${grid(c, h.products.slice(0, 12))}</section>` : ''}
+${shipped(c, h.gallery.filter((g) => g.section === 'giao'))}
 ${steps(c)}
 ${band(c)}`;
   const legacy = raw(`<script>if(location.hash.indexOf('#/')===0)location.replace('/quan-ly'+location.hash)</script>`);
