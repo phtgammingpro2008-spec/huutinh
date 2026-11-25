@@ -257,6 +257,12 @@ export async function getShop(env: Env): Promise<Shop> {
 }
 const parseStats = (v: unknown): Stat[] => (Array.isArray(v) ? v : []).slice(0, 4)
   .map((s: any) => ({ value: str(s?.value, 16), label: names(s?.label, 40) })).filter((s) => s.value && s.label.vi);
+/** Only the number band: managers may change it, the contact details stay with the owner. */
+export async function saveStats(env: Env, b: any): Promise<Shop> {
+  const shop = { ...(await getShop(env)), stats: parseStats(b?.stats) };
+  await env.DB.prepare("INSERT INTO settings (key, value) VALUES ('shop', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").bind(JSON.stringify(shop)).run();
+  return shop;
+}
 export async function saveShop(env: Env, b: any): Promise<Shop> {
   const contact = (c: any): Contact => ({ name: str(c?.name, 100), phone: str(c?.phone, 40) });
   const shop: Shop = { address: str(b.address, 300), messenger: str(b.messenger, 200), ceo: contact(b.ceo), sales: contact(b.sales), stats: parseStats(b.stats) };

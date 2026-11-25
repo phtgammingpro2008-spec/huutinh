@@ -39,6 +39,13 @@ test('a manager does the daily work but not the owner settings', async () => {
   for (const [m, path, body] of owned) expect([m, path, (await call(env, m, path, body, staff)).status]).toEqual([m, path, 403]);
   // the settings stayed as they were
   expect((await call(env, 'GET', '/api/settings', undefined, owner)).body.minOrderPairs).toBe(10);
+  // the number band is content: the manager may change it, and only it
+  await call(env, 'PUT', '/api/shop', { address: '', messenger: '', ceo: { name: '', phone: '' }, sales: { name: 'Hào', phone: '0883219569' } }, owner);
+  const st = await call(env, 'PUT', '/api/shop/stats', { stats: [{ value: '50.000+', label: { vi: 'đôi mỗi tháng' } }], sales: { name: 'X', phone: '1' } }, staff);
+  expect(st.status).toBe(200);
+  const shop = (await call(env, 'GET', '/api/shop', undefined, owner)).body;
+  expect(shop.sales).toEqual({ name: 'Hào', phone: '0883219569' });
+  expect(shop.stats).toEqual([{ value: '50.000+', label: { vi: 'đôi mỗi tháng', en: '', km: '' } }]);
 });
 
 test('locking or a new password signs the manager out; customers still see nothing', async () => {
