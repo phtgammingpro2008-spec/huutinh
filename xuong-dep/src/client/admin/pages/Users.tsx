@@ -57,13 +57,15 @@ function Row({ u, onChange }: { u: UserRow; onChange: (u: UserRow) => void }) {
   );
 }
 
-type Staff = { id: string; name: string; locked: boolean; createdAt: string };
+type Staff = { id: string; name: string; role: 'staff' | 'worker'; locked: boolean; createdAt: string };
+const ROLE_LABEL = { staff: 'Quản lý', worker: 'Xưởng' } as const;
 
 /** Manager accounts (owner only): create, set a new password, lock. Managers do the daily work but not the owner's settings. */
 function StaffSection() {
   const [list, setList] = useState<Staff[] | null>(null);
   const [name, setName] = useState('');
   const [pw, setPw] = useState('');
+  const [role, setRole] = useState<'staff' | 'worker'>('staff');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
@@ -74,8 +76,8 @@ function StaffSection() {
     try { await fn(); } catch (e) { setError(e instanceof ApiError ? e.message : 'Có lỗi, vui lòng thử lại'); } finally { setBusy(false); }
   }
   const create = () => run(async () => {
-    const s = await api<Staff>('POST', '/api/staff', { name, password: pw });
-    setName(''); setPw(''); setMsg(`Đã tạo tài khoản ${s.name}. Đăng nhập bằng tên "${s.name}" và mật khẩu anh vừa đặt.`); load();
+    const s = await api<Staff>('POST', '/api/staff', { name, password: pw, role });
+    setName(''); setPw(''); setMsg(`Đã tạo tài khoản ${ROLE_LABEL[s.role]} ${s.name}. Đăng nhập bằng tên "${s.name}" và mật khẩu anh vừa đặt.`); load();
   });
   const newPw = (s: Staff) => run(async () => {
     const p = window.prompt(`Mật khẩu mới cho ${s.name} (ít nhất 8 ký tự):`);
@@ -88,14 +90,15 @@ function StaffSection() {
     await api('POST', `/api/staff/${s.id}/${locked ? 'lock' : 'unlock'}`); load();
   });
   return (
-    <section className="stack" aria-label="Tài khoản quản lý" style={{ marginBottom: 24 }}>
-      <h2 style={{ margin: 0 }}>Tài khoản quản lý</h2>
-      <p className="small muted" style={{ margin: 0 }}>Quản lý làm được đơn hàng, báo giá, khách hàng, thư viện, vật liệu và đăng mẫu lên web. Không sửa được cài đặt chung, Telegram, liên hệ, tài khoản và không tải sao lưu.</p>
+    <section className="stack" aria-label="Tài khoản quản lý và xưởng" style={{ marginBottom: 24 }}>
+      <h2 style={{ margin: 0 }}>Tài khoản quản lý và xưởng</h2>
+      <p className="small muted" style={{ margin: 0 }}>Quản lý làm được đơn hàng, báo giá, khách hàng, thư viện, vật liệu, đăng mẫu lên web, và nhận hàng, giao hàng ở kho. Không sửa được cài đặt chung, Telegram, liên hệ, tài khoản và không tải sao lưu.</p>
+      <p className="small muted" style={{ margin: 0 }}>Xưởng (công nhân) chỉ vào được khu Kho để đóng bao, in tem và xếp bao lên xe. Không thấy tên khách, giá hay công nợ.</p>
       {list && list.length > 0 && (
         <ul className="list">
           {list.map((s) => (
             <li key={s.id} className="card user-row">
-              <div className="row wrap"><strong className="grow">{s.name}</strong>{s.locked && <span className="badge s-da_huy">Đã khóa</span>}<span className="badge">Quản lý</span></div>
+              <div className="row wrap"><strong className="grow">{s.name}</strong>{s.locked && <span className="badge s-da_huy">Đã khóa</span>}<span className="badge">{ROLE_LABEL[s.role] ?? s.role}</span></div>
               <div className="small muted">Tạo {viDate(s.createdAt)}</div>
               <div className="row wrap" style={{ marginTop: 8 }}>
                 <button type="button" className="btn-sm" disabled={busy} onClick={() => newPw(s)}>Đổi mật khẩu</button>
@@ -108,12 +111,17 @@ function StaffSection() {
         </ul>
       )}
       <div className="card stack">
-        <strong>Thêm tài khoản quản lý</strong>
+        <strong>Thêm tài khoản</strong>
+        <div className="seg" role="radiogroup" aria-label="Loại tài khoản">
+          {(['staff', 'worker'] as const).map((r) => (
+            <button key={r} type="button" role="radio" aria-checked={role === r} aria-pressed={role === r} onClick={() => setRole(r)}>{r === 'staff' ? 'Quản lý' : 'Xưởng (công nhân)'}</button>
+          ))}
+        </div>
         <div><label htmlFor="staff-name">Tên đăng nhập</label>
           <input id="staff-name" autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="ví dụ hao" value={name} onChange={(e) => setName(e.target.value)} /></div>
         <div><label htmlFor="staff-pw">Mật khẩu (ít nhất 8 ký tự)</label>
           <input id="staff-pw" type="text" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} /></div>
-        <button type="button" className="btn-primary" disabled={busy || !name.trim() || pw.length < 8} onClick={create}>Tạo tài khoản quản lý</button>
+        <button type="button" className="btn-primary" disabled={busy || !name.trim() || pw.length < 8} onClick={create}>{role === 'staff' ? 'Tạo tài khoản quản lý' : 'Tạo tài khoản xưởng'}</button>
       </div>
       {error && <p className="error" role="alert">{error}</p>}
       {msg && <p className="success" role="status">{msg}</p>}

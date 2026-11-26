@@ -73,6 +73,7 @@ export function App() {
       const me = await api<Me>('GET', '/api/me');
       // customers have their own area; the admin pages would only answer them with 404s
       if (me.role === 'customer') { location.replace('/tai-khoan'); return; }
+      if (me.role === 'worker') { location.replace('/kho'); return; }
       setRole(me.role);
       setAuth({ state: 'in', me });
     } catch {

@@ -108,7 +108,7 @@ export function authRoutes(r: Router) {
     if (!u || !(await verifyPassword(password, u.password_hash))) {
       await bump(env, idKey, LOGIN_WINDOW);
       await bump(env, ipKey, LOGIN_WINDOW);
-      return json({ error: u?.role === 'admin' || u?.role === 'staff' || !u ? 'Sai mật khẩu' : uiT(lang, 'err.wrong_password'), code: 'wrong_password' }, 401);
+      return json({ error: (u && u.role !== 'customer') || !u ? 'Sai mật khẩu' : uiT(lang, 'err.wrong_password'), code: 'wrong_password' }, 401);
     }
     if (u.locked) return fail(403, lang, 'account_locked');
     const token = await createSession(env, u.id);

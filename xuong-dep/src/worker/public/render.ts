@@ -62,6 +62,7 @@ export const tr = (c: PageCtx, k: UiKey, vars?: Record<string, string | number>)
 
 /** Where an order starts: the customer area, or the login modal (with that page as `next`) for guests. */
 export function orderLink(c: PageCtx, label: Val, cls: string, next = '/tai-khoan#/dat-hang', kind = 'cta'): Html {
+  if (c.user?.role === 'worker') return html`<a class="${cls}" href="/kho">${label}</a>`;
   if (c.user && c.user.role !== 'customer') return html`<a class="${cls}" href="/quan-ly#/orders/new">${label}</a>`;
   if (c.user) return html`<a class="${cls}" href="${next}">${label}</a>`;
   return html`<a class="${cls}" href="${'/dang-ky?next=' + encodeURIComponent(next)}" data-need-login="${kind}" data-next="${next}">${label}</a>`;
@@ -78,7 +79,7 @@ const messengerHref = (m: string) => {
 function header(c: PageCtx): Html {
   const next = encodeURIComponent(c.path);
   const account = c.user
-    ? html`<a class="btn btn-sm head-account" href="${c.user.role !== 'customer' ? '/quan-ly' : '/tai-khoan'}" aria-label="${tr(c, 'pub.account')}">${icon('user', 18)}<span class="hide-xs">${tr(c, 'pub.account')}</span></a>`
+    ? html`<a class="btn btn-sm head-account" href="${c.user.role === 'worker' ? '/kho' : c.user.role !== 'customer' ? '/quan-ly' : '/tai-khoan'}" aria-label="${tr(c, 'pub.account')}">${icon('user', 18)}<span class="hide-xs">${tr(c, 'pub.account')}</span></a>`
     : html`<a class="btn btn-sm btn-primary head-account" href="${'/dang-nhap?next=' + next}">${tr(c, 'pub.login')}</a>`;
   return html`<header class="site-header"><div class="site-header-in">
 <a class="brand" href="/" aria-label="HLUXURY – ${tr(c, 'pub.home')}"><span class="brand-logo" aria-hidden="true"></span><span class="visually-hidden">HLUXURY</span></a>

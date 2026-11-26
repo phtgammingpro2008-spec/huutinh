@@ -18,6 +18,12 @@ export async function canViewKey(env: Env, user: SessionUser | null, key: string
   if (shown) return true;
   if (!user) return false;
   if (user.role === 'admin' || user.role === 'staff') return true;
+  if (user.role === 'worker') {
+    // a workshop hand sees the design crops of orders it may pack, nothing else
+    return !!(await env.DB.prepare(
+      "SELECT 1 FROM order_items it JOIN orders o ON o.id = it.order_id WHERE it.crop_key = ? AND o.status IN ('khach_dong_y', 'dang_san_xuat') LIMIT 1",
+    ).bind(key).first());
+  }
   if (!user.customerId) return false;
   const hit = await env.DB.prepare(
     `SELECT 1 FROM uploads WHERE key = ?1 AND user_id = ?2

@@ -2,7 +2,7 @@ import { normalizeEmail, phoneCandidates } from '../../shared/phone';
 import type { Env } from '../env';
 
 export type UserRow = {
-  id: string; name: string; password_hash: string; role: 'admin' | 'staff' | 'customer'; phone: string | null; email: string | null;
+  id: string; name: string; password_hash: string; role: 'admin' | 'staff' | 'worker' | 'customer'; phone: string | null; email: string | null;
   email_verified_at: string | null; customer_id: string | null; locked: number; created_at: string;
 };
 
@@ -20,7 +20,7 @@ export async function findByIdentifier(env: Env, id: string): Promise<UserRow | 
       .bind(JSON.stringify(phones)).first<UserRow>();
     if (r) return r;
   }
-  return env.DB.prepare("SELECT * FROM users WHERE name = ? AND role IN ('admin', 'staff')").bind(raw).first<UserRow>();
+  return env.DB.prepare("SELECT * FROM users WHERE name = ? AND role IN ('admin', 'staff', 'worker')").bind(raw).first<UserRow>();
 }
 
 export const getUser = (env: Env, id: string) => env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(id).first<UserRow>();
