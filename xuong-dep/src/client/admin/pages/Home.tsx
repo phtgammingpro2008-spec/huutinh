@@ -3,7 +3,8 @@ import { formatMoney } from '../../../shared/money';
 import { api } from '../api';
 import { OrderList, viDate, type OrderSummary } from '../components/OrderRow';
 
-type Dashboard = { newFromCustomers: OrderSummary[]; waitingQuote: OrderSummary[]; justAccepted: OrderSummary[]; dueSoon: OrderSummary[]; unpaid: OrderSummary[] };
+type Dashboard = { newFromCustomers: OrderSummary[]; waitingQuote: OrderSummary[]; justAccepted: OrderSummary[]; dueSoon: OrderSummary[]; unpaid: OrderSummary[];
+  kho?: { running: number; missingTrips: number; inCam: number } };
 
 function Bucket({ title, orders, empty, extra }: { title: string; orders: OrderSummary[] | undefined; empty: string; extra?: (o: OrderSummary) => string | undefined }) {
   return (
@@ -34,6 +35,13 @@ export function Home() {
         </div>
       </section>
       {error && <p className="error">{error}</p>}
+      {d?.kho && (
+        <a className={`kho-card card ${d.kho.missingTrips ? 'warn' : ''}`} href="/kho">
+          <strong>Kho</strong>
+          <span>{d.kho.running} chuyến đang chạy · {d.kho.inCam} bao ở Cam{d.kho.missingTrips ? ` · ${d.kho.missingTrips} chuyến thiếu bao` : ''}</span>
+          <span aria-hidden="true">›</span>
+        </a>
+      )}
       {d && d.newFromCustomers.length > 0 && (
         <div className="highlight-bucket">
           <Bucket title="Đơn khách mới" orders={d.newFromCustomers} empty="" extra={(o) => `Đặt ${viDate(o.createdAt)} · chưa xem`} />

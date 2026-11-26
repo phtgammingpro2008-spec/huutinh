@@ -896,3 +896,72 @@ body.site.has-cta .site-footer-in, body.site .site-footer-in { padding-bottom: c
 .btn-line-night { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 14px; border: 2px solid var(--night);
   color: var(--night); font-weight: 800; text-decoration: none; }
 .btn-line-night:hover { background: rgba(12,17,14,.08); }
+
+/* ---- /kho: big buttons, two languages, scanner, labels ---- */
+.bi .km { font-family: "Noto Sans Khmer", var(--font); font-weight: 500; font-size: .82em; opacity: .75; }
+.kho-page h1 { font-size: clamp(1.5rem, 6vw, 2rem); }
+.kho-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.kho-tile { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; padding: 18px 16px; min-height: 118px; border-radius: 20px;
+  background: var(--night); color: var(--cream); text-decoration: none; font-weight: 800; font-size: 1.05rem; }
+.kho-tile span[aria-hidden] { color: var(--gold); }
+.kho-main { min-height: 58px; font-size: 1.08rem; margin-top: 12px; }
+.scanbox { display: grid; gap: 8px; margin: 12px 0; }
+.scan-row { display: flex; gap: 8px; }
+.scan-row input { flex: 1; min-width: 0; font: 700 1.15rem/1 ui-monospace, Menlo, monospace; letter-spacing: .04em; min-height: 54px; text-transform: uppercase; }
+.kho-cam-btn { white-space: nowrap; }
+.scan-video { width: 100%; max-height: 46vh; object-fit: cover; border-radius: 16px; background: #000; }
+.scan-msg { margin: 0; padding: 10px 12px; border-radius: 12px; font-weight: 700; }
+.scan-msg.ok { background: color-mix(in srgb, #2f7a4a 18%, var(--surface)); color: #2f7a4a; }
+.scan-msg.bad { background: color-mix(in srgb, var(--danger, #a43c30) 15%, var(--surface)); color: var(--danger, #a43c30); }
+.big-count { font: 900 clamp(1.8rem, 9vw, 2.6rem)/1.1 var(--font); letter-spacing: -.02em; margin: 8px 0; }
+.kho-warn { border: 2px solid var(--gold); border-radius: 16px; padding: 14px; background: color-mix(in srgb, var(--gold) 14%, var(--surface)); display: grid; gap: 10px; margin-top: 12px; }
+.kho-warn p { margin: 0; font-weight: 700; }
+.toa-list { display: grid; gap: 10px; margin-top: 12px; }
+.toa-card { display: grid; gap: 8px; text-align: left; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); color: var(--ink); min-height: 0; }
+.toa-code { font: 900 1.2rem/1 var(--font); }
+.toa-thumbs { display: flex; gap: 6px; flex-wrap: wrap; }
+.toa-thumbs img { width: 52px; height: 52px; object-fit: cover; border-radius: 10px; background: var(--line); }
+.toa-thumbs.big img { width: 72px; height: 72px; }
+.toa-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: .92rem; }
+.ri-row { display: grid; gap: 6px; }
+.stepper { display: flex; gap: 8px; align-items: center; }
+.stepper button { width: 56px; height: 56px; min-height: 56px; border-radius: 14px; font-size: 1.6rem; font-weight: 800; padding: 0; }
+.stepper input { width: 110px; min-height: 56px; text-align: center; font-size: 1.5rem; font-weight: 800; }
+.trip-item { gap: 10px; }
+.badge.trip-dang_xep { background: color-mix(in srgb, var(--gold) 25%, var(--surface)); }
+.badge.trip-dang_chay { background: var(--night); color: var(--gold); }
+.code-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.code-list code, .bag-row code, .kho-page h1 code { font-family: ui-monospace, Menlo, monospace; font-weight: 700; }
+.bag-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 12px; }
+.bag-row a { text-decoration: none; color: var(--ink); min-width: 0; }
+.h-small { font-size: 1.05rem; margin: 18px 0 6px; }
+.kho-history { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.cam-order { margin-top: 12px; }
+.label-sheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 16px; }
+.kho-label { display: flex; gap: 8px; align-items: center; background: #fff; color: #000; border: 1px dashed #999; border-radius: 6px; padding: 6px; }
+.kho-label-qr { width: 34mm; flex: none; }
+.kho-label-qr svg { display: block; width: 100%; height: auto; }
+.kho-label-text { display: grid; gap: 2px; font: 600 9pt/1.25 Arial, Helvetica, sans-serif; min-width: 0; }
+.kho-label-code { font: 800 10.5pt/1.1 ui-monospace, Menlo, monospace; letter-spacing: .02em; }
+.kho-label-brand { font-weight: 800; letter-spacing: .2em; font-size: 7pt; }
+@media print {
+  /* only the label page prints like this; every other page (production sheet…) keeps its own print layout */
+  body:has(.label-sheet) * { visibility: hidden; }
+  body:has(.label-sheet) .label-sheet, body:has(.label-sheet) .label-sheet * { visibility: visible; }
+  @page labels { size: A4; margin: 0; }
+  .label-sheet { page: labels; position: absolute; left: 0; top: 0; margin: 0; padding: 10.6mm 0 0 0; width: 210mm; display: grid;
+    grid-template-columns: repeat(3, 70mm); grid-auto-rows: 42.3mm; gap: 0; }
+  .kho-label { border: 0; border-radius: 0; padding: 3mm; box-sizing: border-box; height: 42.3mm; }
+}
+.bag-row a { flex: 1 1 100%; }
+.bag-row code { white-space: nowrap; }
+@media (max-width: 440px) { .kho-app .brand-sub { display: none; } }
+.ship-table { border-collapse: collapse; width: 100%; min-width: 420px; font-size: .9rem; }
+.ship-table th, .ship-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+.ship-table th[scope="row"], .ship-table thead th:first-child { text-align: left; }
+.tbl-wrap { overflow-x: auto; }
+.kho-card { display: flex; gap: 12px; align-items: center; margin-top: 14px; padding: 14px 16px; text-decoration: none; color: var(--ink); }
+.kho-card span:nth-child(2) { flex: 1; color: var(--ink-2); font-size: .92rem; }
+.kho-card.warn { border-color: var(--danger, #a43c30); }
+.goods-line { gap: 10px; }
+.goods-left { font-weight: 800; }

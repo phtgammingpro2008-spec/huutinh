@@ -215,5 +215,10 @@ export async function dashboard(env: Env) {
       AND (SELECT COALESCE(SUM(l.unit_price * ${LINE_QTY_SQL}), 0) FROM item_lines l JOIN order_items i ON i.id = l.item_id
            WHERE i.order_id = o.id AND l.unit_price IS NOT NULL)
         > (SELECT COALESCE(SUM(p.amount), 0) FROM payments p WHERE p.order_id = o.id)`, [])).filter((o) => o.due > 0),
+    kho: (await env.DB.prepare(
+      `SELECT (SELECT COUNT(*) FROM trips WHERE status = 'dang_chay') AS running,
+         (SELECT COUNT(DISTINCT trip_id) FROM bags WHERE status = 'thieu') AS missingTrips,
+         (SELECT COUNT(*) FROM bags WHERE status IN ('da_toi', 'trong_kho')) AS inCam`,
+    ).first<{ running: number; missingTrips: number; inCam: number }>())!,
   };
 }

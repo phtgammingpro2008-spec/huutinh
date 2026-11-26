@@ -101,3 +101,20 @@ Final: minor (deferred): JSON backup includes quote_token (a forwarded backup ca
 Final: minor (deferred): no login rate limiting; setup claimable by whoever opens the URL first (guide warns)
 Final: minor (deferred): 26 px tag hit radius makes very dense photos hard to tag
 ```
+
+## 26/11/2026 · Kho và vận chuyển, phần 1
+
+Thiết kế: `docs/superpowers/specs/2026-11-25-kho-van-chuyen-phan-1-design.md` · Kế hoạch: `docs/superpowers/plans/2026-11-25-kho-van-chuyen-phan-1.md`
+
+- Migration `0006_kho.sql`: bảng `trips`, `bags`, `bag_events`. Lịch sử quét bị trigger khóa, không sửa hay xóa được.
+- Tài khoản **Xưởng** (role `worker`): chủ tạo ở Cài đặt → Người dùng. Chỉ vào được `/kho`, không thấy khách, giá hay ảnh gốc.
+- Khu **`/kho`** (Việt + Khmer):
+  - đóng bao theo ri, ghi hàng gửi kèm
+  - in tem decal A4 3 × 7, QR chỉ chứa mã bao
+  - chuyến xe: xếp, bỏ khỏi xe, cho xe chạy
+  - nhận chuyến và chốt thiếu bao
+  - kho Cam, giao khách
+  - trang bao có lịch sử quét; chỉ chủ chỉnh sửa
+- Trang đơn quản lý có phần "Vận chuyển". Khách có phần "Hàng của bạn". Trang chủ quản lý có ô Kho. Telegram báo xe chạy, chuyến thiếu bao, toa giao đủ.
+- Tự chuyển trạng thái đơn: bao đầu tiên chuyển đơn sang Đang sản xuất, giao đủ đôi chuyển sang Đã giao. Mở lại đơn đã giao: chỉ chủ.
+- File sao lưu có thêm bao, chuyến xe và lịch sử quét.

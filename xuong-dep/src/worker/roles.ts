@@ -3,8 +3,9 @@ import type { Env } from './env';
 import { err, getCookie, now } from './http';
 import type { Handler } from './router';
 
-/** admin: the owner (first account). staff: a manager with the daily work but not the owner's settings. */
-export type Role = 'admin' | 'staff' | 'customer';
+/** admin: the owner (first account). staff: a manager with the daily work but not the owner's settings.
+ * worker: a workshop hand (tài khoản Xưởng) who only packs bags and loads trucks in /kho. */
+export type Role = 'admin' | 'staff' | 'worker' | 'customer';
 export const isWorkshop = (role: string | undefined) => role === 'admin' || role === 'staff';
 export type SessionUser = { id: string; role: Role; customerId: string | null; name: string };
 
@@ -41,6 +42,24 @@ export function requireOwner(h: Handler): Handler {
     if (ctx.user!.role !== 'admin') return err(403, 'Chỉ tài khoản chủ xưởng làm được việc này');
     return h(req, env, p, ctx);
   });
+}
+
+const KHO_RANK: Record<string, number> = { worker: 1, staff: 2, admin: 3 };
+const BELOW: Record<'staff' | 'admin', string> = {
+  staff: 'Tài khoản Xưởng không làm được việc này · គណនីរោងចក្រមិនអាចធ្វើការនេះបានទេ',
+  admin: 'Chỉ tài khoản chủ xưởng làm được việc này · មានតែម្ចាស់ទេដែលអាចធ្វើការនេះបាន',
+};
+/** Warehouse routes (/api/kho): worker level admits workers, managers and the owner; staff level managers and the owner; admin level the owner.
+ * Customers get the 404 of an unknown route; a workshop account below the level is told why. */
+export function requireKho(level: 'worker' | 'staff' | 'admin', h: Handler): Handler {
+  return async (req, env, p, ctx) => {
+    const user = await currentUser(req, env);
+    if (!user) return err(401, 'Chưa đăng nhập');
+    const rank = KHO_RANK[user.role] ?? 0;
+    if (!rank) return err(404, 'Không tìm thấy');
+    if (rank < KHO_RANK[level]) return err(403, BELOW[level as 'staff' | 'admin']);
+    return h(req, env, p, { ...ctx, userId: user.id, user });
+  };
 }
 
 /** Customer only (an account linked to a customer profile). */

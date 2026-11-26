@@ -15,7 +15,7 @@ test('owner creates a manager in Người dùng; the manager signs in and does n
   await page.getByLabel('Tên đăng nhập').fill('hao');
   await page.getByLabel('Mật khẩu (ít nhất 8 ký tự)').fill('mat-khau-hao-1');
   await page.getByRole('button', { name: 'Tạo tài khoản quản lý' }).click();
-  await page.getByText('Đã tạo tài khoản hao.', { exact: false }).waitFor();
+  await page.getByText('Đã tạo tài khoản Quản lý hao.', { exact: false }).waitFor();
   await ownerCtx.close();
 
   const ctx = await b.newContext(opts);

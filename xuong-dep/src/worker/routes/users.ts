@@ -135,13 +135,13 @@ export function userRoutes(r: Router) {
 
   // ---- owner: manager accounts (role staff), signed in with a login name like the owner's ----
   const STAFF_NAME = /^(?=.*[a-z])[a-z0-9._-]{3,30}$/;
-  const staffRow = (r: any) => ({ id: r.id, name: r.name, locked: !!r.locked, createdAt: r.created_at });
+  const staffRow = (r: any) => ({ id: r.id, name: r.name, role: r.role, locked: !!r.locked, createdAt: r.created_at });
   const getStaff = async (env: Env, id: string) => {
     const u = await getUser(env, id);
-    return u && u.role === 'staff' ? u : null;
+    return u && (u.role === 'staff' || u.role === 'worker') ? u : null;
   };
   r.on('GET', '/api/staff', requireOwner(async (_req, env) => {
-    const rows = (await env.DB.prepare("SELECT id, name, locked, created_at FROM users WHERE role = 'staff' ORDER BY created_at").all<any>()).results;
+    const rows = (await env.DB.prepare("SELECT id, name, role, locked, created_at FROM users WHERE role IN ('staff', 'worker') ORDER BY created_at").all<any>()).results;
     return json(rows.map(staffRow));
   }));
   r.on('POST', '/api/staff', requireOwner(async (req, env) => {
@@ -150,11 +150,13 @@ export function userRoutes(r: Router) {
     const password = typeof b.password === 'string' ? b.password : '';
     if (!STAFF_NAME.test(name)) return json({ error: 'Tên đăng nhập 3–30 ký tự, chữ thường không dấu, số, dấu . _ - (ví dụ hao hoặc hao.sales)', code: 'bad_name' }, 400);
     if (password.length < 8) return json({ error: 'Mật khẩu ít nhất 8 ký tự', code: 'weak_password' }, 400);
+    const role = b.role === undefined ? 'staff' : b.role;
+    if (role !== 'staff' && role !== 'worker') return json({ error: 'Loại tài khoản không hợp lệ', code: 'bad_role' }, 400);
     if (await env.DB.prepare('SELECT 1 FROM users WHERE name = ?').bind(name).first()) return json({ error: 'Tên đăng nhập này đã có người dùng', code: 'name_taken' }, 409);
     const id = newId(), at = nowIso(env);
-    await env.DB.prepare("INSERT INTO users (id, name, password_hash, role, created_at) VALUES (?, ?, ?, 'staff', ?)")
-      .bind(id, name, await hashPassword(password), at).run();
-    return json(staffRow({ id, name, locked: 0, created_at: at }));
+    await env.DB.prepare('INSERT INTO users (id, name, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)')
+      .bind(id, name, await hashPassword(password), role, at).run();
+    return json(staffRow({ id, name, role, locked: 0, created_at: at }));
   }));
   r.on('POST', '/api/staff/:id/password', requireOwner(async (req, env, p) => {
     const u = await getStaff(env, p.id);

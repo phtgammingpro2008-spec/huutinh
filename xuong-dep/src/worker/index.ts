@@ -16,6 +16,7 @@ import { publicRoutes } from './routes/public';
 import { quoteRoutes } from './routes/quotes';
 import { publicSiteRoutes } from './public/pages';
 import { telegramRoutes } from './telegram';
+import { khoRoutes } from './routes/kho';
 
 export const router = new Router();
 quoteRoutes(router);
@@ -31,6 +32,7 @@ userRoutes(router);
 orderRoutes(router);
 designRoutes(router);
 telegramRoutes(router);
+khoRoutes(router);
 publicSiteRoutes(router);
 
 function decodeB64(s: string): Uint8Array {
@@ -51,6 +53,7 @@ function serveAsset(req: Request): Response | null {
   if (path === '/quan-ly' || path === '/quan-ly/' || path === '/index.html') name = '/index.html';
   else if (/^\/q\/[A-Za-z0-9_-]+\/?$/.test(path)) name = '/quote.html';
   else if (ACCOUNT_PAGES.test(path)) name = '/account.html';
+  else if (path === '/kho' || path === '/kho/') name = '/kho.html';
   const a = ASSETS[name];
   if (!a) return null;
   const cache = a.immutable ? 'public, max-age=31536000, immutable'
