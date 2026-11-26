@@ -3,7 +3,7 @@ import { normalizeBagCode } from '../../shared/ri';
 import type { Env } from '../env';
 import { HttpError, json, nowIso, readJson, str } from '../http';
 import { pairsOf, type RiCount } from '../../shared/ri';
-import { bagView, eventStmt, fullyDelivered, getBagByCode, getTrip, openTrip, packBag, perRiOf, refuse, riOf, toaCards, tripView, type BagRow } from '../repo/kho';
+import { bagView, camBags, eventStmt, fullyDelivered, getBagByCode, getTrip, openTrip, packBag, perRiOf, refuse, riOf, toaCards, tripView, type BagRow } from '../repo/kho';
 import { requireKho, type SessionUser } from '../roles';
 import type { Router } from '../router';
 import { notifyOwner } from '../telegram';
@@ -190,6 +190,8 @@ export function khoRoutes(r: Router) {
     }
     return json({ delivered: todo.length, orders });
   }));
+
+  r.on('GET', '/api/kho/cam', kho('staff', async (_req, env) => json(await camBags(env))));
 
   // ---- corrections: the owner only, every one kept in the history ----
   r.on('POST', '/api/kho/bags/:code/ri', kho('admin', async (req, env, p, user) => {

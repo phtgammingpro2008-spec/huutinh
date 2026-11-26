@@ -316,7 +316,7 @@ export function publicSiteRoutes(r: Router) {
 
   r.on('GET', '/robots.txt', async (req, env) => {
     const o = originOf(env, req);
-    const lines = ['User-agent: *', 'Allow: /', ...['/quan-ly', '/tai-khoan', '/dang-nhap', '/dang-ky', '/quen-mat-khau', '/dat-lai-mat-khau', '/q/', '/api/', '/img/']
+    const lines = ['User-agent: *', 'Allow: /', ...['/quan-ly', '/kho', '/tai-khoan', '/dang-nhap', '/dang-ky', '/quen-mat-khau', '/dat-lai-mat-khau', '/q/', '/api/', '/img/']
       .map((p) => `Disallow: ${p}`), `Sitemap: ${o}/sitemap.xml`, ''];
     return new Response(lines.join('\n'), { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600', 'x-indexable': '1' } });
   });

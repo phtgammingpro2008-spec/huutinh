@@ -43,16 +43,18 @@ export async function build() {
   const quoteJs = await bundleClient('src/client/quote/main.tsx');
   const customerJs = await bundleClient('src/client/customer/main.tsx');
   const islandJs = await bundleClient('src/client/site/island.tsx');
+  const khoJs = await bundleClient('src/client/kho/main.tsx');
   const css = await Bun.file(join(PUB, 'styles.css')).text();
 
   const adminPath = `/assets/admin.${hash(adminJs)}.js`;
   const quotePath = `/assets/quote.${hash(quoteJs)}.js`;
   const customerPath = `/assets/customer.${hash(customerJs)}.js`;
   const islandPath = `/assets/island.${hash(islandJs)}.js`;
+  const khoPath = `/assets/kho.${hash(khoJs)}.js`;
   const cssPath = `/assets/styles.${hash(css)}.css`;
-  const version = hash(adminJs + quoteJs + customerJs + islandJs + css);
+  const version = hash(adminJs + quoteJs + customerJs + islandJs + khoJs + css);
   const { THEME_BOOT } = await import('../src/client/ui/theme');
-  const fill = (s: string) => s.replaceAll('%THEME_BOOT%', THEME_BOOT).replaceAll('%ADMIN_JS%', adminPath).replaceAll('%QUOTE_JS%', quotePath).replaceAll('%CUSTOMER_JS%', customerPath)
+  const fill = (s: string) => s.replaceAll('%THEME_BOOT%', THEME_BOOT).replaceAll('%ADMIN_JS%', adminPath).replaceAll('%QUOTE_JS%', quotePath).replaceAll('%CUSTOMER_JS%', customerPath).replaceAll('%KHO_JS%', khoPath)
     .replaceAll('%CSS%', cssPath).replaceAll('%VERSION%', version);
 
   const assets: Record<string, Asset> = {
@@ -60,6 +62,7 @@ export async function build() {
     [quotePath]: { type: TYPES.js, body: quoteJs, immutable: true },
     [customerPath]: { type: TYPES.js, body: customerJs, immutable: true },
     [islandPath]: { type: TYPES.js, body: islandJs, immutable: true },
+    [khoPath]: { type: TYPES.js, body: khoJs, immutable: true },
     [cssPath]: { type: TYPES.css, body: css, immutable: true },
   };
   for (const file of await walk(PUB)) {

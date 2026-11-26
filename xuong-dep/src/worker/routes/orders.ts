@@ -12,6 +12,7 @@ import {
 } from '../repo/orders';
 import { buildSnapshot, quoteVersionStmts } from '../repo/quotes';
 import type { Router } from '../router';
+import { shippingSummary } from '../repo/kho';
 
 export const LOCKED_MSG = 'Đơn đang sản xuất, không sửa số lượng/giá được';
 export const lockedMessage = (s: OrderStatus) => (s === 'da_huy' ? 'Đơn đã hủy, không sửa số lượng/giá được' : LOCKED_MSG);
@@ -97,7 +98,7 @@ export function orderRoutes(r: Router) {
   r.on('GET', '/api/orders/:id', requireAdmin(async (_req, env, p) => {
     const o = await loadOrder(env, p.id);
     if (o && !o.seenByAdmin) await env.DB.prepare('UPDATE orders SET seen_by_admin = 1 WHERE id = ?').bind(o.id).run();
-    return o ? json(o) : err(404, 'Không tìm thấy đơn');
+    return o ? json({ ...o, shipping: await shippingSummary(env, o.id) }) : err(404, 'Không tìm thấy đơn');
   }));
 
   r.on('GET', '/api/orders', requireAdmin(async (req, env) => {

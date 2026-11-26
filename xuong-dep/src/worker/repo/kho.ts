@@ -152,12 +152,13 @@ export async function bagView(env: Env, b: BagRow, withCustomer: boolean) {
      FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.id = ?`,
   ).bind(b.order_id).first<any>())!;
   const trip = b.trip_id ? await getTrip(env, b.trip_id) : null;
+  const lineLabels = Object.fromEntries((await getSettings(env)).lines.map((l) => [l.key, l.label.vi]));
   const events = (await env.DB.prepare(
     `SELECT e.kind, e.at, e.data, u.name AS by_name, t.code AS trip_code FROM bag_events e
      LEFT JOIN users u ON u.id = e.user_id LEFT JOIN trips t ON t.id = e.trip_id WHERE e.bag_id = ? ORDER BY e.at, e.rowid`,
   ).bind(b.id).all<any>()).results;
   return {
-    code: b.code, seq: b.seq, ri: riOf(b), pairs: b.pairs, extraNote: b.extra_note, extraPairs: b.extra_pairs, over: !!b.over, status: b.status,
+    code: b.code, seq: b.seq, ri: riOf(b), lineLabels, pairs: b.pairs, extraNote: b.extra_note, extraPairs: b.extra_pairs, over: !!b.over, status: b.status,
     createdAt: b.created_at,
     trip: trip ? { id: trip.id, code: trip.code, status: trip.status } : null,
     order: {
@@ -200,4 +201,22 @@ export async function fullyDelivered(env: Env, orderId: string): Promise<boolean
   const ordered = Object.values(orderedRi(items)).reduce((s, l) => s + l.pairs, 0);
   const got = (await env.DB.prepare("SELECT COALESCE(SUM(pairs), 0) AS n FROM bags WHERE order_id = ? AND status = 'da_giao'").bind(orderId).first<{ n: number }>())!.n;
   return ordered > 0 && got >= ordered;
+}
+
+/** Bags waiting in Cambodia (arrived or in the warehouse), grouped by order, for managers. */
+export async function camBags(env: Env) {
+  const rows = (await env.DB.prepare(
+    `SELECT b.code, b.seq, b.pairs, b.ri, b.status, b.extra_note, o.id AS order_id, o.code AS order_code, c.name AS customer_name
+     FROM bags b JOIN orders o ON o.id = b.order_id JOIN customers c ON c.id = o.customer_id
+     WHERE b.status IN ('da_toi', 'trong_kho') ORDER BY o.code, b.seq`,
+  ).all<any>()).results;
+  type CamBag = { code: string; seq: number; pairs: number; ri: RiCount; status: string; extraNote: string };
+  type CamOrder = { orderId: string; orderCode: string; customerName: string; bags: CamBag[] };
+  const out = new Map<string, CamOrder>();
+  for (const r of rows) {
+    const g: CamOrder = out.get(r.order_id) ?? { orderId: r.order_id, orderCode: r.order_code, customerName: r.customer_name, bags: [] };
+    g.bags.push({ code: r.code, seq: r.seq, pairs: r.pairs, ri: JSON.parse(r.ri), status: r.status, extraNote: r.extra_note });
+    out.set(r.order_id, g);
+  }
+  return [...out.values()];
 }
