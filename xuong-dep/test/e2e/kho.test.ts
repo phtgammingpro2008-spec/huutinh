@@ -47,6 +47,11 @@ test('a bag goes from the workshop to the customer, scanned at every step', asyn
   await w.getByText(/Bao số 1/).first().waitFor();
   expect(await w.locator('.kho-label svg').count()).toBe(1);
   expect(await w.locator('.kho-label').first().textContent()).not.toContain(toa.code);
+  // printing shows the labels only
+  await w.emulateMedia({ media: 'print' });
+  expect(await w.locator('.kho-label').first().isVisible()).toBe(true);
+  expect(await w.getByRole('button', { name: /In tem/ }).isVisible()).toBe(false);
+  await w.emulateMedia({ media: 'screen' });
   await w.getByRole('link', { name: /Đóng tiếp/ }).click();
   await w.getByLabel(/^Số ri Nam/).fill('1');
   await w.getByRole('button', { name: /Tạo bao và in tem/ }).click();
@@ -92,4 +97,34 @@ test('a bag goes from the workshop to the customer, scanned at every step', asyn
   const after = await (await fetch(app.url + `/api/orders/${orderId}`, { headers: { cookie: owner } })).json();
   expect(after.status).toBe('da_giao');
   await octx.close();
+});
+
+test('the customer sees how much of the toa was sent and what is still missing', async () => {
+  const reg = await fetch(app.url + '/api/register', { method: 'POST', headers: j, body: JSON.stringify({ name: 'Chị Ngọc', phone: '0908765411', email: 'ngoc@example.com', password: 'mat-khau-ngoc-1', country: 'KH', lang: 'vi' }) });
+  const cust = (reg.headers.get('set-cookie') ?? '').split(';')[0];
+  const me = await api(cust, 'GET', '/api/me');
+  const id = crypto.randomUUID();
+  await api(owner, 'PUT', `/api/orders/${id}`, {
+    id, customerId: me.customerId, currency: 'USD', neededBy: null, note: '', allowPublic: false, images: [],
+    items: [{ id: crypto.randomUUID(), designId: crypto.randomUUID(), imageId: null, tagNo: 1, tapX: null, tapY: null, crop: null, cropKey: `img/2026/11/${crypto.randomUUID()}.jpg`,
+      soleId: null, strapId: null, styleId: null, colorNote: '', lines: [{ id: crypto.randomUUID(), lineKey: 'nam', sizeFrom: 39, sizeTo: 44, mode: 'even', qtyEach: 10, perSize: {}, unitPrice: 500 }] }],
+  });
+  await api(owner, 'POST', `/api/orders/${id}/send-quote`, {});
+  await api(owner, 'POST', `/api/orders/${id}/status`, { to: 'khach_dong_y' });
+  const bag = await api(owner, 'POST', '/api/kho/bags', { orderId: id, ri: { nam: 4 } });
+  const trip = await api(owner, 'POST', '/api/kho/trips', {});
+  await api(owner, 'POST', `/api/kho/trips/${trip.id}/load`, { code: bag.code });
+  await api(owner, 'POST', `/api/kho/trips/${trip.id}/depart`, {});
+
+  const ctx = await ctxOf();
+  await ctx.addCookies([{ name: cust.split('=')[0], value: cust.split('=')[1], url: app.url }]);
+  const p = await ctx.newPage();
+  await p.goto(app.url + `/tai-khoan#/don/${id}`);
+  const goods = p.getByRole('region', { name: 'Hàng của bạn' });
+  await goods.waitFor();
+  expect(await goods.textContent()).toContain('Đã gửi 4 / 10 ri');
+  expect(await goods.textContent()).toContain('Còn thiếu 10 ri');
+  expect(await goods.textContent()).toContain('1 đang trên xe');
+  expect(await goods.textContent()).not.toContain(bag.code);
+  await ctx.close();
 });

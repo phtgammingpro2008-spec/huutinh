@@ -22,6 +22,8 @@ export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
   if (from === 'da_huy') return false;
   if (to === 'da_huy') return from !== 'hoan_tat';
   if (from === 'khach_dong_y' && to === 'da_bao_gia') return true;
+  // the owner reopens a delivered order to pack more bags
+  if (from === 'da_giao' && to === 'dang_san_xuat') return true;
   return rank(to) > rank(from);
 }
 

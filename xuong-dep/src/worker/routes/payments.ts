@@ -11,13 +11,14 @@ import type { Router } from '../router';
 const TABLES = ['customers', 'materials', 'settings', 'orders', 'order_images', 'designs', 'order_items', 'item_lines', 'quotes', 'payments'];
 
 export function paymentRoutes(r: Router) {
-  r.on('POST', '/api/orders/:id/status', requireAdmin(async (req, env, p) => {
+  r.on('POST', '/api/orders/:id/status', requireAdmin(async (req, env, p, ctx) => {
     const o = await getOrderRow(env, p.id);
     if (!o) return err(404, 'Không tìm thấy đơn');
     const to = (await readJson(req)).to as OrderStatus;
     if (!STATUSES.includes(to)) return err(400, 'Trạng thái không hợp lệ');
     if (to === 'da_bao_gia') return err(409, 'Dùng nút "Gửi báo giá" để chuyển sang Đã báo giá');
     if (!canTransition(o.status, to)) return err(409, 'Không chuyển được sang trạng thái này');
+    if (o.status === 'da_giao' && to === 'dang_san_xuat' && ctx.user?.role !== 'admin') return err(403, 'Chỉ tài khoản chủ xưởng mở lại được đơn đã giao');
     if (to !== 'da_huy' && rank(to) >= rank('khach_dong_y') && o.quote_version === 0) return err(409, 'Đơn chưa gửi báo giá');
     const at = nowIso(env);
     const stmts = [env.DB.prepare('UPDATE orders SET status = ?, updated_at = ? WHERE id = ?').bind(to, at, o.id)];

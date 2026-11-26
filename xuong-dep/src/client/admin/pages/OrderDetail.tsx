@@ -17,7 +17,46 @@ export type OrderView = OrderInput & {
   createdAt: string; quotedAt: string | null; acceptedAt: string | null;
   source?: 'admin' | 'customer'; cancelReason?: string; cancelledBy?: string | null;
   productTitles?: Record<string, { product: { vi: string }; color: { vi: string } }>;
+  shipping?: Shipping;
 };
+type ShipLine = { key: string; label: { vi: string }; perRi: number; orderedRi: number; packedRi: number; sentRi: number; deliveredRi: number };
+type Shipping = {
+  bags: number; lines: ShipLine[]; extra: string[];
+  list: { code: string; seq: number; ri: Record<string, number>; pairs: number; extraNote: string; status: string; tripCode: string | null; updatedAt: string }[];
+};
+const BAG_STATUS: Record<string, string> = {
+  da_dong: 'Ở xưởng', tren_xe: 'Trên xe', da_toi: 'Đã tới Cam', thieu: 'Thiếu khi tới', trong_kho: 'Trong kho Cam', da_giao: 'Đã giao', that_lac: 'Thất lạc', hu_hong: 'Hư hỏng',
+};
+const r1 = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+
+/** Bags of the order: ri per size line from ordered to delivered, then each bag with where it is. */
+function ShippingSection({ s }: { s: Shipping }) {
+  return (
+    <section className="card stack" style={{ marginTop: 16 }} aria-label="Vận chuyển">
+      <div className="row"><h2 className="grow" style={{ margin: 0 }}>Vận chuyển</h2><a className="btn-sm" href="/kho">Mở Kho</a></div>
+      <div className="tbl-wrap"><table className="ship-table">
+        <thead><tr><th scope="col">Dòng</th><th scope="col">Đặt</th><th scope="col">Đã đóng</th><th scope="col">Đã gửi</th><th scope="col">Đã giao</th><th scope="col">Còn thiếu</th></tr></thead>
+        <tbody>{s.lines.map((l) => (
+          <tr key={l.key}><th scope="row">{l.label.vi} <span className="small muted">(ri {l.perRi} đôi)</span></th>
+            <td className="num">{r1(l.orderedRi)}</td><td className="num">{r1(l.packedRi)}</td><td className="num">{r1(l.sentRi)}</td><td className="num">{r1(l.deliveredRi)}</td>
+            <td className="num"><strong>{r1(Math.max(0, l.orderedRi - l.deliveredRi))}</strong></td></tr>
+        ))}</tbody>
+      </table></div>
+      {s.bags === 0 ? <p className="small muted" style={{ margin: 0 }}>Chưa có bao nào. Xưởng đóng bao trong khu Kho.</p> : (
+        <ul className="list">
+          {s.list.map((b) => (
+            <li key={b.code} className="bag-row card">
+              <a href={`/kho#/bao/${b.code}`}><code>{b.code}</code> <span className="small muted">Bao {b.seq} · {b.pairs} đôi{b.extraNote ? ` · + ${b.extraNote}` : ''}</span></a>
+              <span className={`badge ${b.status === 'thieu' || b.status === 'that_lac' || b.status === 'hu_hong' ? 's-da_huy' : ''}`}>{BAG_STATUS[b.status] ?? b.status}</span>
+              {b.tripCode && <span className="small muted">{b.tripCode}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 type SendResult = { url: string; message: string; zaloUrl: string | null; messengerUrl: string | null; version: number };
 
 export function describeLine(l: Line, label: string): string {
@@ -213,6 +252,8 @@ export function OrderDetail({ id }: { id: string }) {
           )}
         </div>
       </section>
+
+      {o.shipping && o.status !== 'cho_bao_gia' && o.status !== 'da_bao_gia' && <ShippingSection s={o.shipping} />}
 
       <section className="card stack" style={{ marginTop: 16 }} aria-label="Tiền nhận">
         <h2 style={{ margin: 0 }}>Tiền nhận</h2>

@@ -945,13 +945,23 @@ body.site.has-cta .site-footer-in, body.site .site-footer-in { padding-bottom: c
 .kho-label-code { font: 800 10.5pt/1.1 ui-monospace, Menlo, monospace; letter-spacing: .02em; }
 .kho-label-brand { font-weight: 800; letter-spacing: .2em; font-size: 7pt; }
 @media print {
-  @page { size: A4; margin: 0; }
-  body * { visibility: hidden; }
-  .label-sheet, .label-sheet * { visibility: visible; }
-  .label-sheet { position: absolute; left: 0; top: 0; margin: 0; padding: 10.6mm 0 0 0; width: 210mm; display: grid;
+  /* only the label page prints like this; every other page (production sheet…) keeps its own print layout */
+  body:has(.label-sheet) * { visibility: hidden; }
+  body:has(.label-sheet) .label-sheet, body:has(.label-sheet) .label-sheet * { visibility: visible; }
+  @page labels { size: A4; margin: 0; }
+  .label-sheet { page: labels; position: absolute; left: 0; top: 0; margin: 0; padding: 10.6mm 0 0 0; width: 210mm; display: grid;
     grid-template-columns: repeat(3, 70mm); grid-auto-rows: 42.3mm; gap: 0; }
   .kho-label { border: 0; border-radius: 0; padding: 3mm; box-sizing: border-box; height: 42.3mm; }
 }
 .bag-row a { flex: 1 1 100%; }
 .bag-row code { white-space: nowrap; }
 @media (max-width: 440px) { .kho-app .brand-sub { display: none; } }
+.ship-table { border-collapse: collapse; width: 100%; min-width: 420px; font-size: .9rem; }
+.ship-table th, .ship-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+.ship-table th[scope="row"], .ship-table thead th:first-child { text-align: left; }
+.tbl-wrap { overflow-x: auto; }
+.kho-card { display: flex; gap: 12px; align-items: center; margin-top: 14px; padding: 14px 16px; text-decoration: none; color: var(--ink); }
+.kho-card span:nth-child(2) { flex: 1; color: var(--ink-2); font-size: .92rem; }
+.kho-card.warn { border-color: var(--danger, #a43c30); }
+.goods-line { gap: 10px; }
+.goods-left { font-weight: 800; }

@@ -16,7 +16,29 @@ type COrder = {
   currency: Currency; cancelReason: string | null; items: Item[]; totals: { qty: number }; quote: QuoteSnapshot | null;
   acceptedVersion: number | null; paid: number; due: number; canEdit: boolean; canCancel: boolean; cancelledBy?: string | null;
   productTitles?: Record<string, { product: Record<Lang, string>; color: Record<Lang, string> }>;
+  shipping?: { bags: number; lines: { key: string; label: Record<Lang, string>; orderedRi: number; sentRi: number; deliveredRi: number }[]; byStatus: Record<string, number>; extra: string[] };
 };
+
+const r1 = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+/** "Hàng của bạn": what has been sent and what is still missing, per size line; bag counts by where they are. */
+function GoodsSection({ s, t, lang }: { s: NonNullable<COrder['shipping']>; t: T; lang: Lang }) {
+  const rows: [string, number][] = (['tren_xe', 'da_toi', 'trong_kho', 'da_giao', 'kiem_tra'] as const)
+    .map((k) => [t(`c.ship_${k}` as never), s.byStatus[k] ?? 0] as [string, number]).filter(([, n]) => n > 0);
+  return (
+    <section className="card stack goods" style={{ marginTop: 16 }} aria-label={t('c.goods')}>
+      <h2 style={{ margin: 0 }}>{t('c.goods')}</h2>
+      {s.lines.map((l) => (
+        <div key={l.key} className="row wrap goods-line">
+          <strong className="grow">{l.label[lang] || l.label.vi}</strong>
+          <span>{t('c.ship_sent')} {r1(l.sentRi)} / {r1(l.orderedRi)} ri</span>
+          <span className="goods-left">{t('c.ship_left')} {r1(Math.max(0, l.orderedRi - l.deliveredRi))} ri</span>
+        </div>
+      ))}
+      <p className="small muted" style={{ margin: 0 }}>{s.bags} {t('c.ship_bags')}{rows.length ? ': ' + rows.map(([k, n]) => `${n} ${k}`).join(' · ') : ''}</p>
+      {s.extra.length > 0 && <p className="small" style={{ margin: 0 }}>{t('c.ship_extra')}: {s.extra.join(' · ')}</p>}
+    </section>
+  );
+}
 
 const FLOW: OrderStatus[] = ['cho_bao_gia', 'da_bao_gia', 'khach_dong_y', 'dang_san_xuat', 'da_giao', 'hoan_tat'];
 
@@ -171,6 +193,8 @@ export function OrderView({ id, t, lang }: { id: string; t: T; lang: Lang }) {
         {o.neededBy && <div className="row"><span className="grow muted">{t('c.needed_by')}</span><strong>{dmy(o.neededBy)}</strong></div>}
         {o.note && <div><span className="muted">{t('c.note')}:</span> {o.note}</div>}
       </section>
+
+      {o.shipping && o.shipping.bags > 0 && <GoodsSection s={o.shipping} t={t} lang={lang} />}
 
       <h2>{t('c.designs')}</h2>
       {o.items.map((it) => <Design key={it.id} item={it} quoted={quotedItem(it)} currency={o.currency} lang={lang} t={t} labelOf={labelOf}

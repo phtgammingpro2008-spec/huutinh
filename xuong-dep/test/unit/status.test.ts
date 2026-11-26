@@ -14,6 +14,9 @@ test('backward only khach_dong_y → da_bao_gia', () => {
   expect(canTransition('hoan_tat', 'cho_bao_gia')).toBe(false);
   expect(canTransition('khach_dong_y', 'da_bao_gia')).toBe(true);
   expect(canTransition('dang_san_xuat', 'khach_dong_y')).toBe(false);
+  // the owner reopens a delivered order to pack more
+  expect(canTransition('da_giao', 'dang_san_xuat')).toBe(true);
+  expect(canTransition('hoan_tat', 'dang_san_xuat')).toBe(false);
 });
 test('cancel from anything except hoan_tat', () => {
   for (const s of STATUSES) {

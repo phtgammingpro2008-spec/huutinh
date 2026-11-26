@@ -211,3 +211,39 @@ test('corrections are the owner\'s alone and keep the old values in history', as
   await call(env, 'POST', `/api/kho/trips/${t.id}/load`, { code: c.code }, worker);
   expect((await call(env, 'POST', `/api/kho/bags/${c.code}/cancel`, {}, owner)).status).toBe(409);
 });
+
+test('order pages: the owner sees bag codes, the customer sees progress without codes and problems as "kiem_tra"', async () => {
+  // a customer-placed order so the customer can read it
+  const reg = await call(env, 'POST', '/api/register', { name: 'Khách Ngọc', phone: '0908765499', email: 'ngoc@k.vn', password: 'mat-khau-123', country: 'KH', lang: 'vi' });
+  const cust = cookieFrom(reg);
+  const customerId = (await call(env, 'GET', '/api/me', undefined, cust)).body.customerId;
+  const o = sampleOrder(customerId, { items: [item(1, { lines: [line({ lineKey: 'nam', sizeFrom: 39, sizeTo: 44, qtyEach: 10 })] })] });
+  await call(env, 'PUT', `/api/orders/${o.id}`, o, owner);
+  await env.DB.prepare("UPDATE orders SET status = 'khach_dong_y' WHERE id = ?").bind(o.id).run();
+  const a = (await pack(o.id, { nam: 6 })).body, b = (await pack(o.id, { nam: 4 }, { extraNote: '2 đôi mẫu' })).body;
+  const t = (await call(env, 'POST', '/api/kho/trips', {}, worker)).body;
+  for (const x of [a, b]) await call(env, 'POST', `/api/kho/trips/${t.id}/load`, { code: x.code }, worker);
+  await call(env, 'POST', `/api/kho/trips/${t.id}/depart`, {}, worker);
+  await call(env, 'POST', `/api/kho/trips/${t.id}/receive`, { code: a.code }, staff);
+  await call(env, 'POST', `/api/kho/trips/${t.id}/close`, {}, staff);
+
+  const adm = (await call(env, 'GET', `/api/orders/${o.id}`, undefined, owner)).body.shipping;
+  expect(adm.list.map((x: { code: string }) => x.code)).toEqual([a.code, b.code]);
+  expect(adm.lines[0]).toMatchObject({ key: 'nam', orderedRi: 10, packedRi: 10, sentRi: 10, deliveredRi: 0 });
+
+  const mine = (await call(env, 'GET', `/api/c/orders/${o.id}`, undefined, cust)).body.shipping;
+  expect(JSON.stringify(mine)).not.toContain(a.code);
+  expect(mine.byStatus).toEqual({ da_toi: 1, kiem_tra: 1 });
+  expect(mine.extra).toEqual(['2 đôi mẫu']);
+  expect(mine.lines[0]).toMatchObject({ orderedRi: 10, sentRi: 10, deliveredRi: 0 });
+
+  const dash = (await call(env, 'GET', '/api/dashboard', undefined, owner)).body.kho;
+  expect(dash).toEqual({ running: 0, missingTrips: 1, inCam: 1 });
+});
+
+test('reopening a delivered order is the owner\'s call', async () => {
+  const id = await acceptedOrder('da_giao');
+  expect((await call(env, 'POST', `/api/orders/${id}/status`, { to: 'dang_san_xuat' }, staff)).status).toBe(403);
+  await env.DB.prepare('UPDATE orders SET quote_version = 1 WHERE id = ?').bind(id).run();
+  expect((await call(env, 'POST', `/api/orders/${id}/status`, { to: 'dang_san_xuat' }, owner)).body.status).toBe('dang_san_xuat');
+});

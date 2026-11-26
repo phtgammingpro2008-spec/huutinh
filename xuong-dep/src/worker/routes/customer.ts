@@ -15,6 +15,7 @@ import type { Router } from '../router';
 import { acceptQuote } from './public';
 import { saveOrder } from './orders';
 import { adminOrderUrl, notifyOwner } from '../telegram';
+import { shippingSummary } from '../repo/kho';
 
 const notFound = () => err(404, 'Không tìm thấy đơn');
 const fail = (status: number, code: string, message: string) => json({ error: message, code }, status);
@@ -67,6 +68,16 @@ async function checkSources(env: Env, user: SessionUser, o: OrderInput, orderId:
   void orderId;
 }
 
+/** What a customer sees of the bags: progress per size line, no bag codes; any bag with a problem reads "đang kiểm tra". */
+function customerShipping(s: Awaited<ReturnType<typeof shippingSummary>>) {
+  const byStatus: Record<string, number> = {};
+  for (const [st, n] of Object.entries(s.byStatus)) {
+    const k = st === 'thieu' || st === 'that_lac' || st === 'hu_hong' ? 'kiem_tra' : st;
+    byStatus[k] = (byStatus[k] ?? 0) + (n ?? 0);
+  }
+  return { bags: s.bags, lines: s.lines, byStatus, extra: s.extra };
+}
+
 /** Customer-facing view: no admin notes, prices only from the quote actually sent. */
 async function customerView(env: Env, v: OrderView, row: OrderRow) {
   const q = row.quote_version > 0 ? await latestQuote(env, row.id) : null;
@@ -83,6 +94,7 @@ async function customerView(env: Env, v: OrderView, row: OrderRow) {
     paid: quoted ? v.paid : 0,
     due: quoted ? Math.max(0, (q!.data as QuoteSnapshot).totalAmount - v.paid) : 0,
     canEdit: canEdit(row), canCancel: canCancel(row),
+    shipping: customerShipping(await shippingSummary(env, row.id)),
   };
 }
 
