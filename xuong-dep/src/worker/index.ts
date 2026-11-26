@@ -16,6 +16,7 @@ import { publicRoutes } from './routes/public';
 import { quoteRoutes } from './routes/quotes';
 import { publicSiteRoutes } from './public/pages';
 import { telegramRoutes } from './telegram';
+import { khoRoutes } from './routes/kho';
 
 export const router = new Router();
 quoteRoutes(router);
@@ -31,6 +32,7 @@ userRoutes(router);
 orderRoutes(router);
 designRoutes(router);
 telegramRoutes(router);
+khoRoutes(router);
 publicSiteRoutes(router);
 
 function decodeB64(s: string): Uint8Array {
