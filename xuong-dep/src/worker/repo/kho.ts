@@ -3,6 +3,7 @@ import { newBagCode, orderedRi, pairsOf, type RiCount } from '../../shared/ri';
 import type { Item, Lang } from '../../shared/types';
 import type { Env, Stmt } from '../env';
 import { HttpError, newId, now, nowIso } from '../http';
+import { localDate } from '../../shared/dates';
 import { itemsByOrder } from './orders';
 import { getSettings } from './settings';
 
@@ -112,11 +113,10 @@ export async function packBag(env: Env, userId: string, b: { orderId: string; ri
   }
 }
 
-/** Trip code C + DDMMYY + n of the day, e.g. C251125-1. */
+/** Trip code C + DDMMYY (date in Vietnam and Cambodia, UTC+7) + n of the day, e.g. C251125-1. */
 export async function openTrip(env: Env, userId: string): Promise<string> {
-  const d = now(env);
-  const p = (n: number) => String(n).padStart(2, '0');
-  const prefix = `C${p(d.getUTCDate())}${p(d.getUTCMonth() + 1)}${p(d.getUTCFullYear() % 100)}-`;
+  const [y, m, dd] = localDate(now(env)).split('-');
+  const prefix = `C${dd}${m}${y.slice(2)}-`;
   for (let attempt = 0; ; attempt++) {
     const n = (await env.DB.prepare('SELECT COUNT(*) AS n FROM trips WHERE code LIKE ?').bind(prefix + '%').first<{ n: number }>())!.n + 1 + attempt;
     const id = newId();

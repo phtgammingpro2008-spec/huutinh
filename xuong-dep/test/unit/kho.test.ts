@@ -247,3 +247,20 @@ test('reopening a delivered order is the owner\'s call', async () => {
   await env.DB.prepare('UPDATE orders SET quote_version = 1 WHERE id = ?').bind(id).run();
   expect((await call(env, 'POST', `/api/orders/${id}/status`, { to: 'dang_san_xuat' }, owner)).body.status).toBe('dang_san_xuat');
 });
+
+test('trip codes use the date in Vietnam and Cambodia (UTC+7)', async () => {
+  const early = await createTestEnv({ now: () => new Date('2026-11-25T23:30:00Z') }); // 06:30 on 26/11 locally
+  const o = await loginCookie(early);
+  const t = await call(early, 'POST', '/api/kho/trips', {}, o);
+  expect(t.body.code).toBe('C261126-1');
+});
+
+test('the backup includes bags, trips and their history', async () => {
+  const id = await acceptedOrder();
+  const a = (await pack(id, { nam: 2 })).body;
+  await call(env, 'POST', '/api/kho/trips', {}, worker);
+  const dump = (await call(env, 'GET', '/api/export', undefined, owner)).body;
+  expect(dump.bags.map((b: { code: string }) => b.code)).toEqual([a.code]);
+  expect(dump.trips).toHaveLength(1);
+  expect(dump.bag_events).toHaveLength(1);
+});

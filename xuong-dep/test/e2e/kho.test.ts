@@ -96,6 +96,13 @@ test('a bag goes from the workshop to the customer, scanned at every step', asyn
   await o.getByText(/Đã giao 2 bao/).waitFor();
   const after = await (await fetch(app.url + `/api/orders/${orderId}`, { headers: { cookie: owner } })).json();
   expect(after.status).toBe('da_giao');
+  // the owner's order page keeps its shipping section after a status change
+  await o.goto(app.url + `/quan-ly#/orders/${orderId}`);
+  await o.getByRole('region', { name: 'Vận chuyển' }).waitFor();
+  await o.getByRole('button', { name: /Hoàn tất/ }).click();
+  await o.getByText('Hoàn tất').first().waitFor();
+  await o.waitForTimeout(300);
+  expect(await o.getByRole('region', { name: 'Vận chuyển' }).count()).toBe(1);
   await octx.close();
 });
 

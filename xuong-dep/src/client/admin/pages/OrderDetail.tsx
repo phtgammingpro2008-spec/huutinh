@@ -90,7 +90,8 @@ export function OrderDetail({ id }: { id: string }) {
   const [pay, setPay] = useState({ amount: '', paidOn: localDate(new Date()), note: '' });
 
   const take = (v: OrderView) => {
-    setO(v);
+    // only GET returns the shipping summary; other answers keep the one already shown
+    setO((prev) => ({ ...v, shipping: v.shipping ?? prev?.shipping }));
     setPrices(Object.fromEntries(v.items.flatMap((i) => i.lines.map((l) => [l.id, fmt(l.unitPrice, v.currency)]))));
   };
   const load = () => api<OrderView>('GET', `/api/orders/${id}`).then(take).catch((e) => setError(e.message));

@@ -8,7 +8,7 @@ import { addPayment, deletePayment } from '../repo/payments';
 import { latestQuote } from '../repo/quotes';
 import type { Router } from '../router';
 
-const TABLES = ['customers', 'materials', 'settings', 'orders', 'order_images', 'designs', 'order_items', 'item_lines', 'quotes', 'payments'];
+const TABLES = ['customers', 'materials', 'settings', 'orders', 'order_images', 'designs', 'order_items', 'item_lines', 'quotes', 'payments', 'trips', 'bags', 'bag_events'];
 
 export function paymentRoutes(r: Router) {
   r.on('POST', '/api/orders/:id/status', requireAdmin(async (req, env, p, ctx) => {
