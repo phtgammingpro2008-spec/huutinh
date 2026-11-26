@@ -20,7 +20,7 @@
 - Trip statuses: `dang_xep` → `dang_chay` → `da_toi`. Trip code `C` + `DDMMYY` + `-` + n of the day (e.g. `C251125-1`).
 - Packing allowed only for orders `khach_dong_y` or `dang_san_xuat`. First bag on a `khach_dong_y` order moves it to `dang_san_xuat`. Delivered pairs ≥ ordered pairs moves the order to `da_giao`.
 - `bag_events` rows are never updated or deleted (DB triggers abort UPDATE/DELETE). Every bag change writes one event.
-- Roles: worker = pack, reprint, open trip, load/remove (before departure), depart, look up bag (without customer data). staff/admin = everything else. Only admin creates/locks worker accounts.
+- Roles: worker = pack, reprint, open trip, load/remove (before departure), depart, look up bag (without customer data). staff = also receive, close receipt, stock, deliver, see customer data. **Every correction is admin-only** (owner, 25/11): edit ri, flag lost/damaged, cancel bag, reopen a delivered order; admin also creates/locks worker accounts.
 - Worker never receives customer name/phone/address/notes, prices, payments; `/api/*` outside `/api/kho/*`, `/api/me`, `/api/logout`, `/media/*` (allowed keys only) answers 404 to a worker.
 - `/kho` UI: every label in Vietnamese and Khmer at once (`Đóng bao · ខ្ចប់បាវ`). Admin `/quan-ly` stays Vietnamese only.
 - Telegram (owner only, via `notifyOwner`): trip departs, trip closed with missing bags, order fully delivered.
@@ -121,7 +121,7 @@ test('bag codes', () => {
 - Test: `test/unit/kho-worker.test.ts`
 
 **Interfaces:**
-- Produces: `Role = 'admin' | 'staff' | 'worker' | 'customer'`; `requireKho(level: 'worker' | 'staff', h)` (worker level admits admin/staff/worker; staff level admits admin/staff; customers 404, worker on staff level 403 `Tài khoản Xưởng không làm được việc này`). `requireAdmin` keeps admitting only admin/staff (so workers get 404 on all existing admin routes).
+- Produces: `Role = 'admin' | 'staff' | 'worker' | 'customer'`; `requireKho(level: 'worker' | 'staff' | 'admin', h)` (worker level admits admin/staff/worker; staff level admits admin/staff; admin level admits admin only; customers 404; others below the level 403 `Chỉ tài khoản chủ xưởng làm được việc này · …` or `Tài khoản Xưởng không làm được việc này · …`). `requireAdmin` keeps admitting only admin/staff (so workers get 404 on all existing admin routes).
 - `POST /api/staff` takes `role: 'staff' | 'worker'` (default `staff`); `GET /api/staff` returns `role` per row; lock/password routes accept both roles.
 
 - [ ] **Step 1: Tests** in `kho-worker.test.ts`: owner creates `{ name: 'tho1', password: 'mat-khau-tho-1', role: 'worker' }` → 200, row role `worker`; worker logs in by name; `/api/me` role `worker`; worker gets 404 on `/api/orders`, `/api/customers`, `/api/settings`, `/api/staff`; staff creating a worker → 403; worker on `/media/<order original image key>` → 404.
@@ -174,11 +174,11 @@ test('bag codes', () => {
   - `POST /api/kho/trips/:id/close` [staff] → trip `da_toi`; unscanned bags → `thieu` with `missing` events; Telegram `⚠️ Chuyến … tới Cam: nhận 38/40, thiếu HLX-…, HLX-…` (or `✅ … đủ 40/40`).
   - `POST /api/kho/bags/:code/stock` [staff] (`da_toi` → `trong_kho`).
   - `POST /api/kho/deliver` [staff] `{ codes: string[], note? }` (each `da_toi`|`trong_kho` → `da_giao`); all-or-nothing; response lists orders touched; order whose delivered pairs ≥ ordered pairs → `da_giao`, Telegram `📦 Toa … đã giao đủ`.
-  - `POST /api/kho/bags/:code/ri` [staff] `{ ri }` → event `edit_ri { from, to }`.
-  - `POST /api/kho/bags/:code/flag` [staff] `{ kind: 'that_lac' | 'hu_hong', note }`; `POST /api/kho/bags/:code/cancel` [staff] (only `da_dong`).
+  - `POST /api/kho/bags/:code/ri` [admin] `{ ri }` → event `edit_ri { from, to }`.
+  - `POST /api/kho/bags/:code/flag` [admin] `{ kind: 'that_lac' | 'hu_hong', note }`; `POST /api/kho/bags/:code/cancel` [admin] (only `da_dong`).
   - `shippingSummary(env, orderId): Promise<{ bags: number; lines: { key, label, perRi, orderedRi, packedRi, sentRi, deliveredRi }[]; byStatus: Record<BagStatus, number>; extra: string[]; list: BagRow[] }>` exported from `repo/kho.ts` for Task 6.
 
-- [ ] **Step 1: Tests:** worker calling receive/close/deliver → 403; receive bag from another trip → 409 `other_trip`; close with 1 of 2 received → that bag `thieu`, counts `{ total 2, received 1, missing 1 }`, Telegram lists its code; later receive of the `thieu` bag → `da_toi`, missing 0, both events kept; deliver a `tren_xe` bag → 409, nothing changed even if other codes in the list were valid; deliver all bags of the order → order `da_giao` + Telegram; `edit_ri` changes pairs and keeps the old value in the event; cancel a loaded bag → 409.
+- [ ] **Step 1: Tests:** worker calling receive/close/deliver → 403; staff calling ri/flag/cancel → 403; receive bag from another trip → 409 `other_trip`; close with 1 of 2 received → that bag `thieu`, counts `{ total 2, received 1, missing 1 }`, Telegram lists its code; later receive of the `thieu` bag → `da_toi`, missing 0, both events kept; deliver a `tren_xe` bag → 409, nothing changed even if other codes in the list were valid; deliver all bags of the order → order `da_giao` + Telegram; `edit_ri` changes pairs and keeps the old value in the event; cancel a loaded bag → 409.
 - [ ] **Step 2: Run** → FAIL. **Step 3: Implement.** **Step 4: Run** `bun test test/unit` → pass.
 - [ ] **Step 5: Commit** `feat(kho): receiving, warehouse and delivery`.
 
@@ -216,7 +216,7 @@ test('bag codes', () => {
 - Customer section title `Hàng của bạn` / `Your goods` / `ទំនិញរបស់អ្នក`; rows `Đã gửi`, `Còn thiếu`, `Đang trên xe`, `Đã tới Cam`, `Đã giao`, `Đang kiểm tra`, `Gửi kèm`.
 - Admin section `Vận chuyển`: per line `đặt / đã đóng / đã gửi / đã giao / còn thiếu` ri, bag list (code, ri, status, trip code, date) linking to `/kho#/bao/<code>`, event history.
 
-- [ ] **Step 0: Reopen a delivered order:** in `src/shared/status.ts` `canTransition('da_giao', 'dang_san_xuat')` becomes true (spec §4: the owner or a manager reopens a delivered toa by hand to pack more). Add the case to `test/unit/status.test.ts`.
+- [ ] **Step 0: Reopen a delivered order:** in `src/shared/status.ts` `canTransition('da_giao', 'dang_san_xuat')` becomes true (spec §4: the owner or a manager reopens a delivered toa by hand to pack more). Add the case to `test/unit/status.test.ts`. In `POST /api/orders/:id/status`, that reopening is admin-only (staff → 403).
 - [ ] **Step 1: Unit tests:** customer view has `shipping.lines[].deliveredRi`, no `code` key anywhere in `shipping`, a `thieu` bag counted under `kiem_tra`; admin order view has codes; dashboard counts.
 - [ ] **Step 2: e2e:** extend `kho.test.ts`: customer opens the order and sees `Hàng của bạn` with `Còn thiếu`.
 - [ ] **Step 3–4: Implement, run all unit + e2e** → pass.

@@ -54,7 +54,7 @@ Vòng khép kín chia 3 phần, làm lần lượt (anh đồng ý 25/11):
 ```
 Đã đóng → Trên xe → Đã tới Cam → Trong kho Cam → Đã giao
                 └→ (chốt nhận mà không quét được) Thiếu khi tới
-Bất kỳ lúc nào (Quản lý, Chủ): Thất lạc · Hư hỏng (kèm lý do, có thể kèm ảnh)
+Bất kỳ lúc nào (chỉ Chủ): Thất lạc · Hư hỏng (kèm lý do, có thể kèm ảnh)
 ```
 
 - **Đã đóng:** công nhân tạo bao tại xưởng, in tem, dán lên bao.
@@ -67,11 +67,11 @@ Bất kỳ lúc nào (Quản lý, Chủ): Thất lạc · Hư hỏng (kèm lý d
 
 **Toa đủ hàng:** khi tổng số đôi các bao "Đã giao" bằng hoặc vượt số đôi đặt, toa tự chuyển sang trạng thái **Đã giao** **(em quyết)**. Khi toa "Khách đồng ý" có bao đầu tiên được đóng, toa tự chuyển sang **Đang sản xuất** **(em quyết)**. Anh vẫn đổi trạng thái tay được như hiện nay.
 
-**Toa nào được đóng bao:** chỉ toa đang "Khách đồng ý" hoặc "Đang sản xuất". Toa "Đã giao" muốn đóng thêm thì Quản lý hoặc Chủ phải mở lại bằng tay trước. Toa chờ báo giá, đã hủy hoặc hoàn tất thì không đóng được **(em quyết)**.
+**Toa nào được đóng bao:** chỉ toa đang "Khách đồng ý" hoặc "Đang sản xuất". Toa "Đã giao" muốn đóng thêm thì Chủ phải mở lại bằng tay trước. Toa chờ báo giá, đã hủy hoặc hoàn tất thì không đóng được **(em quyết)**.
 
 **Sửa sai:**
 - Bao quét nhầm lên xe thì bỏ khỏi chuyến được, nhưng chỉ khi xe chưa chạy.
-- Bao tạo nhầm (chưa lên xe) thì Quản lý hoặc Chủ bấm "Hủy bao". Bao không bị xóa mà chuyển sang trạng thái Đã hủy, có ghi lịch sử.
+- Bao tạo nhầm (chưa lên xe) thì Chủ bấm "Hủy bao". Bao không bị xóa mà chuyển sang trạng thái Đã hủy, có ghi lịch sử.
 - Toa bị hủy khi đã có bao: các bao vẫn giữ nguyên để Quản lý xử lý tay **(em quyết)**.
 
 **Đóng dư:** nếu một bao làm tổng số ri gửi vượt số đặt, web hỏi lại "Toa này chỉ đặt X ri, bao này làm dư Y ri, vẫn đóng?" và đánh dấu "gửi dư" **(em quyết)**.
@@ -119,11 +119,13 @@ Thêm loại tài khoản mới **Xưởng** cho công nhân. Chủ tạo và kh
 | Tạo bao, in tem, in lại tem | Được | Được | Được |
 | Mở chuyến, quét bao lên xe, cho xe chạy | Được | Được | Được |
 | Nhận chuyến, chốt nhận, nhập kho Cam, giao khách | Không | Được | Được |
-| Sửa số ri của bao đã đóng (có ghi lịch sử) | Không | Được | Được |
-| Đánh dấu Thất lạc, Hư hỏng | Không | Được | Được |
+| Sửa số ri của bao đã đóng (có ghi lịch sử) | Không | Không | Được |
+| Đánh dấu Thất lạc, Hư hỏng | Không | Không | Được |
+| Hủy bao tạo nhầm, mở lại toa đã giao | Không | Không | Được |
 | Xem tên, số điện thoại, địa chỉ khách, giá, công nợ | Không | Được | Được |
 | Tạo, khóa tài khoản Xưởng | Không | Không | Được |
 
+- **Mọi việc chỉnh sửa chỉ admin001 làm được** (anh chốt 25/11). Quản lý và Xưởng chỉ làm các bước của quy trình.
 - Công nhân chọn toa để đóng bao bằng **mã toa và ảnh các mẫu** trong toa, kèm số ri đặt, đã đóng, còn thiếu. Không thấy tên khách hay giá.
 - **Lịch sử quét không ai sửa hay xóa được, kể cả Chủ.** Mỗi dòng ghi: bao nào, việc gì, ai làm, lúc nào, thuộc chuyến nào, ghi chú. Sửa số ri là thêm một dòng mới "đổi từ X thành Y", không ghi đè **(em quyết)**.
 - Tài khoản Xưởng đăng nhập ở trang đăng nhập chung, xong vào thẳng khu Kho.
