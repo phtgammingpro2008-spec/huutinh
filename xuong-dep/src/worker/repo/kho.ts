@@ -167,3 +167,37 @@ export async function bagView(env: Env, b: BagRow, withCustomer: boolean) {
     events: events.map((e) => ({ kind: e.kind, at: e.at, by: e.by_name ?? '', tripCode: e.trip_code ?? null, data: JSON.parse(e.data || '{}') })),
   };
 }
+
+/** Pairs per ri of each size line of one order (to price a bag in pairs). */
+export async function perRiOf(env: Env, orderId: string): Promise<Record<string, number>> {
+  const items = (await itemsByOrder(env, [orderId])).get(orderId) ?? [];
+  return Object.fromEntries(Object.entries(orderedRi(items)).map(([k, v]) => [k, v.perRi]));
+}
+
+/** Everything an order page shows about its bags. */
+export async function shippingSummary(env: Env, orderId: string) {
+  const items = (await itemsByOrder(env, [orderId])).get(orderId) ?? [];
+  const bags = (await env.DB.prepare(
+    `SELECT b.*, t.code AS trip_code FROM bags b LEFT JOIN trips t ON t.id = b.trip_id
+     WHERE b.order_id = ? AND b.status <> 'da_huy' ORDER BY b.seq`,
+  ).bind(orderId).all<BagRow & { trip_code: string | null }>()).results;
+  const byStatus: Partial<Record<BagStatus, number>> = {};
+  for (const b of bags) byStatus[b.status] = (byStatus[b.status] ?? 0) + 1;
+  return {
+    bags: bags.length,
+    lines: await linesOf(env, items, bags),
+    byStatus,
+    extra: bags.filter((b) => b.extra_note).map((b) => b.extra_note),
+    list: bags.map((b) => ({
+      code: b.code, seq: b.seq, ri: riOf(b), pairs: b.pairs, extraNote: b.extra_note, status: b.status, tripCode: b.trip_code, updatedAt: b.updated_at,
+    })),
+  };
+}
+
+/** Delivered pairs reached the ordered pairs: the order is delivered. */
+export async function fullyDelivered(env: Env, orderId: string): Promise<boolean> {
+  const items = (await itemsByOrder(env, [orderId])).get(orderId) ?? [];
+  const ordered = Object.values(orderedRi(items)).reduce((s, l) => s + l.pairs, 0);
+  const got = (await env.DB.prepare("SELECT COALESCE(SUM(pairs), 0) AS n FROM bags WHERE order_id = ? AND status = 'da_giao'").bind(orderId).first<{ n: number }>())!.n;
+  return ordered > 0 && got >= ordered;
+}

@@ -134,3 +134,80 @@ test('bag lookup forgives typing, hides the customer from workers, shows it to m
   expect(none.body.error).toContain('Không có bao này');
   expect((await call(env, 'POST', `/api/kho/bags/${a.code}/reprint`, {}, worker)).body.events.map((e: { kind: string }) => e.kind)).toEqual(['pack', 'reprint']);
 });
+
+/** Two bags of one order on one departed trip. */
+async function onTheRoad() {
+  const id = await acceptedOrder();
+  const a = (await pack(id, { nam: 10, nu: 6 })).body, b = (await pack(id, { nu: 6 })).body;
+  const t = (await call(env, 'POST', '/api/kho/trips', {}, worker)).body;
+  for (const x of [a, b]) await call(env, 'POST', `/api/kho/trips/${t.id}/load`, { code: x.code }, worker);
+  await call(env, 'POST', `/api/kho/trips/${t.id}/depart`, {}, worker);
+  return { id, a, b, t };
+}
+
+test('receiving needs a manager; a bag of another trip is refused with that trip named', async () => {
+  const { a, t } = await onTheRoad();
+  for (const [m, path, body] of [['POST', `/api/kho/trips/${t.id}/receive`, { code: a.code }], ['POST', `/api/kho/trips/${t.id}/close`, {}], ['POST', '/api/kho/deliver', { codes: [a.code] }]] as const) {
+    expect([path, (await call(env, m, path, body, worker)).status]).toEqual([path, 403]);
+  }
+  const id2 = await acceptedOrder();
+  const c = (await pack(id2, { nam: 1 })).body;
+  const t2 = (await call(env, 'POST', '/api/kho/trips', {}, worker)).body;
+  await call(env, 'POST', `/api/kho/trips/${t2.id}/load`, { code: c.code }, worker);
+  await call(env, 'POST', `/api/kho/trips/${t2.id}/depart`, {}, worker);
+  const wrong = await call(env, 'POST', `/api/kho/trips/${t.id}/receive`, { code: c.code }, staff);
+  expect([wrong.status, wrong.body.code]).toEqual([409, 'other_trip']);
+  expect(wrong.body.error).toContain(t2.code);
+});
+
+test('closing a receipt marks unscanned bags missing; a late scan brings one back', async () => {
+  const { a, b, t } = await onTheRoad();
+  const r1 = await call(env, 'POST', `/api/kho/trips/${t.id}/receive`, { code: a.code }, staff);
+  expect(r1.body.counts).toMatchObject({ total: 2, received: 1, missing: 0 });
+  await call(env, 'POST', `/api/kho/trips/${t.id}/receive`, { code: a.code }, staff); // twice
+  const closed = await call(env, 'POST', `/api/kho/trips/${t.id}/close`, {}, staff);
+  expect(closed.body.status).toBe('da_toi');
+  expect(closed.body.counts).toMatchObject({ total: 2, received: 1, missing: 1 });
+  expect(tg.at(-1)).toContain(`nhận 1/2, thiếu ${b.code}`);
+  const late = await call(env, 'POST', `/api/kho/trips/${t.id}/receive`, { code: b.code }, staff);
+  expect(late.body.counts).toMatchObject({ received: 2, missing: 0 });
+  const kinds = (await call(env, 'GET', `/api/kho/bags/${b.code}`, undefined, staff)).body.events.map((e: { kind: string }) => e.kind);
+  expect(kinds).toEqual(['pack', 'load', 'depart', 'missing', 'receive']);
+  const aEvents = (await call(env, 'GET', `/api/kho/bags/${a.code}`, undefined, staff)).body.events;
+  expect(aEvents.filter((e: { kind: string }) => e.kind === 'receive')).toHaveLength(1);
+});
+
+test('stock and delivery: all-or-nothing, a fully delivered order becomes da_giao', async () => {
+  const { id, a, b, t } = await onTheRoad();
+  await call(env, 'POST', `/api/kho/trips/${t.id}/receive`, { code: a.code }, staff);
+  expect((await call(env, 'POST', `/api/kho/bags/${a.code}/stock`, {}, staff)).body.status).toBe('trong_kho');
+  // b is still on the truck: nothing is delivered
+  const bad = await call(env, 'POST', '/api/kho/deliver', { codes: [a.code, b.code] }, staff);
+  expect([bad.status, bad.body.code]).toEqual([409, 'not_arrived']);
+  expect((await call(env, 'GET', `/api/kho/bags/${a.code}`, undefined, staff)).body.status).toBe('trong_kho');
+  await call(env, 'POST', `/api/kho/trips/${t.id}/receive`, { code: b.code }, staff);
+  const ok = await call(env, 'POST', '/api/kho/deliver', { codes: [a.code, b.code], note: 'giao bến xe Siem Reap' }, staff);
+  expect(ok.status).toBe(200);
+  expect((await call(env, 'GET', `/api/orders/${id}`, undefined, owner)).body.status).toBe('da_giao');
+  expect(tg.at(-1)).toContain('đã giao đủ');
+});
+
+test('corrections are the owner\'s alone and keep the old values in history', async () => {
+  const id = await acceptedOrder();
+  const a = (await pack(id, { nam: 6 })).body;
+  for (const [path, body] of [[`/api/kho/bags/${a.code}/ri`, { ri: { nam: 5 } }], [`/api/kho/bags/${a.code}/flag`, { kind: 'hu_hong', note: 'ướt' }], [`/api/kho/bags/${a.code}/cancel`, {}]] as const) {
+    expect([path, (await call(env, 'POST', path, body, staff)).status]).toEqual([path, 403]);
+  }
+  const e = await call(env, 'POST', `/api/kho/bags/${a.code}/ri`, { ri: { nam: 5 } }, owner);
+  expect(e.body).toMatchObject({ ri: { nam: 5 }, pairs: 30 });
+  expect(e.body.events.at(-1)).toMatchObject({ kind: 'edit_ri', data: { from: { nam: 6 }, to: { nam: 5 } } });
+  const f = await call(env, 'POST', `/api/kho/bags/${a.code}/flag`, { kind: 'hu_hong', note: 'ướt' }, owner);
+  expect(f.body.status).toBe('hu_hong');
+  const b = (await pack(id, { nam: 1 })).body;
+  expect((await call(env, 'POST', `/api/kho/bags/${b.code}/cancel`, {}, owner)).body.status).toBe('da_huy');
+  const c = (await pack(id, { nam: 1 })).body;
+  expect(c.seq).toBe(3); // numbers are never reused
+  const t = (await call(env, 'POST', '/api/kho/trips', {}, worker)).body;
+  await call(env, 'POST', `/api/kho/trips/${t.id}/load`, { code: c.code }, worker);
+  expect((await call(env, 'POST', `/api/kho/bags/${c.code}/cancel`, {}, owner)).status).toBe(409);
+});
